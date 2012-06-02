@@ -1,12 +1,15 @@
 module Data.ShortList (
-    ShortList,
-    mkShortList
+    ShortList
+  , ShortString
+  , mkShortString
+  , mkShortList
 ) where
 
 import Data.Serialize
 import Control.Applicative
 
 newtype ShortList a = ShortList [a]
+  deriving (Eq, Ord, Show)
 
 mkShortList xs
  | length xs > 255 = error "ShortList can contain 0..255 items"
@@ -33,3 +36,5 @@ getShortListOf m = ShortList <$> (go [] =<< getWord8)
   go as i = do x <- m
                x `seq` go (x:as) (i - 1)
 
+type ShortString = ShortList Char
+mkShortString = mkShortList
