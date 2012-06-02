@@ -18,7 +18,7 @@ data Mac = Mac
   deriving (Eq, Ord, Show)
 
 instance Serialize Mac where
-  put (Mac a b c d e f) = mapM_ putWord8 [a,b,c,d,e,f]
+  put (Mac a b c d e f) = put a >> put b >> put c >> put d >> put e >> put f
   get = Mac <$> get <*> get <*> get <*> get <*> get <*> get
 
 data EthernetFrame = EthernetFrame
