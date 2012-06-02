@@ -1,4 +1,6 @@
 module Data.Ethernet (
+    Mac(..)
+  , EthernetFrame(..)
 ) where
 
 import Data.Word
