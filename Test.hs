@@ -10,10 +10,12 @@ import Control.Applicative
 import System.IO.Unsafe
 
 import Data.Serialize
-import Data.ByteString
+import qualified Data.ByteString as B
+import Data.ByteString (ByteString,pack)
 import Crypto.NaCl.Sign hiding (verify)
 import Crypto.NaCl.Key
 
+import Control.Concurrent.STM.Graph
 import Data.Ethernet
 import Vindicat
 
@@ -25,7 +27,7 @@ $( derive makeArbitrary ''Mac )
 $( derive makeArbitrary ''EthernetFrame )
 $( derive makeArbitrary ''PubKey )
 $( derive makeArbitrary ''DeviceProperty )
-$( derive makeArbitrary ''Device )
+$( derive makeArbitrary ''LinkProperty )
 
 instance Arbitrary Signature where
   arbitrary = NaclSignature <$> pack <$> replicateM 64 arbitrary
@@ -42,20 +44,32 @@ prop_serialize_signature :: Signature -> Bool
 prop_serialize_signature sig =        sig == UnknownSignature ||
                                 Right sig == (decode . encode) sig
 
-prop_sign_verify_nacl :: ByteString -> Bool
-prop_sign_verify_nacl msg = True == (verify msg pk $ naclSign sk msg)
-  where
-    pk = NaclKey pk'
-    (pk',sk) = unsafePerformIO createKeypair
+k_prop_sign_verify_nacl :: KeyPair -> ByteString -> Bool
+k_prop_sign_verify_nacl (pk,sk) msg
+ = True == (verify msg (NaclKey pk) $ naclSign sk msg)
 
-prop_sign_verify_bogus_nacl sig msg = False == (verify msg pk sig)
-  where
-    pk = NaclKey $ fst $ unsafePerformIO createKeypair
+k_prop_sign_verify_bogus_nacl (pk,_) sig msg = False == (verify msg (NaclKey pk) sig)
 
-prop_serialize_device :: Mac -> ByteString -> Bool
-prop_serialize_device mac nick = (Right dev) == ((decode . encode) dev)
+k_prop_serialize_device :: KeyPair -> Mac -> ByteString -> Bool
+k_prop_serialize_device kp mac nick = (Right dev) == ((decode . encode) dev)
     where
     dev = mkDevice kp mac nick
-    kp = unsafePerformIO createKeypair
+
+k_prop_serialize_linkhalf :: KeyPair -> PubKey -> Bool
+k_prop_serialize_linkhalf kp otherpub
+ = otherpub == UnknownPubKey || Right lh == (decode . encode) lh
+    where lh = mkLinkHalf kp otherpub []
+
+kk_prop_serialize_link kp1@(pk1,_) kp2@(pk2,_) = Right l == (decode . encode) l
+    where
+    l = acceptLink kp2 lh
+    lh = mkLinkHalf kp1 (NaclKey pk2) []
+
+prop_sign_verify_nacl       = k_prop_sign_verify_nacl       (unsafePerformIO createKeypair)
+prop_sign_verify_bogus_nacl = k_prop_sign_verify_bogus_nacl (unsafePerformIO createKeypair)
+prop_serialize_device       = k_prop_serialize_device       (unsafePerformIO createKeypair)
+prop_serialize_linkhalf     = k_prop_serialize_linkhalf     (unsafePerformIO createKeypair)
+prop_serialize_link         = kk_prop_serialize_link        (unsafePerformIO createKeypair) (unsafePerformIO createKeypair)
+
 
 main = $( quickCheckAll )
