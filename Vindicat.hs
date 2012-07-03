@@ -264,7 +264,7 @@ acceptLink :: KeyPair -> LinkHalf -> Link
 acceptLink (pk,sk) (LinkHalf l r p linkinfo othersig)
  = Link l r (DeadLink `elem` p) rawlink where
   rawlink = linkinfo `B.append` sigs
-  sigs = runPut (putWord8 2 >> put othersig >> put (naclSign sk linkinfo))
+  sigs = runPut $ putWord8 2 >> put othersig >> put (naclSign sk linkinfo)
 
 
 
