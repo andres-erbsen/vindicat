@@ -11,6 +11,10 @@ import Control.Concurrent
 import Control.Concurrent.Chan
 
 data PcapHandleSR = PcapHandleSR PcapHandle (Chan ByteString) ThreadId
+-- TODO: manually write instances for Device instead of this hack
+instance Ord PcapHandleSR where compare _ _ = EQ
+instance Eq  PcapHandleSR where (==) _ _ = False
+instance Show PcapHandleSR where show _ = "[someiface]"
 
 type CallbackSRBS = PcapHandleSR -> PktHdr -> ByteString -> IO ()
 

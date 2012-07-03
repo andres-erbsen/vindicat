@@ -13,7 +13,6 @@ module Vindicat (
   , acceptLink
   , naclSign
   , isNaclKey
-  , isHWAddr
   , isNick
   , verify
 ) where
@@ -31,6 +30,7 @@ import Crypto.NaCl.Key
 import qualified Crypto.NaCl.Sign as NaCl
 import Crypto.NaCl.Encrypt.PublicKey
 
+import Network.Pcap.SendReceive
 import Data.Ethernet
 import Data.Time.TAI64
 
@@ -75,23 +75,18 @@ instance Serialize PubKey where
 
 
 
-data DeviceProperty = HWAddr Mac
-                    | Nick ByteString
+data DeviceProperty = Nick ByteString
                     | DeviceTime TAI64
                     | UnknownDeviceProperty
     deriving (Show, Eq, Ord)
 
-isHWAddr (HWAddr _) = True
-isHWAddr _ = False
 isNick   (Nick _)   = True
 isNick   _ = False
 
-unHWAddr (HWAddr mac) = mac
 unNick (Nick s) = s
 
 instance Serialize DeviceProperty where
   -- | Word8: constructor | Word16be: length | data...
-  put (HWAddr mac)   = putWord8 0x01 >> putWord16be 6 >> put mac
   put (Nick nick)    = putWord8 0x02 >> putWord16be (fromIntegral (B.length nick)) >> putByteString nick
   put (DeviceTime t) = putWord8 0x03 >> putWord16be 8 >> put t
   put UnknownDeviceProperty = error "UnknownDeviceProperty can not be serialized"
@@ -100,7 +95,6 @@ instance Serialize DeviceProperty where
     tag <- getWord8
     len <- fromIntegral <$> getWord16be
     case tag of
-      0x01 -> HWAddr <$> get
       0x02 -> Nick <$> getBytes len
       _    -> skip len >> return UnknownDeviceProperty
 
@@ -133,7 +127,6 @@ verify _ _ _ = False
 
 data Device = Device
   { deviceNaclKey :: Maybe PublicKey
-  , deviceMac     :: Maybe Mac
   , deviceNick    :: Maybe ByteString
   , deviceToBS    :: ByteString
   -- local fields
@@ -158,17 +151,17 @@ instance Serialize Device where
     -- list of verified key which signatures we could successfully verify
     let okKeys = map fst . filter (uncurry $ verify deviceinfo) $ zip keys sigs
     let naclkey = unNaclKey <$> find isNaclKey okKeys -- (first) verified NaCl public key
-    let mac     = unHWAddr  <$> find isHWAddr  props  -- (first) mac address
     let nick    = unNick    <$> find isNick    props  -- (first) nickname for device
-    return $ Device naclkey mac nick rawdevice Nothing
+    return $ Device naclkey nick rawdevice Nothing
 
-mkDevice :: KeyPair -> Mac -> ByteString -> Device
-mkDevice (pk,sk) mac nick
- = Device (Just pk) (Just mac) (Just nick) rawdevice Nothing where
+mkDevice :: KeyPair -> ByteString -> Device
+mkDevice (pk,sk) nick
+ = Device (Just pk) (Just nick) rawdevice Nothing
+  where
   rawdevice = deviceinfo `B.append` (encode $ naclSign sk deviceinfo)
   deviceinfo = runPut $ do
     putWord8 1 >> put (NaclKey pk)
-    putWord8 2 >> put (HWAddr mac) >> put (Nick nick)
+    putWord8 1 >> put (Nick nick)
 
 deviceKeys dev = catMaybes [NaclKey <$> deviceNaclKey dev]
 

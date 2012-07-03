@@ -19,7 +19,7 @@ import Crypto.NaCl.Encrypt.PublicKey
 import Crypto.NaCl.Key
 
 initAtlas kp = do
-  let ourDev = mkDevice kp (Mac 0 0 0 0 0 0) (B.pack "CHANGETHIS")
+  let ourDev = mkDevice kp (B.pack "CHANGETHIS")
   newMVar $ mkAtlas ourDev
 
 ethType =  "0xFFFF"
@@ -45,8 +45,7 @@ broadcastUsing :: (Serialize a) => MVar [PcapHandleSR] -> a -> IO ()
 broadcastUsing srifsV pkt = do
   interfaces <- readMVar srifsV
   forM_ interfaces $ \iface -> do
-   let ethpkt = encode pkt
-   sendPacketSRBS iface ethpkt
+    sendPacketSRBS iface (error "From what mac to send?")
 
 receive :: KeyPair -> MVar Atlas -> (Packet -> IO ()) -> CallbackSRBS
 receive kp atlasV broadcast = receivep where
@@ -64,8 +63,8 @@ receive kp atlasV broadcast = receivep where
             modifyMVar atlasV remember
             broadcast . LinkPack $ link
             where
-              remember atl = return $ insertLink link atl
-              link = acceptLink kp lh  
+            remember atl = return $ insertLink link atl
+            link = acceptLink kp lh  
         FwdPack tid bs -> return ()
         DataPacket  da -> putStrLn $ "> " ++ show da
         carbage -> print carbage
