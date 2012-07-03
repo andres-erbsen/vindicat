@@ -2,12 +2,14 @@ module Vindicat (
     PubKey(..)
   , DeviceProperty(..)
   , Signature(..)
-  , Device
+  , Device(..)
   , LinkProperty(..)
-  , Link
-  , LinkHalf
+  , Link(..)
+  , LinkHalf(..)
   , mkDevice
+  , deviceKeys
   , mkLinkHalf
+  , deviceGraphId
   , acceptLink
   , naclSign
   , isNaclKey
@@ -19,6 +21,7 @@ module Vindicat (
 import Data.Serialize
 import Data.Word
 import Data.List
+import Data.Maybe
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Control.Monad
@@ -133,6 +136,8 @@ data Device = Device
   , deviceMac     :: Maybe Mac
   , deviceNick    :: Maybe ByteString
   , deviceToBS    :: ByteString
+  -- local fields
+  , deviceGraphId  :: Maybe Int
   } deriving (Show, Eq, Ord)
 
 instance Serialize Device where
@@ -155,16 +160,17 @@ instance Serialize Device where
     let naclkey = unNaclKey <$> find isNaclKey okKeys -- (first) verified NaCl public key
     let mac     = unHWAddr  <$> find isHWAddr  props  -- (first) mac address
     let nick    = unNick    <$> find isNick    props  -- (first) nickname for device
-    return $ Device naclkey mac nick rawdevice
+    return $ Device naclkey mac nick rawdevice Nothing
 
 mkDevice :: KeyPair -> Mac -> ByteString -> Device
 mkDevice (pk,sk) mac nick
- = Device (Just pk) (Just mac) (Just nick) rawdevice where
+ = Device (Just pk) (Just mac) (Just nick) rawdevice Nothing where
   rawdevice = deviceinfo `B.append` (encode $ naclSign sk deviceinfo)
   deviceinfo = runPut $ do
     putWord8 1 >> put (NaclKey pk)
     putWord8 2 >> put (HWAddr mac) >> put (Nick nick)
 
+deviceKeys dev = catMaybes [NaclKey <$> deviceNaclKey dev]
 
 
 data LinkProperty = DeadLink

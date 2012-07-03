@@ -16,7 +16,6 @@ import Data.Word
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Data.Tagged(Tagged,untag)
-import Data.DeriveTH
 
 import Crypto.NaCl.Key
 import Crypto.NaCl.Nonce
@@ -24,7 +23,9 @@ import Crypto.NaCl.Encrypt.PublicKey
 
 import Vindicat
 
-$( derive makeSerialize ''PublicKey )
+instance Serialize PublicKey where
+  put = put . unPublicKey
+  get = PublicKey <$> get
 
 instance Serialize PKNonce where
   put = putByteString . toBS

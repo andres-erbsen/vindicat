@@ -1,0 +1,64 @@
+module Atlas (
+) where
+
+import Data.Maybe
+import Data.List
+import Data.Map (Map)
+import qualified Data.Map as M
+import Data.Graph.Inductive (Gr, Path, LPath)
+import qualified Data.Graph.Inductive as G
+import qualified Data.Graph.Inductive.Graph as G
+import qualified Data.Graph.Inductive.Query.SP as G
+import Data.Graph.Inductive.Internal.RootPath as G
+
+import Vindicat
+
+data Atlas = Atlas 
+  { atlasDevs :: Map PubKey Device
+  , atlasGraph :: Gr Device Link
+  , nextNode :: Int
+  }
+
+mkAtlas ourDev = Atlas M.empty (G.insNode (0,ourDev) G.empty) 1
+
+insertDevice :: Atlas -> Device -> Atlas
+insertDevice atlas@(Atlas m gr n) dev = case match of
+  Nothing -> atlas {m' gr' n'} -- this device is not in our graph yet
+    return $ Atlas m' gr' n'
+    where
+    m' = foldr (\k -> M.insert k dev') m newkeys
+    gr' = G.insNode (n, dev') gr
+    n'  = n+1
+    dev' = dev {deviceGraphId = Just n}
+  (Just old_dev) -> atlas -- TODO: update info
+  where
+  match = find isJust $ map devByKey keys
+  newkeys = filter (isNothing . devByKey) keys
+  keys = deviceKeys dev
+  devByKey k = M.lookup k m
+
+insertLink   :: Atlas -> Link -> Atlas
+insertLink atlas link = if isJust lref && isJust rref then do -- know ends?
+  l <- fromJust . deviceGraphId # fromJust lref
+  r <- fromJust . deviceGraphId # fromJust rref
+  let gr' = if linkDead link then G.delEdge (l,r)      $ atlasGraph atlas
+                             else G.insEdge (l,r,link) $ atlasGraph atlas
+  return $ atlas {atlasGraph = gr'}
+  else return atlas
+  where
+  lref = M.lookup (linkLeftEnd  link) (atlasDevs atlas)
+  rref = M.lookup (linkRightEnd link) (atlasDevs atlas)
+
+
+getPathTo :: Atlas -> PubKey -> [Device]
+getPathTo atlas k = 
+  if isJust dref then do
+    d <- fromJust . deviceGraphId # fromJust dref
+    return .  map (fromJust . G.lab gr) . G.sp 0 d . G.emap measureEdge $ gr
+  else return []
+  where
+  gr = atlasGraph atlas
+  dref = M.lookup k (atlasDevs atlas)
+
+measureEdge :: Num a => Link -> a
+measureEdge _ = 1

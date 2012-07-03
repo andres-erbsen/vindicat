@@ -1,3 +1,8 @@
+Main.hs:55:15: Not in scope: `shouldAcceptLink'
+
+Main.hs:55:42: Not in scope: `sendTo'
+
+
 *Sõnumite liigitus, koostamine - TEHTUD
 *Sõnumite saatmine, vastuvõtmine - TEHTUD
 
