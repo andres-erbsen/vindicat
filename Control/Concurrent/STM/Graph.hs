@@ -26,7 +26,6 @@ import Data.Maybe (fromJust)
 import qualified Data.STM.LinkedList as TL
 import qualified Data.Array.MArray as MA
 import Data.Array.ST
-import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Heap.Finger (Heap, OrdSeq)
 import qualified Data.Heap.Finger as FH
@@ -226,9 +225,10 @@ edgesTo' = wrapEdges . inEdges
 
 labelEdges :: Graph e v -> [(Int, e)] -> STM [(v,e)]
 labelEdges g es =
-  forM es $ \(i,e) -> do
+  forM es (\(i,e) -> do
     v <- nodeLabel' g i
     return (v,e)
+    )
 
 edgesFrom :: (Ord v) => Graph e v -> v -> STM [(v,e)]
 edgesFrom g v = labelEdges g =<< edgesFrom' g =<< nodeNumber' g v
@@ -245,40 +245,31 @@ shortestPathsByFrom'  :: (Ord b, Num b) =>
   -> IO [( Int, (Path e Int, b))]
 shortestPathsByFrom' g measure source = do
   lg <- atomically $ toList' g
+  return $! runST $ dijkstraST measure lg source
+
+dijkstraST :: (Num b, Ord b) => (e -> b) -> [(Int,[(Int,e)])] -> Int -> ST tt [( Int, (Path e Int, b))]
+dijkstraST measure lg source = do
+  -- highest node index
+  let n = fst $ last lg
   -- neighbour lookup map: v -> [e,v']
   let mg = M.fromList lg
-  return $! runST $ dijkstraST measure mg source
-
-dijkstraST :: (Num b, Ord b) => (e -> b) -> Map Int [(Int, e)] -> Int -> ST s [( Int, (Path e Int, b))]
-dijkstraST measure mg source = do
-  -- Maximal node (id) number
-  let n = maximum $ M.keys mg
-  -- array[v] is mminumum distance from source to node v
-  reached <- MA.newArray (0,n) False :: ST s (STArray s Int Bool)
-  -- array[v] is mminumum distance from source to node v
-  distances <- MA.newArray_ (0,n) :: ST s (STArray s Int b)
-  -- array[v] is the last edge on shortest path from source to v
-  parents   <- MA.newArray_ (0,n) :: ST s (STArray s Int Int)
+  -- array[v] is mminumum distance from source to node v (or Nothing for no path)
+  distances <- MA.newArray (0,n) Nothing :: ST tt (STArray tt Int (Maybe b))
   -- frontier queue
   q <- ref $ FH.insert 0 source $ FH.empty
-  writeArray reached     source True
-  writeArray distances   source 0
   while (not . FH.null # q) $ do
     (dst_v, v, q') <- FH.extractMin # q
     q #= q'
     let maybe_v_w = M.lookup v mg
     case maybe_v_w of
-      Nothing -> pass
+      Nothing -> return ()
       Just vw -> forM_ vw $ \(w,e) -> do
-        isreached <- readArray reached w
-        dst_w   <- readArray distances w
+        maybe_dst_w <- readArray distances w
         let dst_w' = dst_v + measure e
-        if not isreached || dst_w' < dst_w
-        then do
-          q .= FH.insert dst_w' w
-          writeArray distances w dst_w'
-          writeArray parents   w v
-        else pass
+        let pushEdge e w d = (q .= FH.insert d w) >> writeArray distances w (Just d)
+        case maybe_dst_w of
+          Nothing    -> pushEdge e w dst_w'
+          Just dst_w -> if dst_w' < dst_w then pushEdge e w dst_w' else return ()
   return []
 
 main = do
@@ -288,7 +279,6 @@ main = do
   atomically $ insertEdge g "K" "L" 10.5
   print =<< (atomically $ edgesFrom g "K")
   print =<< (atomically $ edgesFromTo g "K" "L")
-  
   print =<< (atomically $ edgesTo g "L")
   atomically $ deleteEdgesBetween g "K" "L"
   putStrLn "deleted"

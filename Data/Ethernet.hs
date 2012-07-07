@@ -29,7 +29,7 @@ data EthernetFrame = EthernetFrame
   } deriving (Eq,Show)
 
 instance Serialize EthernetFrame where
-  put  (EthernetFrame s d t da) = put s >> put d >> put t >> putByteString da
+  put  (EthernetFrame d s t da) = put d >> put s >> put t >> putByteString da
   get = EthernetFrame <$> get <*> get <*> get <*> (getBytes =<< remaining)
 
 

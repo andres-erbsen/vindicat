@@ -18,34 +18,36 @@ import Network.Pcap.SendReceive
 import Crypto.NaCl.Encrypt.PublicKey
 import Crypto.NaCl.Key
 
-initAtlas kp = do
-  let ourDev = mkDevice kp (B.pack "CHANGETHIS")
-  newMVar $ mkAtlas ourDev
-
 ethType =  "0xFFFF"
+ifnames = ["lo"]
+ifmacs = [Mac 0 0 0 0 0 0]
 
 main = do
   kp <- createKeypair
-  atlV <- initAtlas kp
+  atlV <- newMVar . mkAtlas $ mkDevice kp (B.pack "CHANGETHIS")
   -- start pcap interfaces
-  ifaces <- forM ["lo"] $ \ifname -> do
-    -- only one thread allowed per interface handle / pcap_t
+  -- only one thread allowed per interface handle / pcap_t
+  ifaces <- forM ifnames $ \ifname -> do
     iface <- openLive ifname (read ethType) False 0
     setFilter iface ("ether proto " ++ ethType) True 0 -- not threadsafe in C
     return iface
-  srifsV <- newEmptyMVar -- list send-receive interfaces for broadcast
-  let broadcast = broadcastUsing srifsV
-  let receiveCallback = receive kp atlV broadcast
+  -- list of send-receive interfaces for broadcast
+  srifsV <- newEmptyMVar
+  let broadcast = broadcastUsing ifmacs srifsV :: (Serialize a) => a -> IO ()
+  let receiveCallback = receive kp atlV broadcast :: CallbackSRBS
   -- start the send-receive loop!
   putMVar srifsV =<< (sendReceiveLoopBS receiveCallback) `mapM` ifaces
   putStrLn "Started"
   getLine -- wait for other threads
 
-broadcastUsing :: (Serialize a) => MVar [PcapHandleSR] -> a -> IO ()
-broadcastUsing srifsV pkt = do
+broadcastUsing :: (Serialize a) => [Mac] -> MVar [PcapHandleSR] -> a -> IO ()
+broadcastUsing macs srifsV pkt = do
   interfaces <- readMVar srifsV
-  forM_ interfaces $ \iface -> do
-    sendPacketSRBS iface (error "From what mac to send?")
+  forM_ (zip interfaces macs) $ \(iface, mac) -> do
+    sendPacketSRBS iface . encode . EthernetFrame bcast mac (read ethType) $ p
+  where
+  bcast = (Mac 0xff 0xff 0xff 0xff 0xff 0xff)
+  p = encode pkt
 
 receive :: KeyPair -> MVar Atlas -> (Packet -> IO ()) -> CallbackSRBS
 receive kp atlasV broadcast = receivep where
