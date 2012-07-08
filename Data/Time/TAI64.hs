@@ -1,7 +1,7 @@
 module Data.Time.TAI64 (
-    TAI64
-  , TAI64N
-  , TAI64NA
+    TAI64(..)
+  , TAI64N(..)
+  , TAI64NA(..)
   , posixToTAI64
   , posixToTAI64N
   , posixToTAI64NA
