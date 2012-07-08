@@ -187,15 +187,14 @@ instance Serialize Link where
       leftSig  <- mb_leftSig
       rightSig <- mb_rightSig
       let dead = DeadLink `elem` props
-      if (verify linkinfo leftKey leftSig && verify linkinfo rightKey rightSig
-            || dead && verify linkinfo leftKey leftSig) then
-        return link { linkLeftEnd  = left
-                    , linkRightEnd = right
-                    , linkDead     = dead
-                    , linkTime     = unLinkTime <$> find isLinkTime props
-                    , linkToBS     = rawlink
-                    }
-      else fail "Bad signatures"
+      if verify linkinfo leftKey leftSig && (dead || verify linkinfo rightKey rightSig)
+        then return link { linkLeftEnd  = left
+                         , linkRightEnd = right
+                         , linkDead     = dead
+                         , linkTime     = unLinkTime <$> find isLinkTime props
+                         , linkToBS     = rawlink
+                         }
+        else fail "Bad signatures"
 
 {- {{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{ LinkHalf }}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} -}
 
@@ -225,14 +224,14 @@ instance Serialize LinkHalf where
     ret left right props mb_leftSig linkinfo = do
       leftKey  <- deviceFirstKey left
       leftSig  <- mb_leftSig
-      if verify linkinfo leftKey leftSig then
-        return linkhalf { linkHalfLeftEnd  = left
+      if verify linkinfo leftKey leftSig
+        then return linkhalf { linkHalfLeftEnd  = left
                         , linkHalfRightEnd = right
                         , linkHalfProps    = props
                         , linkHalfInfo     = linkinfo
                         , linkHalfSig      = leftSig
                         }
-      else fail "Bad signatures"
+        else fail "Bad signatures"
 
 
 mkLinkHalf :: NaCl.KeyPair -> Device -> Device -> [LinkProperty] -> LinkHalf

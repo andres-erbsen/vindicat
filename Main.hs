@@ -54,13 +54,13 @@ receive kp atlasV broadcast = receivep where
   receivep iface _ rawp = case decode rawp of
     Right etherp -> case decode (etherData etherp) of
       Right packet -> case packet of
-        DevicePack dev -> modifyMVar atlasV remember `andif` broadcast packet
+        BeaconPack dev -> modifyMVar atlasV remember `andif` broadcast packet
           where remember atl = return $ insertDevice dev atl
         LinkPack  link -> modifyMVar atlasV remember `andif` broadcast packet
           where remember atl = return $ insertLink link atl
         LinkReqPack lh -> do
           atl <- readMVar atlasV
-          let other = getDevice atl (linkHalfLeftEnd lh)
+          let other = linkHalfLeftEnd lh
           when (shouldAcceptLink atl lh) $ do
             modifyMVar atlasV remember
             broadcast . LinkPack $ link

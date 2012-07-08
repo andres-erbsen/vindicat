@@ -23,10 +23,6 @@ import Crypto.NaCl.Encrypt.PublicKey
 
 import Vindicat
 
-instance Serialize PublicKey where
-  put = put . unPublicKey
-  get = PublicKey <$> get
-
 instance Serialize PKNonce where
   put = putByteString . toBS
   get = do
@@ -38,7 +34,7 @@ instance Serialize PKNonce where
 
 type TunnelID = Word32
 
-data Packet = DevicePack Device
+data Packet = BeaconPack Device
             | LinkPack Link
             | LinkReqPack LinkHalf
             | FwdPack TunnelID ByteString
@@ -52,7 +48,7 @@ data Packet = DevicePack Device
   deriving (Show, Eq, Ord)
 
 instance Serialize Packet where
-  put (DevicePack device)    = putWord8 0x01 >> put device
+  put (BeaconPack device)    = putWord8 0x01 >> put device
   put (LinkPack link)        = putWord8 0x02 >> put link
   put (LinkReqPack linkhalf) = putWord8 0x03 >> put linkhalf
   put (FwdPack tunnelid bs)  = putWord8 0x04 >> put tunnelid >> putByteString bs
@@ -62,7 +58,7 @@ instance Serialize Packet where
   get = do
     tag <- getWord8
     case tag of
-      0x01 -> DevicePack <$> get
+      0x01 -> BeaconPack <$> get
       0x02 -> LinkPack <$> get
       0x03 -> LinkReqPack <$> get
       0x04 -> FwdPack <$> get <*> (remaining >>= getByteString)

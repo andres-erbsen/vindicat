@@ -42,19 +42,21 @@ insertDevice dev atlas@(Atlas m gr n) = case match of
   keys = deviceKeys dev
   devByKey k = M.lookup k m
 
+headJust :: [Maybe a] -> Maybe a
+headJust = listToMaybe . catMaybes
+
+getDevice :: Atlas -> PubKey -> Maybe Device
+getDevice atlas k = M.lookup k (atlasDevs atlas)
 
 insertLink   :: Link -> Atlas -> (Atlas,Bool)
 insertLink link atlas = (atlas, False) `fromMaybe` do
-  ldev <- M.lookup (linkLeftEnd  link) (atlasDevs atlas)
-  rdev <- M.lookup (linkRightEnd  link) (atlasDevs atlas)
+  ldev <- headJust . map (getDevice atlas) . deviceKeys . linkLeftEnd  $ link
+  rdev <- headJust . map (getDevice atlas) . deviceKeys . linkRightEnd $ link
   let (l,r) = (fromJust $ deviceGraphId ldev, fromJust $ deviceGraphId rdev)
   let gr' = if linkDead link then G.delEdge (l,r)      gr
                              else G.insEdge (l,r,link) gr
   return $ (atlas {atlasGraph = gr'}, True)
   where gr = atlasGraph atlas
-
-getDevice :: Atlas -> PubKey -> Maybe Device
-getDevice atlas k = M.lookup k (atlasDevs atlas)
 
 getPathTo :: Atlas -> PubKey -> [Device]
 getPathTo atlas k = [] `fromMaybe` do

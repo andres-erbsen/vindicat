@@ -24,8 +24,10 @@ executable vindicat
                      , bytestring == 0.9.*
                      , time == 1.4.*
                      , pcap == 0.4.*
-                     , salt == 0.0.*
+                     , salt == 0.*
+                     , derive == 2.5.*
                      , tagged == 0.4.*
                      , fgl == 5.4.*
                      , impermute
+
 
