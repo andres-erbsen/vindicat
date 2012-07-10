@@ -4,12 +4,12 @@ module Vindicat (
   , DeviceProperty(..)
   , Signature(..)
   , Device(..)
+  , Medium(..)
   , LinkProperty(..)
   , Link(..)
-  , LinkHalf(..)
   , mkDevice
   , deviceKeys
-  , mkLinkHalf
+  , mkLinkRq
   , acceptLink
   , naclSign
   , verify
@@ -20,6 +20,7 @@ import Data.DeriveTH
 import Data.List (find,intersect)
 import Data.Maybe
 import Data.Serialize
+import Data.Word
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B
 import Control.Monad
@@ -45,8 +46,14 @@ $(  derive makeIs        ''PubKey )
 
 data Signature = NaClSignature {unNaClSignature :: ByteString} -- sign' -> 64byte
     deriving (Eq, Ord, Show)
-$(  derive makeSerialize ''Signature )
 $(  derive makeIs        ''Signature )
+
+instance Serialize Signature where
+  put (NaClSignature xs) = putWord8 0x01 >> putByteString xs
+  get = getWord8 >>= \tag -> case tag of
+    0x01 -> NaClSignature <$> getBytes 64
+    _    -> fail "unknown constructor"
+  
 
 verify :: ByteString -> PubKey -> Signature -> Bool
 verify msg (NaClKey pk) (NaClSignature sig)
@@ -57,15 +64,21 @@ naclSign :: NaCl.SecretKey -> ByteString -> Signature
 naclSign sk xs = NaClSignature $ NaCl.sign' sk xs
 -- TODO: verify: signature is in first 64 bytes, so we can dropm the following copy of the message
 
-type Acceptance = (PubKey, Signature) -- TODO: implement vouching
 
 {- {{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{ Device }}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} -}
 
 data DeviceProperty = Nick {unNick :: ByteString}
                     | DeviceTime {unDeviceTime :: TAI64}
     deriving (Show, Eq, Ord)
-$(  derive makeSerialize ''DeviceProperty )
 $(  derive makeIs        ''DeviceProperty )
+
+instance Serialize DeviceProperty where
+  put (Nick xs)      = putWord8 0x01 >> putByteString xs
+  put (DeviceTime x) = putWord8 0x02 >> put x
+  get = getWord8 >>= \tag -> case tag of
+    0x01 -> Nick <$> (getBytes =<< remaining) -- ONLY in getWithLength
+    0x02 -> DeviceTime <$> get
+    _ -> fail "unknown constructor"
 
 data Device = Device
   { deviceFirstKey :: Maybe PubKey
@@ -74,14 +87,16 @@ data Device = Device
   , deviceToBS     :: ByteString
   -- local fields (not serialised)
   , deviceGraphId  :: Maybe Int
-  } deriving (Show, Ord)
-device = Device Nothing Nothing Nothing "" Nothing
+  } deriving (Show, Ord,Eq)
+device = Device Nothing Nothing Nothing "\NUL\NUL\NUL" Nothing
 
 deviceKeys :: Device -> [PubKey]
 deviceKeys dev = catMaybes [NaClKey <$> deviceNaClKey dev]
 
-instance Eq Device where -- equivelence, not equality: the same real device
-  a == b = not . null $ deviceKeys a `intersect` deviceKeys b
+-- | Test whether two @Device@s represent the same physical device. Checks
+-- whether a key (the intersection) has signed two devices as its own.
+sameDev :: Device -> Device -> Bool
+a `sameDev` b = not . null $ deviceKeys a `intersect` deviceKeys b
 
 mkDevice :: NaCl.KeyPair -> ByteString -> Device
 mkDevice (pk,sk) nick
@@ -93,11 +108,9 @@ mkDevice (pk,sk) nick
   rawdevice =  runPut $ do
     putByteString deviceinfo
     putNetListOf put [naclSign sk deviceinfo] -- sigs
-    putWord8 0  -- no accepts
   deviceinfo = runPut $ do
-    putWord8 1 >> putWithLength put (NaClKey pk)
-    putWord8 1 >> putWithLength put (Nick nick)
-
+    putNetListOf put [NaClKey pk]
+    putNetListOf put [Nick nick ]
 
 {-
 -- | Device in wire format. Specification as Haskell code. All lists are to be
@@ -106,21 +119,19 @@ data NetDevice = NetDevice
   { netDevPubkeys :: [PubKey]
   , netDevProps   :: [DeviceProperty]
   , netDevSig     :: [Signature]
-  , netDevAccepts :: [Acceptance]
   }
 -}
 
 instance Serialize Device where
   put = putByteString . deviceToBS
   get = do
-    totalbytes <- remaining
-    rawdevice  <- lookAhead $ getBytes totalbytes -- original signed Device
-    keys    <- getNetListOf get
-    props   <- getNetListOf get
-    sigsbytes  <- remaining -- end of device info, start of verification info
-    sigs    <- getNetListOf get
-    accepts <- getNetListOf get :: Get [Acceptance]
-    let deviceinfo = B.take (totalbytes - sigsbytes) rawdevice -- shva :P
+    ((keys,props,sigs,deviceinfo),rawdevice) <- getWithRaw $ do
+      ((keys,props),deviceinfo) <- getWithRaw $ do
+        keys    <- getNetListOf get
+        props   <- getNetListOf get
+        return (keys,props)
+      sigs    <- getNetListOf get
+      return (keys,props,sigs,deviceinfo)
     -- the keys for which a valid signature on this device was found
     let okKeys = map fst . filter (uncurry $ verify deviceinfo) $ zip keys sigs
     -- for each field take first item of the right type
@@ -137,20 +148,52 @@ instance Serialize Device where
     
 {- {{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{ Link }}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} -}
 
+data Medium = Wifi | Cable | Optical | Pigeon
+    deriving (Eq, Ord, Show)
+$(  derive makeSerialize ''Medium )
+$(  derive makeIs        ''Medium )
+
 data LinkProperty = DeadLink
-                  | LinkTime {unLinkTime :: TAI64}
-                  deriving (Eq, Ord, Show)
+                  | LinkTime   {unLinkTime   :: TAI64}
+                  | LinkIfaceL {unLinkIfaceL :: Word8}
+                  | LinkIfaceR {unLinkIfaceR :: Word8}
+                  | LinkMedium {unLinkMedium :: Medium}
+    deriving (Eq, Ord, Show)
 $(  derive makeSerialize ''LinkProperty )
 $(  derive makeIs        ''LinkProperty )
 
 data Link = Link -- TODO: add efficency measures
-  { linkLeftEnd  :: Device
-  , linkRightEnd :: Device
-  , linkDead     :: Bool
-  , linkTime     :: Maybe TAI64
-  , linkToBS     :: ByteString
+  { linkToBS      :: ByteString
+  , linkRequestBS :: Maybe ByteString
+  , linkLeftEnd   :: Device
+  , linkRightEnd  :: Device
+  , linkIsKnown   :: Bool
+  , linkDead      :: Bool
+  , linkTime      :: Maybe TAI64
+  , linkMedium    :: Maybe Medium
+  , linkIfaceL    :: Maybe Word8
+  , linkIfaceR    :: Maybe Word8
   } deriving (Eq, Ord, Show)
-link = Link device device True (Just $ TAI64 0x0) ""
+link = Link "lXl" Nothing device device False False Nothing Nothing Nothing Nothing
+
+-- | Test whether two @Link@s represent the same physical link. Checks
+-- whether there are no conflicting properties (connection type, interface)
+-- but ignores differences in efficency measures and timestamps.
+sameLink :: Link -> Link -> Bool
+a `sameLink` b = idents a == idents b where
+  idents x = (linkLeftEnd x, linkRightEnd x, linkMedium x, 
+              linkIfaceL x, linkIfaceR x)
+
+setLinkProperty :: LinkProperty -> Link -> Link
+setLinkProperty p l = case p of
+  DeadLink     -> l {linkDead   = True}
+  LinkTime   x -> l {linkTime   = Just x}
+  LinkIfaceL x -> l {linkIfaceL = Just x}
+  LinkIfaceR x -> l {linkIfaceR = Just x}
+  LinkMedium x -> l {linkMedium = Just x}
+
+setLinkProps :: Link -> [LinkProperty] -> Link
+setLinkProps l = (foldr setLinkProperty) l . reverse
 
 {-
 -- | Link in wire format. Specification as Haskell code. All lists are to be
@@ -159,89 +202,59 @@ newtype NetLink = NetLink
    { netLinkLeftDev  :: Device 
    , netLinkRightDev :: Device 
    , netLinkProps    :: [LinkProperty]
-   , netLinkLeftSig  :: Signature -- with first  devices first key
-   , netLinkRightSig :: Signature -- with second devices first key
-   , netLinkAccepts  :: [Acceptance]
+   , netLinkLeftSigs  :: [Signature]
+   , netLinkRightSigs  :: [Signature]
    }
 -}
 
 instance Serialize Link where
   put = putByteString . linkToBS
   get = do
-    totalbytes <- remaining
-    rawlink  <- lookAhead $ getBytes totalbytes -- original signed Link
-    (left,right) <- getTwoOf get get       :: Get (Device, Device)
-    props        <- getNetListOf get       :: Get [LinkProperty]
-    sigsbytes  <- remaining -- end of device info, start of verification info
-    mb_leftSig   <- getWithLength get      :: Get (Maybe Signature)
-    mb_rightSig  <- getWithLength get      :: Get (Maybe Signature)
-    accepts            <- getNetListOf get :: Get [Acceptance]
-    let linkinfo = B.take (totalbytes - sigsbytes) rawlink -- the signed part
-    case ret left right props mb_leftSig mb_rightSig accepts linkinfo rawlink of
-      Just l -> return l
-      Nothing -> fail "Bad signatures"
+    ((left,right,n,props,leftsigs,rightsigs,linkinfo),rawlink) <- getWithRaw $ do
+      ((left,right,n,props),linkinfo) <- getWithRaw $ do
+        (left,right) <- getTwoOf get get :: Get (Device, Device)
+        n <- lookAhead $ getWord8
+        props <- getNetListOf get :: Get [LinkProperty]
+        return (left,right,n,props)
+      leftsigs <- getNetListOf get :: Get [Signature]
+      rightsigs <- getNetListOf get :: Get [Signature]
+      return (left,right,n,props,leftsigs,rightsigs,linkinfo)
+    let mb_leftSig  = listToMaybe leftsigs
+    let mb_rightSig = listToMaybe rightsigs
+    -- Did we understand all the properties? Won't sign ath otherwise.
+    let isknown = length props == fromIntegral n
+    -- Is this a link request?
+    let isrq = not . isJust $ mb_rightSig
+    -- Either side can drop a link without the others permission
+    let dead = DeadLink `elem` props
+    let ret = link { linkToBS      = rawlink
+                   , linkLeftEnd   = left
+                   , linkRightEnd  = right
+                   , linkRequestBS = if isrq then Just linkinfo else Nothing
+                   , linkIsKnown   = isknown
+                   } `setLinkProps` props -- first over last
+    let check = verifymb linkinfo
+    if check left mb_leftSig && (dead || isrq || check right mb_rightSig)
+      then return ret
+      else fail "not signed enough"
     where
-    ret left right props mb_leftSig mb_rightSig accepts linkinfo rawlink = do
-      leftKey  <- deviceFirstKey left
-      rightKey <- deviceFirstKey right
-      leftSig  <- mb_leftSig
-      rightSig <- mb_rightSig
-      let dead = DeadLink `elem` props
-      if verify linkinfo leftKey leftSig && (dead || verify linkinfo rightKey rightSig)
-        then return link { linkLeftEnd  = left
-                         , linkRightEnd = right
-                         , linkDead     = dead
-                         , linkTime     = unLinkTime <$> find isLinkTime props
-                         , linkToBS     = rawlink
-                         }
-        else fail "Bad signatures"
+    verifymb linkinfo dev mb_sig = False `fromMaybe` do
+      key <- deviceFirstKey dev
+      sig  <- mb_sig
+      return $ verify linkinfo key sig
 
-{- {{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{ LinkHalf }}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} -}
-
-data LinkHalf = LinkHalf
-  { linkHalfLeftEnd  :: Device
-  , linkHalfRightEnd :: Device
-  , linkHalfProps    :: [LinkProperty]
-  , linkHalfInfo     :: ByteString
-  , linkHalfSig      :: Signature
-  } deriving (Eq, Ord, Show)
-linkhalf = LinkHalf device device [] "" (NaClSignature "")
-
-instance Serialize LinkHalf where
-  put lh = putByteString (linkHalfInfo lh) >> putWithLength put (linkHalfSig lh)
-  get = do
-    totalbytes <- remaining
-    rawlink  <- lookAhead $ getBytes totalbytes -- original signed Link
-    (left,right) <- getTwoOf get get       :: Get (Device, Device)
-    props        <- getNetListOf get       :: Get [LinkProperty]
-    sigsbytes  <- remaining -- end of device info, start of verification info
-    mb_leftSig   <- getWithLength get      :: Get (Maybe Signature)
-    let linkinfo = B.take (totalbytes - sigsbytes) rawlink -- the signed part
-    case ret left right props mb_leftSig linkinfo of
-      Just l -> return l
-      Nothing -> fail "Bad signatures"
-    where
-    ret left right props mb_leftSig linkinfo = do
-      leftKey  <- deviceFirstKey left
-      leftSig  <- mb_leftSig
-      if verify linkinfo leftKey leftSig
-        then return linkhalf { linkHalfLeftEnd  = left
-                        , linkHalfRightEnd = right
-                        , linkHalfProps    = props
-                        , linkHalfInfo     = linkinfo
-                        , linkHalfSig      = leftSig
-                        }
-        else fail "Bad signatures"
-
-
-mkLinkHalf :: NaCl.KeyPair -> Device -> Device -> [LinkProperty] -> LinkHalf
-mkLinkHalf (pk,sk) left right props
- = linkhalf { linkHalfLeftEnd  = left
-            , linkHalfRightEnd = right
-            , linkHalfProps    = props
-            , linkHalfInfo     = linkinfo
-            , linkHalfSig      = sig
-            } where
+mkLinkRq :: NaCl.KeyPair -> Device -> Device -> [LinkProperty] -> Link
+mkLinkRq (_,sk) left right props = link
+  { linkToBS      = rawlink
+  , linkLeftEnd   = left
+  , linkRightEnd  = right
+  , linkRequestBS = Just linkinfo
+  , linkIsKnown   = True
+  } `setLinkProps` props  where
+  rawlink = runPut $ do
+    putByteString linkinfo
+    putNetListOf put [sig]
+    putNetListOf put ([] :: [Signature])
   sig = naclSign sk linkinfo
   linkinfo = runPut $ do
     put left
@@ -249,19 +262,14 @@ mkLinkHalf (pk,sk) left right props
     putWord8 . fromIntegral . length $ props
     mapM_ (putWithLength put) props
 
-acceptLink :: NaCl.KeyPair -> LinkHalf -> Link
-acceptLink (pk,sk) lh
- = link { linkLeftEnd  = linkHalfLeftEnd  lh
-        , linkRightEnd = linkHalfRightEnd lh
-        , linkDead     = DeadLink `elem` props
-        , linkTime     = unLinkTime <$> find isLinkTime props
-        , linkToBS     = rawlink
-        } where
-  props = linkHalfProps lh
-  rawlink = runPut $ do 
-    putByteString linkinfo
-    putWithLength put $ linkHalfSig lh
-    putWithLength put $ naclSign sk linkinfo
-    putWord8 0 -- no accepts
-  linkinfo = linkHalfInfo lh
 
+acceptLink :: NaCl.KeyPair -> Link -> Link
+acceptLink (_,sk) link = link
+  { linkToBS      = rawlink
+  , linkRequestBS = Nothing
+  } where
+  -- drop the null list placeholder, add signature
+  rawlink = runPut $ do
+    putByteString . B.init . linkToBS $ link
+    putNetListOf put [sig]
+  sig = naclSign sk . fromJust . linkRequestBS $ link

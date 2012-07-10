@@ -33,6 +33,7 @@ $( derive makeArbitrary ''Mac )
 $( derive makeArbitrary ''EthernetFrame )
 $( derive makeArbitrary ''PubKey )
 $( derive makeArbitrary ''DeviceProperty )
+$( derive makeArbitrary ''Medium )
 $( derive makeArbitrary ''LinkProperty )
 $( derive makeArbitrary ''TAI64 )
 
@@ -53,26 +54,26 @@ k_prop_sign_verify_nacl (pk,sk) msg
 k_prop_sign_verify_bogus_nacl (pk,_) sig msg = False == (verify msg (NaClKey pk) sig)
 
 k_prop_serialize_device :: KeyPair -> ByteString -> Bool
-k_prop_serialize_device kp nick = (Right dev) == ((decode . encode) dev)
+k_prop_serialize_device kp nick = (Right dev) == (decode . encode $ dev)
     where
     dev = mkDevice kp nick
 
-k_prop_serialize_linkhalf :: KeyPair -> [LinkProperty] -> ByteString -> Bool
-k_prop_serialize_linkhalf kp props nick = Right lh == (decode . encode) lh
-    where lh = mkLinkHalf kp dev dev props
+k_prop_serialize_linkrq :: KeyPair -> [LinkProperty] -> ByteString -> Bool
+k_prop_serialize_linkrq kp props nick = Right lrq == (decode . encode) lrq
+    where lrq = mkLinkRq kp dev dev props
           dev = mkDevice kp nick
 
 kk_prop_serialize_link kp1 kp2 nick1 nick2 props = Right l ==(decode . encode) l
     where
     l = acceptLink kp2 lh
-    lh = mkLinkHalf kp1 dev1 dev2 props
+    lh = mkLinkRq kp1 dev1 dev2 props
     dev1 = mkDevice kp1 nick1
     dev2 = mkDevice kp2 nick2
 
 prop_sign_verify_nacl       = k_prop_sign_verify_nacl       (unsafePerformIO createKeypair)
 prop_sign_verify_bogus_nacl = k_prop_sign_verify_bogus_nacl (unsafePerformIO createKeypair)
 prop_serialize_device       = k_prop_serialize_device       (unsafePerformIO createKeypair)
-prop_serialize_linkhalf     = k_prop_serialize_linkhalf     (unsafePerformIO createKeypair)
+prop_serialize_linkrq       = k_prop_serialize_linkrq       (unsafePerformIO createKeypair)
 prop_serialize_link         = kk_prop_serialize_link        (unsafePerformIO createKeypair) (unsafePerformIO createKeypair)
 
 main = $( quickCheckAll )

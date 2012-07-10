@@ -3,10 +3,12 @@ module SafeSerialize (
   , getWithLength
   , putNetListOf
   , getNetListOf
+  , getWithRaw
 ) where
 
 import Data.Serialize
 import Data.Serialize.Put (Putter)
+import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString as B
 
 import qualified Crypto.NaCl.Key               as NaCl
@@ -42,3 +44,13 @@ getNetListOf m = go [] =<< getWord8
     case m_x of
       Just x  -> x `seq` go (x:xs) (pred i)
       Nothing ->         go (  xs) (pred i) -- this element is unknown to us
+
+getWithRaw :: Get a -> Get (a,ByteString)
+getWithRaw m = do
+  start <- remaining
+  (got,end) <- lookAhead $ do
+    got <- m
+    end <- remaining
+    return (got,end)
+  raw <- getBytes (start - end)
+  return (got, raw)

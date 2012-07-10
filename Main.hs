@@ -51,26 +51,23 @@ broadcastUsing macs srifsV pkt = do
 
 receive :: KeyPair -> MVar Atlas -> (Packet -> IO ()) -> CallbackSRBS
 receive kp atlasV broadcast = receivep where
-  receivep iface _ rawp = case decode rawp of
-    Right etherp -> case decode (etherData etherp) of
-      Right packet -> case packet of
-        BeaconPack dev -> modifyMVar atlasV remember `andif` broadcast packet
-          where remember atl = return $ insertDevice dev atl
-        LinkPack  link -> modifyMVar atlasV remember `andif` broadcast packet
-          where remember atl = return $ insertLink link atl
-        LinkReqPack lh -> do
-          atl <- readMVar atlasV
-          let other = linkHalfLeftEnd lh
-          when (shouldAcceptLink atl lh) $ do
-            modifyMVar atlasV remember
-            broadcast . LinkPack $ link
-            where
-            remember atl = return $ insertLink link atl
-            link = acceptLink kp lh  
-        FwdPack tid bs -> return ()
-        DataPacket  da -> putStrLn $ "> " ++ show da
-        carbage -> print carbage
-      carbage -> print carbage
-    carbage -> print carbage
+ receivep iface _ rawp = case decode rawp >>= liftM etherData >>= decode of
+  Right packet -> case packet of
+    BeaconPack dev -> return ()
+    LinkPack  link -> modifyMVar atlasV remember `andif` broadcast packet
+      where remember atl = return $ insertLink link atl
+    LinkReqPack lh -> do
+      atl <- readMVar atlasV
+      let other = linkHalfLeftEnd lh
+      when (shouldAcceptLink atl lh) $ do
+        modifyMVar atlasV remember
+        broadcast . LinkPack $ link
+        where
+        remember atl = return $ insertLink link atl
+        link = acceptLink kp lh  
+    FwdPack tid bs -> return ()
+    DataPacket  da -> putStrLn $ "> " ++ show da
+    unknownpacket -> print unknownpacket
+  carbage -> print carbage
 
 shouldAcceptLink atl lh = False
