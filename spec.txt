@@ -1,5 +1,0 @@
-NetList: word8 n items | [word16 length | put item]
-
-NetLink:      Device Device (NetList LinkProp) (Maybe Signature) (Maybe Signature) (Maybe (NetList Acceptance))
-NetDevice: (NetList PubKey) (NetList LinkProp) Signature           (NetList Acceptance)
-
