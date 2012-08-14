@@ -53,8 +53,8 @@ If `B` accepts `A`'s tunnel through him, he should forward the additional
 packet to to `C`. If `B` refuses to route `A`'s packets
 (maybe because he does not know a route to `C`), he should send a
 authenticated statement of that back to `A` and is encouraged to include
-the reason. This way, a route can be encoded as
-a list of encrypted tunnel requests, negotiating packets to be forwarded
+the reason. This way, a route can be encoded as a list of encrypted tunnel
+requests, negotiating packets to be forwarded
 without giving away the the source or destination to arbitrary eavesdroppers.
 The first packet of a session can be piggypacked on the tunnel request.
 Adversaries who can inject packets cannot make `A` drop its tunnels if
