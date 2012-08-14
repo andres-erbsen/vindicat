@@ -8,6 +8,9 @@ module Data.Time.TAI64 (
   , getCurrentTAI64
   , getCurrentTAI64N
   , getCurrentTAI64NA
+  , tAI64ToPosix
+  , tAI64NToPosix
+  , tAI64NAToPosix
 ) where
 
 import Data.Serialize

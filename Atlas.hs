@@ -8,6 +8,7 @@ module Atlas (
 ) where
 
 import Data.Maybe
+import Control.Applicative
 import Data.List
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -22,13 +23,14 @@ data Atlas = Atlas
   { atlasDevs  :: Map PubKey Device
   , atlasGraph :: Gr Device Link
   , nextNode   :: Int
+  , ourDev     :: Device
   }
 
-mkAtlas ourDev = Atlas M.empty (G.insNode (0,ourDev) G.empty) 1
+mkAtlas ourDev = Atlas M.empty (G.insNode (0,ourDev) G.empty) 1 ourDev
 
 insertDevice :: Device -> Atlas -> (Atlas,Bool)
-insertDevice dev atl@(Atlas m gr n) = case match of
-  Nothing -> (Atlas m' gr' n', True) -- this device is not in our graph yet
+insertDevice dev atl@(Atlas m gr n od) = case match of
+  Nothing -> (Atlas m' gr' n' od, True) -- this device is not in our graph yet
     where
     m' = foldr (\k -> M.insert k dev') m newkeys
     gr' = G.insNode (n, dev') gr
@@ -37,26 +39,32 @@ insertDevice dev atl@(Atlas m gr n) = case match of
   (Just old_dev) -> (atl, False) -- TODO: update info
   where
   match = find isJust $ map devByKey keys
+  devByKey k = M.lookup k m
   newkeys = filter (isNothing . devByKey) keys
   keys = deviceKeys dev
-  devByKey k = M.lookup k m
 
-headJust :: [Maybe a] -> Maybe a
-headJust = listToMaybe . catMaybes
 
 getDevice :: Atlas -> PubKey -> Maybe Device
 getDevice atl k = M.lookup k (atlasDevs atl)
 
-insertLink   :: Link -> Atlas -> (Atlas,Bool)
-insertLink link atl = (atl, False) `fromMaybe` do
-  ldev <- headJust . map (getDevice atl) . deviceKeys . linkLeftEnd  $ link
-  rdev <- headJust . map (getDevice atl) . deviceKeys . linkRightEnd $ link
-  l <- deviceGraphId ldev
-  r <- deviceGraphId rdev
-  let gr' = if linkDead link then G.delEdge (l,r)      gr
-                             else G.insEdge (l,r,link) gr
-  return $ (atl {atlasGraph = gr'}, True)
-  where gr = atlasGraph atl
+insertLink :: Link -> Atlas -> (Atlas,Bool)
+insertLink link atl
+ = if (haveleft || haveright) && (not haveleft || not haveright || dead)
+     then if dead
+       then (atl {atlasGraph = G.delEdge (l,r)      gr}, True)
+       else (atl {atlasGraph = G.insEdge (l,r,link) gr}, True)
+     else (atl,False)
+  where
+  dead = linkDead link
+  haveleft  = not . null $ leftdevs
+  haveright = not . null $ rightdevs
+  l = fromJust <$> deviceGraphId $ head leftdevs
+  r = fromJust <$> deviceGraphId $ head rightdevs
+  leftdevs  = catMaybes . map (getDevice atl) $ leftKeys 
+  rightdevs = catMaybes . map (getDevice atl) $ leftKeys 
+  leftKeys  = deviceKeys . linkLeftEnd   $ link
+  rightKeys = deviceKeys . linkRightEnd  $ link
+  gr = atlasGraph atl
 
 getPathTo :: Atlas -> PubKey -> [Device]
 getPathTo atl k = [] `fromMaybe` do

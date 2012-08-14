@@ -16,12 +16,15 @@ import Data.Word
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Data.Tagged(Tagged,untag)
+import Data.DeriveTH
 
 import Crypto.NaCl.Key
 import Crypto.NaCl.Nonce
 import Crypto.NaCl.Encrypt.PublicKey
 
 import Vindicat
+
+$( derive makeSerialize ''PublicKey )
 
 instance Serialize PKNonce where
   put = putByteString . toBS
@@ -34,9 +37,9 @@ instance Serialize PKNonce where
 
 type TunnelID = Word32
 
-data Packet = BeaconPack Device
+data Packet = DevicePack Device
             | LinkPack Link
-            | LinkReqPack Link
+            | LinkReqPack LinkHalf
             | FwdPack TunnelID ByteString
             | DataPacket ByteString
             -- UnknownPacket
@@ -48,7 +51,7 @@ data Packet = BeaconPack Device
   deriving (Show, Eq, Ord)
 
 instance Serialize Packet where
-  put (BeaconPack device)    = putWord8 0x01 >> put device
+  put (DevicePack device)    = putWord8 0x01 >> put device
   put (LinkPack link)        = putWord8 0x02 >> put link
   put (LinkReqPack linkhalf) = putWord8 0x03 >> put linkhalf
   put (FwdPack tunnelid bs)  = putWord8 0x04 >> put tunnelid >> putByteString bs
@@ -58,7 +61,7 @@ instance Serialize Packet where
   get = do
     tag <- getWord8
     case tag of
-      0x01 -> BeaconPack <$> get
+      0x01 -> DevicePack <$> get
       0x02 -> LinkPack <$> get
       0x03 -> LinkReqPack <$> get
       0x04 -> FwdPack <$> get <*> (remaining >>= getByteString)

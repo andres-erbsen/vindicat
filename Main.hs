@@ -9,8 +9,10 @@ import Control.Loop
 import Control.Concurrent
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
-import Network.Pcap
+import Data.Time.Clock.POSIX
+import Network.Pcap hiding (Link)
 
+import Data.Time.TAI64
 import Message
 import Vindicat
 import Atlas
@@ -24,7 +26,7 @@ ifmacs = [Mac 0 0 0 0 0 0]
 
 main = do
   kp <- createKeypair
-  atlV <- newMVar . mkAtlas $ mkDevice kp (B.pack "CHANGETHIS")
+  atlV <- newMVar . mkAtlas $ mkDevice kp (B.pack "nick me") :: IO (MVar Atlas)
   -- start pcap interfaces
   -- only one thread allowed per interface handle / pcap_t
   ifaces <- forM ifnames $ \ifname -> do
@@ -49,25 +51,43 @@ broadcastUsing macs srifsV pkt = do
   bcast = (Mac 0xff 0xff 0xff 0xff 0xff 0xff)
   p = encode pkt
 
+sendLocalToUsing :: Serialize a => MVar Atlas -> Device -> a -> IO ()
+sendLocalToUsing atlasV dev pkt = 
+
 receive :: KeyPair -> MVar Atlas -> (Packet -> IO ()) -> CallbackSRBS
 receive kp atlasV broadcast = receivep where
- receivep iface _ rawp = case decode rawp >>= liftM etherData >>= decode of
-  Right packet -> case packet of
-    BeaconPack dev -> return ()
-    LinkPack  link -> modifyMVar atlasV remember `andif` broadcast packet
-      where remember atl = return $ insertLink link atl
-    LinkReqPack lh -> do
-      atl <- readMVar atlasV
-      let other = linkHalfLeftEnd lh
-      when (shouldAcceptLink atl lh) $ do
-        modifyMVar atlasV remember
-        broadcast . LinkPack $ link
-        where
-        remember atl = return $ insertLink link atl
-        link = acceptLink kp lh  
-    FwdPack tid bs -> return ()
-    DataPacket  da -> putStrLn $ "> " ++ show da
-    unknownpacket -> print unknownpacket
-  carbage -> print carbage
+  receivep iface _ rawp = case decode rawp of
+    Right (EthernetFrame dest src _ dat) -> case decode dat of
+      Right packet -> case packet of
+        LinkPack link -> modifyMVar atlasV remember `andif` broadcast packet
+          where remember atl = return $ insertLink link atl
+        LinkReqPack lrq -> do
+          atl <- takeMVar atlasV
+          accept_rq <- shouldAcceptLink atl lrq
+          if accept_rq
+            then do
+              let link = acceptLink kp lrq 
+                { linkHandle   = Just iface
+                , linkOurMac   = Just dest
+                , linkOtherMac = Just src
+                }
+              broadcast . LinkPack $ link
+              putMVar atlasV $ fst $ insertLink link atl
+            else putMVar atlasV atl
+        unknownpacket -> print unknownpacket
+      carbage -> print carbage
+    carbage -> print carbage
 
-shouldAcceptLink atl lh = False
+shouldAcceptLink :: Atlas -> Link -> IO Bool
+shouldAcceptLink atl lrq = do
+  if linkRightEnd lrq `sameDev` ourDev atl
+       && linkIsKnown lrq
+       && not (linkDead lrq)
+       && linkMedium lrq  == Nothing
+       && linkIfaceR  lrq == Nothing
+    then case linkTime lrq of
+      Nothing -> return False
+      Just linkTime -> do
+        actualTime <- getPOSIXTime
+        return $! abs (actualTime - tAI64ToPosix linkTime) < 30
+    else return False

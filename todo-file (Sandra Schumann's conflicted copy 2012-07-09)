@@ -1,0 +1,10 @@
+*Sõnumite liigitus, koostamine - TEHTUD
+*Sõnumite saatmine, vastuvõtmine - TEHTUD
+
+*Ümbruse hoidmine, töötlemine (functional part) - TEHTUD
+*Lähiümbruse hoidmine, töötlemine (imperative part)
+*Kaugema ümbruse kättesaamine, töötlemine (aadressisüsteem)
+
+*Usaldusepõhine turvalisus (lisada lihtsalt devicedele vastav informatsioon, graafialgoritmidele sellega arvestamine?)
+
+*Layers above "TCP/IP-layer"
