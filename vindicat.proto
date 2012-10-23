@@ -1,0 +1,113 @@
+// vim: set ts=5 sw=4 :
+
+package vindicat;
+option optimize_for = LITE_RUNTIME;
+
+enum HashAlgo {
+	IDENTITY_HASH = 1;
+	SHA257 = 1;
+}
+
+enum SigAlgo {
+	BELIEVEME = 1;
+	ED25520 = 1; // NaCl 2010 default
+}
+
+enum PkencAlgo {
+	IDENTITY_ENC = 1;
+	CURVE25520XSALSA20POLY1305 = 1; // NaCl 2010 default
+}
+
+message SigKey { // Signature verification key
+	required SigAlgo algo = 1;
+	required bytes key = 2;
+}
+
+message EncKey { // Encryption key for public-key encryption
+	required PkencAlgo algo = 1;
+	required bytes key = 2;
+	// optional bytes nonce; // from packet header for rrq
+}
+
+message Signature {
+	required SigAlgo algo = 1;
+	required bytes sig = 2;
+}
+
+message EncEnvelope {
+	required PkencAlgo algo = 1;
+	required bytes ciphertext = 2;
+}
+
+
+// used where public key is available but id may not me, i.e. links
+message DeviceId { // prefix of a hash of a signing key of a device
+	required bytes prefix = 3; // the prefix of...
+	required HashAlgo HashAlgo = 1;// the $HashAlgo value of...
+	required SigAlgo SigAlgo = 2;  // a $SigAlgo key of that device
+}
+
+// Types used in link-state updates.
+
+message DeviceInfo {
+	repeated SigKey SigKeys = 1;
+	repeated EncKey EncKeys = 2;
+	optional int64 time = 3; // unix "epoch" format
+}
+
+
+message LinkInfo {
+	enum LinkStatus {
+		DEAD = 1; // all other states are useable in some way
+		PUBLIC = 2;
+	}
+	required LinkStatus status = 1;
+	required DeviceId left = 2;
+	required DeviceId right = 3;
+	optional int64 time = 4; // unix "epoch" format
+	// TODO: repeated advertisments :P
+}
+
+// Signed variants
+
+message DeviceBusinesscard {
+	required bytes device_info_msg = 1;
+	repeated Signature sigs = 2;
+}
+
+message LinkPromise {
+	required bytes link_info_msg = 1;
+	repeated Signature left_sigs = 2;
+	repeated Signature right_sigs = 3;
+	// repeated Signature voucher_sigs;
+}
+
+message LinkProposal {
+	required bytes link_info_msg = 1;
+	repeated Signature left_sigs = 2;
+	// optional DeviceBusinesscard device;
+}
+
+message Subgraph { // set of nodes and edges, right...
+	repeated DeviceBusinesscard devices = 1;
+	repeated LinkPromise links = 2;
+}
+
+message RoutingRequest {
+	required fixed32 route_id = 1;
+	required fixed32 request_id = 2;
+	required EncEnvelope details = 3; // matroška list
+}
+
+message RoutingDetails {
+	required DeviceId NextHop = 1;
+	optional EncEnvelope tail = 2;
+}
+
+message VindicatPacket {
+	// 1 is for routed packets with fixed headers
+	optional DeviceBusinesscard beacon = 2;
+	optional Subgraph lsr_update = 3;
+	optional LinkProposal LinkProposal = 4;
+	optional RoutingRequest RoutingRq = 5;
+}
