@@ -1,7 +1,10 @@
 #!/bin/sh
 
-mkdir lib/libev || :
+mkdir -p lib/libev || :
 cd lib/libev
-rm *.h
-wget https://raw.github.com/brimworks/libev/master/ev.h
-wget https://raw.github.com/brimworks/libev/master/ev++.h
+
+for file in ev.h ev.c ev++.h ev_vars.h ev_wrap.h ev_select.c ev_poll.c ev_epoll.c;
+do
+	rm "$file" | :
+	wget "https://raw.github.com/brimworks/libev/master/$file"
+done

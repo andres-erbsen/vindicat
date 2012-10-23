@@ -1,7 +1,12 @@
 #!/bin/sh
 
-( cd libsocket && git pull ) || git clone git://github.com/dermesser/libsocket.git
-rm -rf lib/libsocket/*
-cp -t lib/libsocket libsocket/headers/socket.hpp libsocket/headers/libinetsocket.h libsocket/headers/exception.hpp libsocket/headers/inetbase.hpp libsocket/headers/inetdgram.hpp libsocket/headers/inetclientdgram.hpp libsocket/headers/dgramclient.hpp libsocket/headers/inetserverdgram.hpp
-cp -t lib/libsocket libsocket/C++/socket.cpp libsocket/C/libinetsocket.c libsocket/C++/exception.cpp libsocket/C++/inetbase.cpp libsocket/C++/inetdgram.cpp libsocket/C++/inetclientdgram.cpp libsocket/C++/dgramclient.cpp libsocket/C++/inetserverdgram.cpp
-sed "s:../headers/::g" -i lib/libsocket/*.cpp
+mkdir -p lib/libsocket || :
+cd lib/libsocket
+rm *.1 || :
+for file in headers/socket.hpp headers/libinetsocket.h headers/exception.hpp headers/inetbase.hpp headers/inetdgram.hpp headers/inetclientdgram.hpp headers/dgramclient.hpp headers/inetserverdgram.hpp C++/socket.cpp C/libinetsocket.c C++/exception.cpp C++/inetbase.cpp C++/inetdgram.cpp C++/inetclientdgram.cpp C++/dgramclient.cpp C++/inetserverdgram.cpp;
+do
+	rm "$file" || :
+	wget "https://raw.github.com/dermesser/libsocket/master/$file"
+done
+
+sed "s:../headers/::g" -i *.cpp
