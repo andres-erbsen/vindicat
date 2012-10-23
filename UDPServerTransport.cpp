@@ -52,6 +52,14 @@ void UDPServerTransport::incoming() {
 void UDPServerTransport::enable() {
 	_sock = new libsocket::inet_dgram_server(_host,_port,BOTH,SOCK_NONBLOCK);
 	// setup libev for this transport here with the incoming() from above
+    _read_watcher.set <UDPServerTransport, &UDPServerTransport::read_cb> (this);
+	_read_watcher.start (_sock->getfd(), ev::READ);
+}
+
+void UDPServerTransport::read_cb(ev::io &w, int revents) {
+	// Callback for libev loop
+	// Calls incoming()
+	UDPServerTransport::incoming();
 }
 
 void UDPServerTransport::broadcast(const std::string& buf) {

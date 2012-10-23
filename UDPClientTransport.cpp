@@ -5,7 +5,9 @@ UDPClientSocket(packet_callback handler, std::string host, std::string port)
 	: _sock(host,port,get_address_family(host.c_str()),SOCK_NONBLOCK)
 	, _handler(handler)
 	{
-	// setup libev for this socket here
+	// Setup libev for this socket
+	_read_watcher.set <UDPClientSocket, &UDPClientSocket::read_cb> (this);
+	_read_watcher.start (_sock.getfd(), ev::READ);
 }
 
 void UDPClientSocket::send(const std::string& buf) {
@@ -21,11 +23,19 @@ void UDPClientSocket::useless() {
 	_handler(this,std::string(""));
 }
 
+void UDPClientSocket::read_cb(ev::io &w, int revents) {
+	// Callback for libev loop
+	// Reads data and gives it to handler
+	std::string data_from_sock;
+	_sock >> data_from_sock;
+	_handler(this, data_from_sock);
+}
+
 
 
 
 UDPClientTransport::
-UDPClientTransport(std::string host, std::string port)
+UDPClientTransport(std::string host, std::string port = std::string("30307"))
 	: _host(host)
 	, _port(port)
 	{}
