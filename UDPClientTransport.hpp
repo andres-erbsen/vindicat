@@ -22,7 +22,7 @@ private:
 
 class UDPClientTransport : public Transport {
 public:
-	UDPClientTransport(std::string, std::string);
+	UDPClientTransport(std::string host, std::string port = std::string("30307"));
 	void onPacket(packet_callback);
 	void enable();
 	void broadcast(const std::string&);

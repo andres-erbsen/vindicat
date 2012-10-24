@@ -22,8 +22,8 @@ void UDPServerSocket::useless() {
 
 
 UDPServerTransport::
-UDPServerTransport(std::string host = std::string("localhost")
-		  ,std::string port = std::string("30307"))
+UDPServerTransport(std::string host
+		  ,std::string port)
 	: _host(host)
 	, _port(port)
 	{}

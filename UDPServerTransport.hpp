@@ -24,7 +24,7 @@ private:
 class UDPServerTransport : public Transport {
 public:
 	friend class UDPServerSocket;
-	UDPServerTransport(std::string, std::string);
+	UDPServerTransport(std::string host = std::string("localhost"), std::string port = std::string("30307"));
 	void onPacket(packet_callback);
 	void enable();
 	void broadcast(const std::string&);
