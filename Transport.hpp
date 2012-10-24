@@ -1,3 +1,6 @@
+#ifndef TRANSPORT_HPP
+#define TRANSPORT_HPP
+
 #include <functional>
 #include <string>
 
@@ -21,3 +24,4 @@ public:
 	virtual void broadcast(const std::string&) = 0; // send to all
 };
 
+#endif
