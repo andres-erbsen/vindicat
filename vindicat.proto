@@ -104,10 +104,11 @@ message RoutingDetails {
 	optional EncEnvelope tail = 2;
 }
 
-message VindicatPacket {
-	// 1 is for routed packets with fixed headers
-	optional DeviceBusinesscard beacon = 2;
-	optional Subgraph lsr_update = 3;
-	optional LinkProposal LinkProposal = 4;
-	optional RoutingRequest RoutingRq = 5;
-}
+// implemented manually
+// message VindicatPacket {
+//	// 1 is for routed packets with fixed headers
+//	optional DeviceBusinesscard beacon = 2;
+//	optional Subgraph lsr_update = 3;
+//	optional LinkProposal link_proposal = 4;
+//	optional RoutingRequest RoutingRq = 5;
+// }
