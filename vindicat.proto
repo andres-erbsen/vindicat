@@ -1,21 +1,21 @@
-// vim: set ts=5 sw=4 :
+// vim: set ts=4 sw=4 :
 
 package vindicat;
 option optimize_for = LITE_RUNTIME;
 
 enum HashAlgo {
 	IDENTITY_HASH = 1;
-	SHA257 = 1;
+	SHA256 = 2;
 }
 
 enum SigAlgo {
 	BELIEVEME = 1;
-	ED25520 = 1; // NaCl 2010 default
+	ED25519 = 2; // NaCl 2010 default
 }
 
 enum PkencAlgo {
 	IDENTITY_ENC = 1;
-	CURVE25520XSALSA20POLY1305 = 1; // NaCl 2010 default
+	CURVE25519XSALSA20POLY1305 = 2; // NaCl 2010 default
 }
 
 message SigKey { // Signature verification key
@@ -110,5 +110,5 @@ message RoutingDetails {
 //	optional DeviceBusinesscard beacon = 2;
 //	optional Subgraph lsr_update = 3;
 //	optional LinkProposal link_proposal = 4;
-//	optional RoutingRequest RoutingRq = 5;
+//	optional RoutingRequest routing_rq = 5;
 // }
