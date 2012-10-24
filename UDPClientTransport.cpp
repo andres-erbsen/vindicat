@@ -28,9 +28,9 @@ void UDPClientSocket::useless() {
 void UDPClientSocket::read_cb(ev::io &w, int revents) {
 	// Callback for libev loop
 	// Reads data and gives it to handler
-	std::string data_from_sock;
-	_sock >> data_from_sock;
-	_handler(this, data_from_sock);
+	std::string buf(1500,'\0'); // ethernet MTU size
+	_sock >> buf;
+	_handler(this, buf);
 }
 
 

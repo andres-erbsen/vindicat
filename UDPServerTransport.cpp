@@ -35,7 +35,7 @@ void UDPServerTransport::onPacket(packet_callback handler) {
 void UDPServerTransport::incoming() {
 	// optmiize: with lower-level programming something lighter than strings
 	// could be used to identify connections.
-	std::string addr, port, id, buf;
+	std::string addr, port, id, buf(1500,'\0'); // ethernet MTU size
 	UDPServerSocket* s;
 	_sock->rcvfrom(buf,addr,port);
 	id = addr + std::string(":") + port;
