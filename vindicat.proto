@@ -65,6 +65,10 @@ message LinkInfo {
 	required DeviceId left = 2;
 	required DeviceId right = 3;
 	optional int64 time = 4; // unix "epoch" format
+	enum LinkTransport {
+		UDP = 1;
+	}
+	optional LinkTransport = 5;
 	// TODO: repeated advertisments :P
 }
 
