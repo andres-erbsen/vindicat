@@ -1,6 +1,5 @@
 // vim: set ts=4 sw=4 :
 
-package vindicat;
 option optimize_for = LITE_RUNTIME;
 
 enum HashAlgo {
@@ -10,12 +9,12 @@ enum HashAlgo {
 
 enum SigAlgo {
 	BELIEVEME = 1;
-	ED25519 = 2; // NaCl 2010 default
+	ED25519 = 2; // https://github.com/floodyberry/ed25519-donna
 }
 
 enum PkencAlgo {
 	IDENTITY_ENC = 1;
-	CURVE25519XSALSA20POLY1305 = 2; // NaCl 2010 default
+	CURVE25519XSALSA20POLY1305 = 2; // http://nacl.cr.yp.to/box.html
 }
 
 message SigKey { // Signature verification key
@@ -37,38 +36,40 @@ message Signature {
 message EncEnvelope {
 	required PkencAlgo algo = 1;
 	required bytes ciphertext = 2;
+	optional bytes nonce = 3;
+	optional bytes sender_pubkey = 4;
 }
 
-
+// XXX: OBSOLETE! use raw hash prefix instead
 // used where public key is available but id may not me, i.e. links
-message DeviceId { // prefix of a hash of a signing key of a device
-	required bytes prefix = 3; // the prefix of...
-	required HashAlgo HashAlgo = 1;// the $HashAlgo value of...
-	required SigAlgo SigAlgo = 2;  // a $SigAlgo key of that device
-}
+// message DeviceId { // prefix of a hash of a signing key of a device
+//	required bytes prefix = 3; // the prefix of...
+//	required HashAlgo HashAlgo = 1;// the $HashAlgo value of...
+//	required SigAlgo SigAlgo = 2;  // a $SigAlgo key of that device
+//}
 
 // Types used in link-state updates.
 
 message DeviceInfo {
-	repeated SigKey SigKeys = 1;
-	repeated EncKey EncKeys = 2;
+	repeated SigKey sig_keys = 1;
+	repeated EncKey enc_keys = 2;
 	optional int64 time = 3; // unix "epoch" format
 }
 
 
 message LinkInfo {
-	enum LinkStatus {
+	enum Status {
 		DEAD = 1; // all other states are useable in some way
 		PUBLIC = 2;
 	}
-	required LinkStatus status = 1;
-	required DeviceId left = 2;
-	required DeviceId right = 3;
+	required Status status = 1;
+	required bytes left = 2;  // device id
+	required bytes right = 3; // device id
 	optional int64 time = 4; // unix "epoch" format
-	enum LinkTransport {
+	enum Transport {
 		UDP = 1;
 	}
-	optional LinkTransport = 5;
+	optional Transport transport = 5;
 	// TODO: repeated advertisments :P
 }
 
@@ -97,22 +98,26 @@ message Subgraph { // set of nodes and edges, right...
 	repeated LinkPromise links = 2;
 }
 
-message RoutingRequest {
-	required fixed32 route_id = 1;
-	required fixed32 request_id = 2;
-	required EncEnvelope details = 3; // matroška list
+message RoutingRequest { // follows manual headers
+	optional EncKey sender_pubkey = 1; // temporary and meaningless, used for pubkey enc
+	required EncEnvelope tail = 2; // Hop
 }
 
-message RoutingDetails {
-	required DeviceId NextHop = 1;
-	optional EncEnvelope tail = 2;
+message Hop {
+	enum Type {
+		SIMPLE_ONEWAY = 1; // forward all future packets and $tail to $next_hop
+		SIMPLE_TWOWAY = 1; // forward all future packets and $tail to $next_hop, and all packets from him with same id pack to me
+	}
+	required Type type = 1;
+	required bytes next = 2; // device id
+	optional EncEnvelope tail = 3; // Hop
 }
 
 // implemented manually
 // message VindicatPacket {
-//	// 1 is for routed packets with fixed headers
-//	optional DeviceBusinesscard beacon = 2;
-//	optional Subgraph lsr_update = 3;
-//	optional LinkProposal link_proposal = 4;
-//	optional RoutingRequest routing_rq = 5;
+//	// 0 is for routed packets with fixed headers
+//	// 1 is for routing requests: fixed headers + RoutingDetails
+//	optional Subgraph lsr_update = 2;
+//	optional LinkProposal link_proposal = 3;
+//	optional DeviceBusinesscard beacon = 4;
 // }
