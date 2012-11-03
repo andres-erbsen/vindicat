@@ -105,11 +105,12 @@ message RoutingRequest { // follows manual headers
 
 message Hop {
 	enum Type {
-		SIMPLE_ONEWAY = 1; // forward all future packets and $tail to $next_hop
-		SIMPLE_TWOWAY = 1; // forward all future packets and $tail to $next_hop, and all packets from him with same id pack to me
+		UP = 1;
+		SIMPLE_ONEWAY = 2; // forward all future packets and $tail to $next_hop
+		SIMPLE_TWOWAY = 3; // forward all future packets and $tail to $next_hop, and all packets from him with same id pack to me
 	}
 	required Type type = 1;
-	required bytes next = 2; // device id
+	optional bytes next = 2; // device id
 	optional EncEnvelope tail = 3; // Hop
 }
 
