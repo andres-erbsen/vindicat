@@ -22,11 +22,11 @@ void UDPServerSocket::useless() {
 
 
 UDPServerTransport::
-UDPServerTransport(std::string host
-		  ,std::string port)
-	: _host(host)
-	, _port(port)
-	{}
+UDPServerTransport( std::string host
+                  , std::string port)
+                  : _host(host)
+                  , _port(port)
+                  {}
 
 void UDPServerTransport::onPacket(packet_callback handler) {
 	_handler = handler;
