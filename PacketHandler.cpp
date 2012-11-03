@@ -25,16 +25,20 @@ void PacketHandler::handlePacket(TransportSocket* trs, std::string packet) {
 		if (packet.size() < 1+4+4) return;
 		uint32_t route_id  = *( (uint32_t*) packet.data() + 1 ); // 4 bytes
 		uint32_t packet_id = *( (uint32_t*) packet.data() + 1+4 ); // 4 bytes
-		EncEnvelope enc;
-		enc.set_nonce(packet.data()+1, 4+4); // nonce = routing id | pakcet id
-		if ( enc.ParseFromArray( packet.data()+1+4+4
+		RoutingRequest rrq;
+		if ( rrq.ParseFromArray( packet.data()+1+4+4
                                , packet.size()-1-4-4 ) == 0 ) return;
-		std::string details_bytes;
-		if ( _crypto_identity.open(enc, details_bytes) == 0 ) return;
-		RoutingDetails details;
-		if ( details.ParseFromString ( details_bytes ) == 0 ) return;
-		if ( details.type() == SIMPLE_FORWARING ) {
-			_nm.addForwarding( trs, SimpleForwarding(route_id, details.next_hop) );
+		EncEnvelope* enc = rrq.mutable_tail();
+		if ( ! enc->has_nonce() ) enc->set_nonce(packet.data()+1, 4+4);
+		if ( rrq.has_sender_pubkey() && ! enc->has_sender_pubkey() ) {
+			*(enc->mutable_sender_pubkey()) = rrq.sender_pubkey();
+		}
+		std::string tail_bytes;
+		if ( _crypto_identity.open(*enc, tail_bytes) == 0 ) return;
+		Hop hop;
+		if ( hop.ParseFromString ( tail_bytes ) == 0 ) return;
+		if ( hop.type() == Hop::SIMPLE_ONEWAY ) {
+			_nm.addForwarding( trs, SimpleForwarding(route_id, hop.next) );
 		} else return;
 	}
 	/* TODO...
