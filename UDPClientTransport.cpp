@@ -22,7 +22,7 @@ void UDPClientSocket::useless() {
 	// Let's just push it pack to the handshake loop.
 	// Let's pretend we received a lot of nothing!
 	//  ... which is actually correct
-	_handler(this,std::string(""));
+	_handler(this,std::string("")); // TODO: launch this as an idle event instead
 }
 
 void UDPClientSocket::read_cb(ev::io &w, int revents) {

@@ -44,7 +44,7 @@ bool CryptoIdentity::open(const EncEnvelope& enc, std::string& dst) {
 		try {
 			dst = crypto_box_open( enc.ciphertext()
 					     , nonce
-					     , enc.sender_pubkey()
+					     , enc.enckey()
 					     , _secretkey_naclbox);
 		} catch(...) {
 			return 0;

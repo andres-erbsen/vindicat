@@ -37,7 +37,7 @@ message EncEnvelope {
 	required PkencAlgo algo = 1;
 	required bytes ciphertext = 2;
 	optional bytes nonce = 3;
-	optional bytes sender_pubkey = 4;
+	optional bytes enckey = 4;
 }
 
 // XXX: OBSOLETE! use raw hash prefix instead

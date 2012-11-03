@@ -21,24 +21,30 @@ void PacketHandler::handlePacket(TransportSocket* trs, std::string packet) {
     else if (tag == 1) { // "Please forward packets with this id to them"
 		// This packet is NOT entirely a protobuf message
 		// The static header is however followed by protobuf-encoded routing details
-		// Packet structure: route id, packet id, details as encrypted protobuf
+		// Packet structure: route id, packet id, more headers as protobuf
 		if (packet.size() < 1+4+4) return;
 		uint32_t route_id  = *( (uint32_t*) packet.data() + 1 ); // 4 bytes
 		uint32_t packet_id = *( (uint32_t*) packet.data() + 1+4 ); // 4 bytes
+		// protobuf headers
 		RoutingRequest rrq;
 		if ( rrq.ParseFromArray( packet.data()+1+4+4
                                , packet.size()-1-4-4 ) == 0 ) return;
+		// the encrypted cons list of forwardings
 		EncEnvelope* enc = rrq.mutable_tail();
+		// some encryption details may be specified on request or per-node
+		// the combination of route_id and packet_id serves as a nonce
 		if ( ! enc->has_nonce() ) enc->set_nonce(packet.data()+1, 4+4);
-		if ( rrq.has_sender_pubkey() && ! enc->has_sender_pubkey() ) {
-			*(enc->mutable_sender_pubkey()) = rrq.sender_pubkey();
+		if ( rrq.has_sender_pubkey() && ! enc->has_enckey() ) {
+			enc->set_enckey( rrq.sender_pubkey().key() );
 		}
 		std::string tail_bytes;
 		if ( _crypto_identity.open(*enc, tail_bytes) == 0 ) return;
 		Hop hop;
 		if ( hop.ParseFromString ( tail_bytes ) == 0 ) return;
 		if ( hop.type() == Hop::SIMPLE_ONEWAY ) {
-			_nm.addForwarding( trs, SimpleForwarding(route_id, hop.next) );
+			_nm.addForwarding( trs, new OnewayForwarding(route_id, hop.next()) );
+		} else if ( hop.type() == Hop::SIMPLE_ONEWAY ) {
+			_nm.addForwarding( trs, new TwowayForwarding(route_id, hop.next()) );
 		} else return;
 	}
 	/* TODO...
