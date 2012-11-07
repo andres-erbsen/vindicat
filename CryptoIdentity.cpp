@@ -10,6 +10,7 @@ CryptoIdentity::CryptoIdentity() {
 	_enckey_naclbox = crypto_box_keypair(&_secretkey_naclbox);;
 };
 
+
 bool CryptoIdentity::pick_key(const DeviceInfo& recipient, EncKey& key) {
 	int bestval = 0;
 	for (int i=0; i<recipient.enc_keys_size(); ++i ) {
@@ -69,7 +70,26 @@ bool CryptoIdentity::sign(const std::string& message, Signature& sig) {
 	            , _verkey_edsig
 	            , rawsig);
 	sig.set_sig ( std::string( reinterpret_cast<char*>(rawsig)
-				 , sizeof(ed25519_signature)  )   );
+				, sizeof(ed25519_signature)  )   );
 	sig.set_algo( SigAlgo::ED25519 );
 	return 1;
+}
+
+
+// TODO: where to put this function?
+bool verify( const std::string& message
+           , const Signature& sig
+           , const SigKey& key)
+{
+	if ( sig.algo() != key.algo() ) return 0;
+	if ( key.algo() == SigAlgo::ED25519 ) {
+		if ( sig.sig().size() != sizeof(ed25519_signature) ) return 0;
+		if ( key.key().size() != sizeof(ed25519_public_key) ) return 0;
+		return 0 == ed25519_sign_open(
+				reinterpret_cast<const unsigned char*>( message.data()   )
+		      ,                                         message.size()
+		      , reinterpret_cast<const unsigned char*>( key.key().data() )
+		      , reinterpret_cast<const unsigned char*>( sig.sig().data() )
+			  );
+	} else return 0;
 }
