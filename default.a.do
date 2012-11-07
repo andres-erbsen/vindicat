@@ -2,7 +2,7 @@
 
 if false; then :;
 elif [ "$1" == "build/libnacl.a" ]; then
-	redo-ifchange buildnacl
+	redo-ifchange nacl
 
 	# FIXME: pick an arbitrary arbitrary ABI, note that "amd64" < "x86"
 	host=$(hostname | tr -d _ )

@@ -3,6 +3,7 @@ mkdir -p build/lib
 
 redo-ifchange libev
 redo-ifchange libsocket
+redo-ifchange ed25519-donna
 redo-ifchange nacl
 
 redo-ifchange build/UDPClientTransport.o

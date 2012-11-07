@@ -2,7 +2,10 @@ s2=${2#build\/}
 
 : ${CC:="gcc"}
 : ${CXX:="g++"}
-: ${LIBS:="-Ilib/libev -Ilib/libsocket -Ilib/nacl"}
+: ${LIBS:="-Ilib/libev -Ilib/libsocket -Ilib/nacl -Ilib/ed25519-donna"}
+
+redo-ifchange vindicat.pb.h
+redo-ifchange build/libnacl.a
 
 if false; then :;
 elif [ -f "$s2.c" ]; then
