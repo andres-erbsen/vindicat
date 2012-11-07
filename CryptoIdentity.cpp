@@ -1,7 +1,14 @@
 #include "CryptoIdentity.hpp"
 
-#include "lib/nacl/crypto_box.h"
+#include <randombytes.h>
+#include <crypto_box.h>
 
+CryptoIdentity::CryptoIdentity() {
+	randombytes(_secretkey_edsig, sizeof(ed25519_secret_key));	
+	ed25519_publickey(_secretkey_edsig, &(_verkey_edsig[0]));
+
+	_enckey_naclbox = crypto_box_keypair(&_secretkey_naclbox);;
+};
 
 bool CryptoIdentity::pick_key(const DeviceInfo& recipient, EncKey& key) {
 	int bestval = 0;

@@ -2,7 +2,12 @@
 #include "PacketHandler.hpp"
 #include "vindicat.pb.h"
 
-void PacketHandler::handlePacket(TransportSocket* trs, std::string packet) {
+PacketHandler::PacketHandler(NetworkMap& nm, CryptoIdentity& ci) 
+	: _nm(nm)
+	, _crypto_identity(ci)
+	{}
+
+void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
 	if (packet.size() == 0) {
 		// TODO: handle new tranportsockets
 		return;
@@ -18,7 +23,7 @@ void PacketHandler::handlePacket(TransportSocket* trs, std::string packet) {
 		uint32_t route_id = *((uint32_t*) packet.data() + 1 );
 		_nm.forward(trs, route_id, packet);
 	}
-    else if (tag == 1) { // "Please forward packets with this id to them"
+	else if (tag == 1) { // "Please forward packets with this id to them"
 		// This packet is NOT entirely a protobuf message
 		// The static header is however followed by protobuf-encoded routing details
 		// Packet structure: route id, packet id, more headers as protobuf
@@ -28,7 +33,7 @@ void PacketHandler::handlePacket(TransportSocket* trs, std::string packet) {
 		// protobuf headers
 		RoutingRequest rrq;
 		if ( rrq.ParseFromArray( packet.data()+1+4+4
-                               , packet.size()-1-4-4 ) == 0 ) return;
+							   , packet.size()-1-4-4 ) == 0 ) return;
 
 		// the encrypted cons list of forwardings
 		EncEnvelope* enc = rrq.mutable_tail();
@@ -57,27 +62,54 @@ void PacketHandler::handlePacket(TransportSocket* trs, std::string packet) {
 		TransportSocket* trs_out = _nm.socketTo( hop.next() );
 		trs_out->send(packet);
 	}
-	/* TODO...
-    else if (tag == 2) {
-        // Subgraph
-        // Must be given to NetworkMap _nm
-        _nm.mergeGraph(Subgraph(packet)); // TODO - or should sth else do it?
-        // Also TODO: confidence in given subgraph?
-    }
-    else if (tag == 3) {
-        // LinkProposal
-        // Next step: signing, adding to network map, broadcasting
-        // TODO: verifying data accuracy
-        LinkPromise lp = _signLink(LinkProposal(packet));
-        // TODO: Add to map
-        // TODO: Broadcast
-    }
-    else if (tag == 4) {
-        // DeviceBusinesscard
-        // Now LinkProposal has to be created and sent back
-        LinkProposal lp = _createLinkProposal(DeviceBusinesscard(packet),2,1);
+	else if (tag == 2) {
+		// Subgraph
+		// Must be given to NetworkMap _nm
+		Subgraph sg;
+		if ( sg.ParseFromArray( packet.data()+1
+							  , packet.size()-1 ) == 0 ) return;
+		_nm.mergeGraph(*sg);
+        // TODO: broadcasting
+	}
+	else if (tag == 3) {
+		// LinkProposal
+		// Next step: signing, adding to network map, broadcasting
+		// TODO: verifying data accuracy
+        LinkProposal l_prop;
+        if ( l_prop.ParseFromArray( packet.data()+1
+                                  , packet.size()-1 ) == 0 ) return;
+        
+        // Signing
+        Signature* sig;
+        if ( _crypto_identity.sign(l_prop.link_info_msg(), sig) == 0) return;
+        
+        // Creating LinkPromise
+        LinkPromise l_prom;
+        l_prom.set_link_info_msg(l_prop.link_info_msg());
+        for (int i = 0; i < l_prop.left_sigs_size(); i++) {
+            Signature* left_s = l_prom->add_left_sigs();
+            left_s->set_left_sigs(l_prop.left_sigs(i));
+        }
+        Signature* right_s = l_prom->add_right_sigs();
+        right_s->set_right_sigs(sig);
+        
+        /* TODO, kell palju ja ei viitsi jantida praegu
+        // Adding to map
+        Subgraph sg;
+        DeviceBusinesscard* dbc_left = sh->add_devices();
+        */
+        
+        
+		// TODO: Add to map
+		// TODO: broadcasting
+	}
+	/* TODO
+	else if (tag == 4) {
+		// DeviceBusinesscard
+		// Now LinkProposal has to be created and sent back
+		LinkProposal lp = _createLinkProposal(DeviceBusinesscard(packet),2,1);
 		// TODO: remove hardcoded link params?
-        // TODO: Forward packet
-    }
+		// TODO: Forward packet
+	}
 	*/
 }
