@@ -91,5 +91,17 @@ bool verify( const std::string& message
 		      , reinterpret_cast<const unsigned char*>( key.key().data() )
 		      , reinterpret_cast<const unsigned char*>( sig.sig().data() )
 			  );
-	} else return 0;
+	}
+	return 0;
 }
+
+bool verify( const std::string& message
+           , const Signature& sig
+           , const DeviceInfo& device )
+{
+	for ( int i=0; i<device.sig_keys_size(); ++i ) {
+		if ( verify(message, sig, device.sig_keys(i) ) ) return 1;
+	}
+	return 0;
+}
+
