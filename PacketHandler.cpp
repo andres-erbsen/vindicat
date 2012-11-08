@@ -62,4 +62,41 @@ void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
 		TransportSocket* trs_out = _nm.socketTo( hop.next() );
 		trs_out->send(packet);
 	}
+	else if (tag == 2) { // Subgraph
+		// Must be given to NetworkMap _nm
+		Subgraph sg;
+		if ( sg.ParseFromArray( packet.data()+1
+							  , packet.size()-1 ) == 0 ) return;
+		_nm.mergeGraph(sg);
+	}
+	else if (tag == 3) { // LinkProposal
+		LinkProposal l_prop;
+		if ( l_prop.ParseFromArray( packet.data()+1
+								  , packet.size()-1 ) == 0 ) return;
+		
+		// Signing
+		Signature sig;
+		if ( _crypto_identity.sign(l_prop.link_info_msg(), sig) == 0) return;
+		
+		// Creating LinkPromise
+		LinkPromise l_prom;
+		l_prom.set_link_info_msg(l_prop.link_info_msg());
+		for (int i = 0; i < l_prop.left_sigs_size(); i++) {
+			*l_prom.add_left_sigs() = l_prop.left_sigs(i);
+		}
+		*l_prom.add_right_sigs() = sig;
+		
+		// Adding to map
+		LinkInfo l_info;
+		if ( l_info.ParseFromString( l_prop.link_info_msg() ) == 0 ) return;
+		DeviceBusinesscard left_dbc;
+		if ( left_dbc.ParseFromString( l_info.left() ) == 0 ) return;
+		DeviceBusinesscard right_dbc;
+		if ( right_dbc.ParseFromString( l_info.right() ) == 0 ) return;
+		Subgraph sg;
+		*sg.add_devices() = left_dbc;
+		*sg.add_devices() = right_dbc;
+		*sg.add_links() = l_prom;
+		_nm.mergeGraph(sg);
+	}
 }

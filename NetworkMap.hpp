@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <unordered_map>
 #include <vector>
+#include "vindicat.pb.h"
 
 
 using lemon::ListGraph;
@@ -19,6 +20,7 @@ public:
 	// forwrard this packet that came from this socket, return 0 otherwise
 	bool forward(TransportSocket*, uint32_t, std::string);
 	TransportSocket* socketTo(const std::string&);
+    bool mergeGraph(const Subgraph&);
 private:
 	ListGraph _graph;
 	typedef std::unordered_map<uint32_t,Forwarding*> ForwardingMap;
