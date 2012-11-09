@@ -1,7 +1,7 @@
 // vim: set ts=4 sw=4 :
-
 option optimize_for = LITE_RUNTIME;
 
+// Algorithm specifiers
 enum HashAlgo {
 	IDENTITY_HASH = 1;
 	SHA256 = 2;
@@ -17,6 +17,8 @@ enum PkencAlgo {
 	CURVE25519XSALSA20POLY1305 = 2; // http://nacl.cr.yp.to/box.html
 }
 
+
+// Keys
 message SigKey { // Signature verification key
 	required SigAlgo algo = 1;
 	required bytes key = 2;
@@ -28,6 +30,8 @@ message EncKey { // Encryption key for public-key encryption
 	// optional bytes nonce; // from packet header for rrq
 }
 
+
+// Cryptographic containers
 message Signature {
 	required SigAlgo algo = 1;
 	required bytes sig = 2;
@@ -40,22 +44,14 @@ message EncEnvelope {
 	optional bytes enckey = 4;
 }
 
-// XXX: OBSOLETE! use raw hash prefix instead
-// used where public key is available but id may not me, i.e. links
-// message DeviceId { // prefix of a hash of a signing key of a device
-//	required bytes prefix = 3; // the prefix of...
-//	required HashAlgo HashAlgo = 1;// the $HashAlgo value of...
-//	required SigAlgo SigAlgo = 2;  // a $SigAlgo key of that device
-//}
 
-// Types used in link-state updates.
-
+// Actual serialization
 message DeviceInfo {
 	repeated SigKey sig_keys = 1;
 	repeated EncKey enc_keys = 2;
 	optional int64 time = 3; // unix "epoch" format
+	repeated bytes identifiers = 999; // list of (device id), not included on the wire
 }
-
 
 message LinkInfo {
 	enum Status {
@@ -66,41 +62,38 @@ message LinkInfo {
 	required bytes left = 2;  // device id
 	required bytes right = 3; // device id
 	optional int64 time = 4; // unix "epoch" format
-	enum Transport {
-		UDP = 1;
-	}
-	optional Transport transport = 5;
+	// enum Transport {
+	// 	UDP = 1;
+	// }
+	// optional Transport transport = 5;
 	// TODO: repeated advertisments :P
 }
 
-// Signed variants
 
+// Complicated signed variants of serialised structures
 message DeviceBusinesscard {
-	required bytes device_info_msg = 1;
+	required bytes device_info_msg = 1; // DeviceInfo
 	repeated Signature sigs = 2;
 }
 
 message LinkPromise {
-	required bytes link_info_msg = 1;
+	required bytes link_info_msg = 1; // LinkInfo
 	repeated Signature left_sigs = 2;
 	repeated Signature right_sigs = 3;
 	// repeated Signature voucher_sigs;
 }
 
 message LinkProposal {
-	required bytes link_info_msg = 1;
+	required bytes link_info_msg = 1; // LinkInfo
 	repeated Signature left_sigs = 2;
 	// optional DeviceBusinesscard device;
 }
 
+
+// Compound messages
 message Subgraph { // set of nodes and edges, right...
 	repeated DeviceBusinesscard devices = 1;
 	repeated LinkPromise links = 2;
-}
-
-message RoutingRequest { // follows manual headers
-	optional EncKey sender_pubkey = 1; // temporary and meaningless, used for pubkey enc
-	required EncEnvelope tail = 2; // Hop
 }
 
 message Hop {
@@ -113,6 +106,12 @@ message Hop {
 	optional bytes next = 2; // device id
 	optional EncEnvelope tail = 3; // Hop
 }
+
+message RoutingRequest { // follows manual headers
+	optional EncKey sender_pubkey = 1; // temporary and meaningless, used for pubkey enc
+	required EncEnvelope tail = 2; // Hop
+}
+
 
 // implemented manually
 // message VindicatPacket {

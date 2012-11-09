@@ -1,11 +1,21 @@
+#include "NetworkMap.hpp"
+#include "CryptoIdentity.hpp"
+
 #include <unordered_map>
 #include <lemon/list_graph.h>
 #include <assert.h>
 
-#include "NetworkMap.hpp"
+#include <ctime>
+
 
 NetworkMap::NetworkMap()
+	// FIXME: initialize these?
 	: _forwardings(_graph)
+	, _sigkeys(_graph)
+	, _enckeys(_graph)
+	, _dev_mtimes(_graph)
+	, _link_mtimes(_graph)
+	, _link_statuses(_graph)
 	, _sockets(_graph)
 	, _our_node( _graph.addNode() )
 	{}
@@ -59,43 +69,86 @@ bool NetworkMap::forward( TransportSocket* from_trs
 	return fwd->forward(_sockets[to_edge],packet);
 }
 
-bool NetworkMap::mergeGraph( const Subgraph& s ) {
-    int devicenum = s.devices_size();
-    int linknum = s.links_size();
-    
-	// Adding devices
-	for (int i = 0; i < devicenum; i++) {
-		const DeviceBusinesscard& dbc = s.devices(i);
-		
-		if (_node_by_id.find(dbc.device_info_msg()) == _node_by_id.end()) {
-			// Device not in graph, insert it there
-			ListGraph::Node added_node = _graph.addNode();
-			_node_by_id[dbc.device_info_msg()] = added_node;
+bool NetworkMap::addDevice(const DeviceInfo& device) {
+	// Is this device already represented in the network map? Multiple times?
+	std::vector<Node> matching_nodes;
+	std::vector<std::string> new_identifiers;
+
+	for ( const auto& id : device.identifiers() ) {
+		auto iter = _node_by_id.find(id);
+		if ( iter != _node_by_id.end() ) {
+			matching_nodes.push_back(iter->second);
+		} else new_identifiers.push_back(id);
+	}
+
+	ListGraph::Node node;
+	if (matching_nodes.empty()) { // completely new device
+		node = _graph.addNode();
+	} else if (matching_nodes.size() == 1) { // already known
+		node = *matching_nodes.begin();
+	// some devices we know are actually one
+	} else assert(/*"Merging multiple devices not implemented"*/0);
+
+	bool override;
+	if ( device.has_time() && device.time() > _dev_mtimes[node] ) {
+		override = 1;
+		_dev_mtimes[node] = device.time();
+	}
+
+	// Merge device info
+	for ( const SigKey& key : device.sig_keys() ) {
+		if ( override || ! _sigkeys[node].count(key.algo()) ) {
+			_sigkeys[node][key.algo()] = key.key();
 		}
 	}
-	
-	// Adding links
-    bool added_to_graph = false; // For deciding whether to broadcast
-	for (int i = 0; i < linknum; i++) {
-		const LinkPromise& lp = s.links(i);
-		LinkInfo l_info;
-		if ( l_info.ParseFromString(lp.link_info_msg()) == 0 ) return 0;
-		
-        // Get nodes by id if in graph
-        if (_node_by_id.find(l_info.left()) == _node_by_id.end()) continue;
-		ListGraph::Node left = _node_by_id[l_info.left()];
-        if (_node_by_id.find(l_info.right()) == _node_by_id.end()) continue;
-		ListGraph::Node right = _node_by_id[l_info.right()];
-        
-        ListGraph::Edge wanted_edge = findEdge(_graph,left,right); // Edge already in graph?
-        if ( wanted_edge == lemon::INVALID ) {
-            _graph.addEdge(left, right);
-            added_to_graph = true; // For deciding whether to broadcast
-        }
+
+	for ( const EncKey& key : device.enc_keys() ) {
+		if ( override || ! _enckeys[node].count(key.algo()) ) {
+			_enckeys[node][key.algo()] = key.key();
+		}
 	}
-	
-	// Limiting what to broadcast
-    // Right now broadcast everything with two devices and one new link
-	if (devicenum == 2 && linknum == 1 && added_to_graph) return 1;
+
+	for ( auto& id : new_identifiers ) _node_by_id[id] = node;
+
+	return 1;
+}
+
+bool NetworkMap::addLink(const LinkInfo& link) {
+	if ( _node_by_id.count(link.left()) == 0 ) return 0;
+	if ( _node_by_id.count(link.left()) == 0 ) return 0;
+	auto lnode = _node_by_id[link.left() ];
+	auto rnode = _node_by_id[link.right()];
+	ListGraph::Edge edge = findEdge(_graph, lnode, rnode);
+	if ( edge == lemon::INVALID ) { // no link between these nodes before this
+		edge = _graph.addEdge(lnode, rnode);
+		if (link.has_time()) _link_mtimes[edge] = link.time();
+		if (link.has_status()) _link_statuses[edge] = link.status();
+		return 1;
+	} else {
+		if ( link.has_time() && link.time() > _link_mtimes[edge] ) {
+			_link_mtimes[edge] = link.time();
+			if (link.has_status()) _link_statuses[edge] = link.status();
+		} else if ( !link.has_time() && _link_mtimes[edge] == 0 ) {
+			if (link.has_status()) _link_statuses[edge] = link.status();
+		} else return 0; // outdated
+	}
+}
+
+bool NetworkMap::mergeGraph( const Subgraph& sgr ) {
+	if ( sgr.devices_size() == 2 && sgr.links_size() == 1) { //Link announcement
+		DeviceInfo ldev, rdev;
+		LinkInfo link;
+		if ( ! verify(sgr.devices(0), ldev) ) return 0;
+		if ( ! verify(sgr.devices(1), rdev) ) return 0;
+		if ( ! verify(sgr.links(0), ldev, rdev, link) ) return 0;
+		bool have_ldev = 0, have_rdev = 0;
+		for ( auto& id :ldev.identifiers() ) have_ldev |= _node_by_id.count(id);
+		for ( auto& id :rdev.identifiers() ) have_rdev |= _node_by_id.count(id);
+		if ( ! have_ldev && ! have_ldev ) return 0;
+		bool ret;
+		addDevice(rdev);
+		addDevice(ldev);
+		return addLink(link);
+	}
 	return 0;
 }

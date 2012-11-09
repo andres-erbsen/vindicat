@@ -2,6 +2,11 @@
 
 #include <randombytes.h>
 #include <crypto_box.h>
+#include <crypto_hash_sha256.h>
+
+#include <google/protobuf/repeated_field.h>
+
+#include <algorithm>
 
 CryptoIdentity::CryptoIdentity() {
 	randombytes(_secretkey_edsig, sizeof(ed25519_secret_key));	
@@ -99,9 +104,63 @@ bool verify( const std::string& message
            , const Signature& sig
            , const DeviceInfo& device )
 {
-	for ( int i=0; i<device.sig_keys_size(); ++i ) {
-		if ( verify(message, sig, device.sig_keys(i) ) ) return 1;
+	for ( const auto& key : device.sig_keys() ) {
+		if ( verify(message, sig, key ) ) return 1;
 	}
 	return 0;
 }
 
+
+bool verify(const DeviceBusinesscard& card, DeviceInfo& ret) {
+	ret.Clear(); // TODO: really not needed??
+	if ( ! card.sigs_size() 
+	  || ! card.has_device_info_msg() 
+	  || ! ret.ParseFromString(card.device_info_msg()) ) {
+		return 0;
+	}
+	google::protobuf::RepeatedPtrField<SigKey> verified_keys;
+	google::protobuf::RepeatedPtrField<std::string> verified_identifiers;
+	int n = std::min(ret.sig_keys_size(), card.sigs_size());
+	bool got = 0;
+	for (int i=0; i<n; ++i) {
+		const Signature& sig = card.sigs(i);
+		const SigKey&    key = ret.sig_keys(i);
+		if ( verify(card.device_info_msg(), sig, key) ) {
+			got = 1;
+			*verified_keys.Add() = key;
+			// the signing key itself is the main identity
+			// also happens to be the hash of itself using id()
+			*verified_identifiers.Add() = key.key().substr(0,16);
+			// SHA256-128
+			*verified_identifiers.Add() = crypto_hash_sha256(key.key()).substr(0,16);
+		}
+	}
+	verified_keys.Swap( ret.mutable_sig_keys() );
+	verified_identifiers.Swap( ret.mutable_identifiers() );
+	return got;
+}
+
+
+bool verify( const LinkPromise& promise
+           , const DeviceInfo& ldev
+           , const DeviceInfo& rdev
+		   , LinkInfo& ret) {
+	ret.Clear(); // TODO: really not needed??
+	if ( ! promise.has_link_info_msg()
+	  || ! promise.left_sigs_size() 
+	  || ! promise.right_sigs_size() 
+	  || ! ret.ParseFromString(promise.link_info_msg()) ) {
+		return 0;
+	}
+	const auto& msg = promise.link_info_msg();
+	return (1 
+	&&     std::any_of( ldev.identifiers().begin(), ldev.identifiers().end()
+	                  , [&](const std::string& id) {return id == ret.left ();} )
+	&&     std::any_of( rdev.identifiers().begin(), rdev.identifiers().end()
+	                  , [&](const std::string& id) {return id == ret.right();} )
+	&& std::any_of( promise.left_sigs().begin(), promise.left_sigs().end()
+	              , [&](const Signature& sig) {return verify(msg, sig, ldev);} )
+	&& std::any_of( promise.right_sigs().begin(), promise.right_sigs().end()
+	              , [&](const Signature& sig) {return verify(msg, sig, rdev);} )
+	);
+}

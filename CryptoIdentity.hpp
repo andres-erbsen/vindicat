@@ -2,7 +2,10 @@
 
 #include <ed25519.h>
 
-#include <string.h>
+#include <string>
+#include <list>
+#include <array>
+#include <tuple>
 
 class CryptoIdentity {
 public:
@@ -19,3 +22,9 @@ private:
 	std::string _enckey_naclbox;
 };
 
+bool verify(const std::string&, const Signature&, const SigKey& key);
+bool verify(const std::string&, const Signature&, const DeviceInfo&);
+
+bool verify(const DeviceBusinesscard&, DeviceInfo&); // results in $1
+bool verify(const LinkPromise&, const DeviceInfo&
+           , const DeviceInfo&, LinkInfo&); // results in $3
