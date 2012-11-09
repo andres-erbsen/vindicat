@@ -44,7 +44,6 @@ public:
 	TwowayForwarding(uint32_t, std::string);
 	const lemon::ListGraph::Node&
 		dst(const lemon::ListGraph::Node&) const;
-	bool forward(TransportSocket*, std::string);
 };
 
 class OnewayForwarding : public SimpleForwarding {
@@ -54,7 +53,6 @@ public:
 	OnewayForwarding(uint32_t, std::string);
 	const lemon::ListGraph::Node&
 		dst(const lemon::ListGraph::Node&) const;
-	bool forward(TransportSocket*, std::string);
 };
 
 #endif // FORWARDING_HPP
