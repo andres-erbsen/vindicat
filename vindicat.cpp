@@ -2,6 +2,7 @@
 #include "UDPClientTransport.hpp"
 #include "NetworkMap.hpp"
 #include "PacketHandler.hpp"
+#include "Beacon.hpp"
 #include <stdio.h>
 
 #include <ev++.h>
@@ -24,7 +25,12 @@ int main (int argc, char** argv) {
 	NetworkMap nm;
 	CryptoIdentity ci;
 	PacketHandler hn(nm, ci);
+
 	for (Transport* tr : transports) tr->onPacket(hn);
 	for (Transport* tr : transports) tr->enable();
+
+	Beacon bcn(3,ci,transports);
+	bcn.enable();
+
 	ev_run (EV_DEFAULT_ 0);	
 }

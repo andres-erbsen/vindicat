@@ -1,5 +1,9 @@
 #include "UDPClientTransport.hpp"
 
+#include <exception.hpp> // libsocket
+
+#include <errno.h>
+
 UDPClientSocket::
 UDPClientSocket(packet_callback handler, std::string host, std::string port)
 	: _sock(host,port,get_address_family(host.c_str()),SOCK_NONBLOCK)
@@ -29,8 +33,16 @@ void UDPClientSocket::read_cb(ev::io &w, int revents) {
 	// Callback for libev loop
 	// Reads data and gives it to handler
 	std::string buf(1500,'\0'); // ethernet MTU size
-	_sock >> buf;
-	_handler(this, buf);
+	try {
+		_sock >> buf;
+		_handler(this, buf);
+	} catch (libsocket::socket_exception exc) {
+		if ( exc.err == ECONNREFUSED) {} // not found? Just wait.
+		else {
+			std::cerr << exc.mesg;
+			throw exc;
+		}
+	}
 }
 
 
