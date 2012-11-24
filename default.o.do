@@ -21,7 +21,7 @@ fi
 
 redo-ifchange "$srcfile"
 mkdir -p $(dirname "$1")
-$CXX -MD -MF "$2.d" -c $CXXFLAGS $CPPFLAGS $LIBS -o "$3" "$srcfile" --std=c++11 -DEV_STANDALONE
+$CXX -MD -MF "$2.d" -c $CXXFLAGS $LIBS -o "$3" "$srcfile" --std=c++11 -DEV_STANDALONE
 
 read DEPS < "$2.d"
 redo-ifchange ${DEPS#*:}
