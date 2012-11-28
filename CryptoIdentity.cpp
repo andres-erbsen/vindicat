@@ -9,11 +9,20 @@
 #include <algorithm>
 #include <ctime>
 
+std::vector<std::string> identifiers(const std::string& keybytes) {
+	return {keybytes.substr(0,16), crypto_hash_sha256(keybytes).substr(0,16)};
+}
+
 CryptoIdentity::CryptoIdentity() {
 	randombytes(_secretkey_edsig, sizeof(ed25519_secret_key));	
 	ed25519_publickey(_secretkey_edsig, &(_verkey_edsig[0]));
 
 	_enckey_naclbox = crypto_box_keypair(&_secretkey_naclbox);;
+
+	_our_identifiers = identifiers(std::string(
+				reinterpret_cast<char*>(_verkey_edsig)
+				,sizeof(ed25519_public_key))
+	);
 };
 
 
@@ -141,7 +150,6 @@ bool verify( const std::string& message
 	return 0;
 }
 
-
 bool verify(const DeviceBusinesscard& card, DeviceInfo& ret) {
 	ret.Clear(); // TODO: really not needed??
 	if ( ! card.sigs_size() 
@@ -193,5 +201,26 @@ bool verify( const LinkPromise& promise
 	              , [&](const Signature& sig) {return verify(msg, sig, ldev);} )
 	&& std::any_of( promise.right_sigs().begin(), promise.right_sigs().end()
 	              , [&](const Signature& sig) {return verify(msg, sig, rdev);} )
+	);
+}
+
+
+bool CryptoIdentity::verifyProposal( const LinkProposal& proposal
+                                   , const DeviceInfo& ldev
+		                           , LinkInfo& ret) {
+	ret.Clear(); // TODO: really not needed?::?
+	if ( ! proposal.has_link_info_msg()
+	  || ! proposal.left_sigs_size() 
+	  || ! ret.ParseFromString(proposal.link_info_msg()) ) {
+		return 0;
+	}
+	const auto& msg = proposal.link_info_msg();
+	return (1 
+	&& std::any_of( ldev.identifiers().begin(), ldev.identifiers().end()
+	              , [&](const std::string& id) {return id == ret.left ();} )
+	&& std::any_of( _our_identifiers.begin(), _our_identifiers.end()
+		          , [&](const std::string& id) {return id == ret.right();} )
+	&& std::any_of( proposal.left_sigs().begin(), proposal.left_sigs().end()
+	              , [&](const Signature& sig) {return verify(msg, sig, ldev);} )
 	);
 }

@@ -17,12 +17,15 @@ public:
 	bool open(const EncEnvelope&, std::string&) const;
 	bool sign(const std::string&, Signature&) const;
 	void our_businesscard(DeviceBusinesscard&) const;
+	bool verifyProposal(const LinkProposal&, const DeviceInfo&, LinkInfo&);
 private:
 	ed25519_secret_key _secretkey_edsig;
 	ed25519_public_key _verkey_edsig;
 
 	std::string _secretkey_naclbox;
 	std::string _enckey_naclbox;
+
+	std::vector<std::string> _our_identifiers;
 };
 
 bool pick_key(const DeviceInfo& recipient, EncKey& key);
