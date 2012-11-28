@@ -91,6 +91,7 @@ message LinkProposal {
 
 
 // Compound messages
+
 message Subgraph { // set of nodes and edges, right...
 	repeated DeviceBusinesscard devices = 1;
 	repeated LinkPromise links = 2;
