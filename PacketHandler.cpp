@@ -9,7 +9,7 @@ PacketHandler::PacketHandler(NetworkMap& nm, CryptoIdentity& ci)
 
 void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
 	if (packet.size() == 0) {
-		// TODO: handle new tranportsockets
+		_nm.addSocket(trs); // TODO: do we need to check whether the sock was new?
 		return;
 	}
 	uint8_t tag = packet[0];
@@ -22,8 +22,7 @@ void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
 		if (packet.size() < 1+4) return;
 		uint32_t route_id = *((uint32_t*) packet.data() + 1 );
 		_nm.forward(trs, route_id, packet);
-	}
-	else if (tag == 1) { // "Please forward packets with this id to them"
+	} else if (tag == 1) { // "Please forward packets with this id to them"
 		// This packet is NOT entirely a protobuf message
 		// The static header is however followed by protobuf-encoded routing details
 		// Packet structure: route id, packet id, more headers as protobuf
@@ -46,7 +45,7 @@ void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
 		}
 		if ( _crypto_identity.open(*enc, tail_bytes) == 0 ) return;
 		Hop hop;
-		if ( hop.ParseFromString ( tail_bytes ) == 0 ) return;
+		if ( hop.ParseFromString(tail_bytes) == 0 ) return;
 
 		Forwarding* fwd;
 		if ( hop.type() == Hop::SIMPLE_ONEWAY ) {
@@ -61,42 +60,28 @@ void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
 		if ( rrq.AppendToString(&packet) == 0 ) return;
 		TransportSocket* trs_out = _nm.socketTo( hop.next() );
 		trs_out->send(packet);
-	}
-	else if (tag == 2) { // Subgraph
+	} else if (tag == 2) { // Subgraph
 		// Must be given to NetworkMap _nm
 		Subgraph sg;
 		if ( sg.ParseFromArray( packet.data()+1
 							  , packet.size()-1 ) == 0 ) return;
 		_nm.mergeGraph(sg);
+	} else if (tag == 4) { // Beacon packet
+		// optimize: cache beacon packets, do not parse+verify again if known
+		DeviceBusinesscard card;
+		if ( ! card.ParseFromArray( packet.data()+1, packet.size()-1 ) ) return;
+		_nm.beacon(trs, card);
 	}
-	else if (tag == 3) { // LinkProposal
-		LinkProposal l_prop;
-		if ( l_prop.ParseFromArray( packet.data()+1
-								  , packet.size()-1 ) == 0 ) return;
-		
-		// Signing
-		Signature sig;
-		if ( _crypto_identity.sign(l_prop.link_info_msg(), sig) == 0) return;
-		
-		// Creating LinkPromise
-		LinkPromise l_prom;
-		l_prom.set_link_info_msg(l_prop.link_info_msg());
-		for (int i = 0; i < l_prop.left_sigs_size(); i++) {
-			*l_prom.add_left_sigs() = l_prop.left_sigs(i);
-		}
-		*l_prom.add_right_sigs() = sig;
-		
-		// Adding to map
-		LinkInfo l_info;
-		if ( l_info.ParseFromString( l_prop.link_info_msg() ) == 0 ) return;
-		DeviceBusinesscard left_dbc;
-		if ( left_dbc.ParseFromString( l_info.left() ) == 0 ) return;
-		DeviceBusinesscard right_dbc;
-		if ( right_dbc.ParseFromString( l_info.right() ) == 0 ) return;
-		Subgraph sg;
-		*sg.add_devices() = left_dbc;
-		*sg.add_devices() = right_dbc;
-		*sg.add_links() = l_prom;
-		_nm.mergeGraph(sg);
+}
+
+bool understandEverything(const LinkProposal original) {
+    // Makes sure there are no fields unknown to us in the LinkProposal
+	// Copy all the fields we know,
+	// then test if the original and the copy are the same.
+	LinkProposal replica;
+	replica.mutable_left_sigs()->CopyFrom(original.left_sigs());
+    if ( original.has_link_info_msg() ) {
+      replica.set_link_info_msg(original.link_info_msg());
 	}
+	return ( original.SerializeAsString() == replica.SerializeAsString() );
 }
