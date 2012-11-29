@@ -24,7 +24,7 @@ int main (int argc, char** argv) {
 
 	NetworkMap nm;
 	CryptoIdentity ci;
-	PacketHandler hn(nm, ci);
+	PacketHandler hn(nm, ci, transports);
 
 	for (Transport* tr : transports) tr->onPacket(hn);
 	for (Transport* tr : transports) tr->enable();

@@ -2,9 +2,12 @@
 #include "PacketHandler.hpp"
 #include "vindicat.pb.h"
 
-PacketHandler::PacketHandler(NetworkMap& nm, CryptoIdentity& ci) 
+PacketHandler::PacketHandler( NetworkMap& nm
+	                        , CryptoIdentity& ci
+	                        , std::vector<Transport*>& transports) 
 	: _nm(nm)
 	, _crypto_identity(ci)
+	, _transports(transports)
 	{}
 
 void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
@@ -65,7 +68,9 @@ void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
 		Subgraph sg;
 		if ( sg.ParseFromArray( packet.data()+1
 							  , packet.size()-1 ) == 0 ) return;
-		_nm.mergeGraph(sg);
+		if ( _nm.mergeGraph(sg) ) { // was interesting enough for us to spread it
+			broadcast(packet);
+		}
 	} else if (tag == 3) {
 		// LinkProposal
 		LinkProposal l_prop;
@@ -112,11 +117,23 @@ void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
         
         // Add to map
         _nm.mergeGraph(sg);
+        
+        // Broadcast
+        std::string sg_packet = "\0x02";
+        if ( ! sg.AppendToString(&sg_packet) ) assert(0);
+        broadcast(sg_packet);
+        
     } else if (tag == 4) { // Beacon packet
 		// optimize: cache beacon packets, do not parse+verify again if known
 		DeviceBusinesscard card;
 		if ( ! card.ParseFromArray( packet.data()+1, packet.size()-1 ) ) return;
 		_nm.beacon(trs, card);
+	}
+}
+
+void PacketHandler::broadcast(const std::string& packet) const {
+	for (auto transport : _transports) {
+		transport->broadcast(packet);
 	}
 }
 
