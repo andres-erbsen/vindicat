@@ -18,5 +18,5 @@ private:
 };
 
 
-bool understandEverything(const LinkProposal);
+bool understandEverything(const LinkInfo&);
 
