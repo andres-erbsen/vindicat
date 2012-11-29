@@ -16,11 +16,13 @@ public:
 	typedef ListGraph::Node Node;
 	NetworkMap();
 	bool addSocket(TransportSocket*);
+	TransportSocket* socketTo(const std::string&);
+
 	// start forwarding packets that come from a socket. true if all ok.
 	bool addForwarding(TransportSocket*, Forwarding*);
 	// forwrard this packet that came from this socket, return 0 otherwise
 	bool forward(TransportSocket*, uint32_t, std::string);
-	TransportSocket* socketTo(const std::string&);
+
     bool mergeGraph(const Subgraph&);
 	void beacon(TransportSocket*, const DeviceBusinesscard&);
 	bool getDeviceBusinesscard(const std::string&, DeviceBusinesscard&) const;
