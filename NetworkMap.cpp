@@ -10,8 +10,7 @@
 
 NetworkMap::NetworkMap()
 	: _forwardings  (_graph)
-	, _sigkeys      (_graph)
-	, _enckeys      (_graph)
+	, _dev_bcards   (_graph)
 	, _dev_mtimes   (_graph, 0)
 	, _link_mtimes  (_graph, 0)
 	, _link_statuses(_graph, LinkInfo::DEAD)
@@ -38,7 +37,7 @@ TransportSocket* NetworkMap::socketTo(const std::string& device_id) {
 
 bool NetworkMap::addForwarding( TransportSocket* from_trs
 							  , Forwarding* fwd) {
-	// From whom?
+	// From whomE
 	ListGraph::Edge from_edge = _edge_by_sock.at(from_trs);
 	ListGraph::Node from_node = _graph.oppositeNode(_our_node,from_edge);
 	// To what device?
@@ -78,37 +77,13 @@ bool NetworkMap::forward( TransportSocket* from_trs
 	return fwd->forward(_sockets[to_edge],packet);
 }
 
-void NetworkMap::mergeDevice(const DeviceInfo& device, ListGraph::Node node) {
-	bool override = 0;
-	if ( device.has_time() && device.time() > _dev_mtimes[node] ) {
-		override = 1;
-		_dev_mtimes[node] = device.time();
-	}
-
-	for ( const SigKey& key : device.sig_keys() ) {
-		if ( override || ! _sigkeys[node].count(key.algo()) ) {
-			_sigkeys[node][key.algo()] = key.key();
-		}
-	}
-
-	for ( const EncKey& key : device.enc_keys() ) {
-		if ( override || ! _enckeys[node].count(key.algo()) ) {
-			_enckeys[node][key.algo()] = key.key();
-		}
-	}
-
-	for ( const auto& id : device.identifiers() ) _node_by_id[id] = node;
-}
-
 void NetworkMap::beacon(TransportSocket* trs, const DeviceBusinesscard& card) {
-	DeviceInfo device;
-	if ( ! verify(card,device) ) return;
 	ListGraph::Edge edge = _edge_by_sock.at(trs);
 	ListGraph::Node node = _graph.oppositeNode(_our_node, edge);
-	mergeDevice(device, node);
+	mergeToGraph(card, node);
 }
 
-void NetworkMap::addDevice(const DeviceInfo& device) {
+ListGraph::Node NetworkMap::nodeForDevice(const DeviceInfo& device) {
 	// Is this device already represented in the network map? Multiple times?
 	std::vector<Node> matching_nodes;
 
@@ -122,19 +97,59 @@ void NetworkMap::addDevice(const DeviceInfo& device) {
 	ListGraph::Node node;
 	if (matching_nodes.empty()) { // completely new device
 		node = _graph.addNode();
-	} else if (matching_nodes.size() == 1) { // already known
+	} else {
 		node = *matching_nodes.begin();
-	// some devices we know are actually one
-	} else assert(/*Merging multiple devices not implemented*/ 0);
+	} // TODO: handle the case of mutiple matches; when nodes have merged. Or ban it.
 
-	mergeDevice(device,node);
+	return node;
 }
+
+bool NetworkMap::getDeviceBusinesscard( const std::string& id
+	                                  , DeviceBusinesscard& r) const {
+	if ( _node_by_id.count(id) == 0 ) return 0;
+	r = _dev_bcards[_node_by_id.at(id)];
+	return 1;
+}
+
+// Adding/updating devices in the graph
+
+bool NetworkMap::mergeToGraph( const DeviceBusinesscard& card
+	                         , ListGraph::Node node
+	                         , const DeviceInfo& device ) {
+	if ( device.has_time() && device.time() > _dev_mtimes[node] ) {
+		_dev_mtimes[node] = device.time();
+	} else if ( device.has_time() == 0 && _dev_mtimes[node] == 0) {
+		// ok, do nothing
+	} else return 0;
+
+	_dev_bcards[node] = card;
+	for ( const auto& id : device.identifiers() ) _node_by_id[id] = node;
+	return 1;
+}
+
+bool NetworkMap::mergeToGraph( const DeviceBusinesscard& card
+	                         , ListGraph::Node node) {
+	DeviceInfo dev; if ( ! verify(card, dev) ) return 0;
+	return mergeToGraph(card, node, dev);
+}
+
+bool NetworkMap::mergeToGraph( const DeviceBusinesscard& card
+	                         , const DeviceInfo& dev) {
+	return mergeToGraph(card, nodeForDevice(dev), dev);
+}
+
+bool NetworkMap::mergeToGraph(const DeviceBusinesscard& card) {
+	DeviceInfo dev; if ( ! verify(card, dev) ) return 0;
+	return mergeToGraph(card, nodeForDevice(dev), dev);
+}
+
+// Adding links is simpler
 
 bool NetworkMap::addLink(const LinkInfo& link) {
 	if ( _node_by_id.count(link.left()) == 0 ) return 0;
 	if ( _node_by_id.count(link.left()) == 0 ) return 0;
-	auto lnode = _node_by_id[link.left() ];
-	auto rnode = _node_by_id[link.right()];
+	auto lnode = _node_by_id.at(link.left());
+	auto rnode = _node_by_id.at(link.right());
 	ListGraph::Edge edge = findEdge(_graph, lnode, rnode);
 	if ( edge == lemon::INVALID ) { // no link between these nodes before this
 		edge = _graph.addEdge(lnode, rnode);
@@ -153,6 +168,8 @@ bool NetworkMap::addLink(const LinkInfo& link) {
 	}
 }
 
+
+// Merge another graph. TODO: make it generic
 bool NetworkMap::mergeGraph( const Subgraph& sgr ) {
 	if ( sgr.devices_size() == 2 && sgr.links_size() == 1) { //Link announcement
 		DeviceInfo ldev, rdev;
@@ -166,9 +183,10 @@ bool NetworkMap::mergeGraph( const Subgraph& sgr ) {
 		for ( auto& id :rdev.identifiers() ) have_rdev |= _node_by_id.count(id);
 		if ( ! have_ldev && ! have_ldev ) return 0;
 		bool ret;
-		addDevice(rdev);
-		addDevice(ldev);
+		mergeToGraph( sgr.devices(0), ldev);
+		mergeToGraph( sgr.devices(1), rdev);
 		return addLink(link);
 	}
 	return 0;
 }
+

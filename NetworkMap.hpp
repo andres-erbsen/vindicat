@@ -23,20 +23,23 @@ public:
 	TransportSocket* socketTo(const std::string&);
     bool mergeGraph(const Subgraph&);
 	void beacon(TransportSocket*, const DeviceBusinesscard&);
+	bool getDeviceBusinesscard(const std::string&, DeviceBusinesscard&) const;
+
 private:
-    void addDevice(const DeviceInfo&);
+    ListGraph::Node nodeForDevice(const DeviceInfo&);
     bool addLink(const LinkInfo&);
-    void mergeDevice(const DeviceInfo&, ListGraph::Node node);
+
+    bool mergeToGraph(const DeviceBusinesscard&, ListGraph::Node, const DeviceInfo&);
+    bool mergeToGraph(const DeviceBusinesscard&, const DeviceInfo&);
+    bool mergeToGraph(const DeviceBusinesscard&, ListGraph::Node);
+    bool mergeToGraph(const DeviceBusinesscard&);
 
 	ListGraph _graph;
 	ListGraph::Node _our_node;
 
 	typedef std::unordered_map<uint32_t,Forwarding*> ForwardingMap;
-	typedef std::unordered_map<PkencAlgo,std::string> EncKeyMap;
-	typedef std::unordered_map<SigAlgo,std::string> SigKeyMap;
 	ListGraph::NodeMap<ForwardingMap> _forwardings;
-	ListGraph::NodeMap<EncKeyMap> _enckeys;
-	ListGraph::NodeMap<SigKeyMap> _sigkeys;
+	ListGraph::NodeMap<DeviceBusinesscard> _dev_bcards;
 	ListGraph::NodeMap<uint64_t> _dev_mtimes;
 
 	ListGraph::EdgeMap<TransportSocket*> _sockets;
@@ -47,6 +50,7 @@ private:
 	std::unordered_map<std::string,ListGraph::Node> _node_by_id;
 };
 
+# if 0
 // instance Hashable SigAlgo
 namespace std { template <> struct hash<SigAlgo> {
 	size_t operator()(const SigAlgo& algo) const {
@@ -62,5 +66,6 @@ namespace std { template <> struct hash<PkencAlgo> {
 		// return hash<int>()(algo);"
 	}
 }; }
+#endif // 0
 
 #endif // NETWORKMAP_HPP

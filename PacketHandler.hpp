@@ -13,3 +13,7 @@ private:
     // LinkProposal _createLinkProposal(DeviceBusinesscard,LinkStatus,LinkTransport);
     // LinkPromise _signLink(LinkProposal);
 };
+
+
+bool understandEverything(const LinkProposal);
+

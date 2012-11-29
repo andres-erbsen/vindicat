@@ -66,7 +66,53 @@ void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
 		if ( sg.ParseFromArray( packet.data()+1
 							  , packet.size()-1 ) == 0 ) return;
 		_nm.mergeGraph(sg);
-	} else if (tag == 4) { // Beacon packet
+	} else if (tag == 3) {
+		// LinkProposal
+		LinkProposal l_prop;
+		if ( l_prop.ParseFromArray( packet.data()+1
+								  , packet.size()-1 ) == 0 ) return;
+		
+        // Make sure there are no unknown fields in l_prop
+        if ( ! understandEverything(l_prop) ) return;
+        
+        DeviceBusinesscard left_card;
+		{ // Get DeviceBusinesscard of left device
+        	LinkInfo link_unchecked;
+        	if ( ! link_unchecked.ParseFromString(l_prop.link_info_msg()) ) return;
+        	if ( ! _nm.getDeviceBusinesscard(link_unchecked.left(), left_card) ) return;
+		}
+        
+        // Verify signatures
+        DeviceInfo ldev;
+        LinkInfo link;
+        if ( ! verify(left_card, ldev) ) return;
+        if ( ! _crypto_identity.verifyProposal(l_prop, ldev, link) ) return;
+        
+        // IMPORTANT
+        // Before continuing beyond this point,
+        // it's wise to determine if all the fields in l_prop are ok by us.
+        // Right now, there's nothing to check.
+        
+		// Sign
+		Signature sig;
+		if ( _crypto_identity.sign(l_prop.link_info_msg(), sig) == 0 ) return;
+		
+		// Create LinkPromise
+		LinkPromise l_prom;
+		l_prom.set_link_info_msg(l_prop.link_info_msg());
+        l_prop.mutable_left_sigs()->Swap(l_prom.mutable_left_sigs());
+		// WARNING: left sigs of l_prop are now NOT set
+        *l_prom.add_right_sigs() = sig;
+		
+        // Create Subgraph
+        Subgraph sg;
+        *sg.add_devices() = left_card;
+        _crypto_identity.our_businesscard(*sg.add_devices()); // our businesscard
+        *sg.add_links() = l_prom;
+        
+        // Add to map
+        _nm.mergeGraph(sg);
+    } else if (tag == 4) { // Beacon packet
 		// optimize: cache beacon packets, do not parse+verify again if known
 		DeviceBusinesscard card;
 		if ( ! card.ParseFromArray( packet.data()+1, packet.size()-1 ) ) return;

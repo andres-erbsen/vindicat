@@ -79,6 +79,7 @@ bool CryptoIdentity::sign(const std::string& message, Signature& sig) const {
 }
 
 void CryptoIdentity::our_businesscard(DeviceBusinesscard& card) const {
+	// TODO: do not recompute this ecery time!
 	DeviceInfo dev;
 	{
 		SigKey key;
