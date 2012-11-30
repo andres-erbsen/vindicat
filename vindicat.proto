@@ -2,6 +2,7 @@
 option optimize_for = LITE_RUNTIME;
 
 // Algorithm specifiers
+
 enum HashAlgo {
 	IDENTITY_HASH = 1;
 	SHA256 = 2;
@@ -19,6 +20,7 @@ enum PkencAlgo {
 
 
 // Keys
+
 message SigKey { // Signature verification key
 	required SigAlgo algo = 1;
 	required bytes key = 2;
@@ -32,6 +34,7 @@ message EncKey { // Encryption key for public-key encryption
 
 
 // Cryptographic containers
+
 message Signature {
 	required SigAlgo algo = 1;
 	required bytes sig = 2;
@@ -46,6 +49,7 @@ message EncEnvelope {
 
 
 // Actual serialization
+
 message DeviceInfo {
 	repeated SigKey sig_keys = 1;
 	repeated EncKey enc_keys = 2;
@@ -71,6 +75,7 @@ message LinkInfo {
 
 
 // Complicated signed variants of serialised structures
+
 message DeviceBusinesscard {
 	required bytes device_info_msg = 1; // DeviceInfo
 	repeated Signature sigs = 2;
