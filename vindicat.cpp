@@ -3,12 +3,13 @@
 #include "NetworkMap.hpp"
 #include "PacketHandler.hpp"
 #include "Beacon.hpp"
+#include "LinkNegotiator.hpp"
 #include <stdio.h>
 
 #include <ev++.h>
 
 #include <vector>
-#include <assert.h>
+#include <cassert>
 
 int main (int argc, char** argv) {
 	std::vector<Transport*> transports;
@@ -24,7 +25,8 @@ int main (int argc, char** argv) {
 
 	NetworkMap nm;
 	CryptoIdentity ci;
-	PacketHandler hn(nm, ci, transports);
+	LinkNegotiator lneg(nm, ci);
+	PacketHandler hn(nm, ci, transports, lneg);
 
 	for (Transport* tr : transports) tr->onPacket(hn);
 	for (Transport* tr : transports) tr->enable();

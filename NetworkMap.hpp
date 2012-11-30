@@ -12,11 +12,11 @@
 
 using lemon::ListGraph;
 class NetworkMap {
+	friend class LinkNegotiator;
 public:
-	typedef ListGraph::Node Node;
 	NetworkMap();
+
 	bool addSocket(TransportSocket*);
-	TransportSocket* socketTo(const std::string&);
 
 	// start forwarding packets that come from a socket. true if all ok.
 	bool addForwarding(TransportSocket*, Forwarding*);
@@ -25,7 +25,11 @@ public:
 
     bool mergeGraph(const Subgraph&);
 	void beacon(TransportSocket*, const DeviceBusinesscard&);
-	bool getDeviceBusinesscard(const std::string&, DeviceBusinesscard&) const;
+	bool has_link(TransportSocket*);
+
+	TransportSocket* dev_socket(const std::string&);
+	bool dev_bcard(const std::string&, DeviceBusinesscard&) const;
+	const std::vector<std::string>& dev_ids(TransportSocket*);
 
 private:
     ListGraph::Node nodeForDevice(const DeviceInfo&);
@@ -37,16 +41,18 @@ private:
     bool mergeToGraph(const DeviceBusinesscard&);
 
 	ListGraph _graph;
-	ListGraph::Node _our_node;
 
 	typedef std::unordered_map<uint32_t,Forwarding*> ForwardingMap;
 	ListGraph::NodeMap<ForwardingMap> _forwardings;
 	ListGraph::NodeMap<DeviceBusinesscard> _dev_bcards;
+	ListGraph::NodeMap< std::vector<std::string> > _dev_ids;
 	ListGraph::NodeMap<uint64_t> _dev_mtimes;
 
-	ListGraph::EdgeMap<TransportSocket*> _sockets;
 	ListGraph::EdgeMap<uint64_t> _link_mtimes;
 	ListGraph::EdgeMap<LinkInfo::Status> _link_statuses;
+	ListGraph::EdgeMap<TransportSocket*> _sockets;
+
+	ListGraph::Node _our_node;
 
 	std::unordered_map<TransportSocket*,ListGraph::Edge> _edge_by_sock;
 	std::unordered_map<std::string,ListGraph::Node> _node_by_id;

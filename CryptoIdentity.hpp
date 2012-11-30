@@ -16,8 +16,9 @@ public:
 	bool envelope(const std::string&, EncEnvelope&, std::string, const EncKey&) const;
 	bool open(const EncEnvelope&, std::string&) const;
 	bool sign(const std::string&, Signature&) const;
+
 	void our_businesscard(DeviceBusinesscard&) const;
-	bool verifyProposal(const LinkProposal&, const DeviceInfo&, LinkInfo&);
+	const std::vector<std::string>& our_identifiers() const;
 private:
 	ed25519_secret_key _secretkey_edsig;
 	ed25519_public_key _verkey_edsig;
@@ -37,5 +38,6 @@ bool verify(const DeviceBusinesscard&, DeviceInfo&); // results in $1
 bool verify(const LinkPromise&, const DeviceInfo&
            , const DeviceInfo&, LinkInfo&); // results in $3
 
+bool verify(const LinkProposal&, const DeviceInfo&, LinkInfo&);
 
 #endif // CRYPTOIDENTITY_HPP

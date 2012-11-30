@@ -48,6 +48,7 @@ bool CryptoIdentity::envelope( const std::string& message
 bool CryptoIdentity::open(const EncEnvelope& enc, std::string& dst) const {
 	if ( enc.algo() == PkencAlgo::IDENTITY_ENC ) {
 		dst = enc.ciphertext();
+		return 1;
 	} else if ( enc.algo() == PkencAlgo::CURVE25519XSALSA20POLY1305 ) {
 		std::string nonce = enc.nonce();
 		nonce.resize(crypto_box_NONCEBYTES);
@@ -105,6 +106,10 @@ void CryptoIdentity::our_businesscard(DeviceBusinesscard& card) const {
 
 	dev.Clear();
 	assert( verify(card,dev) );
+}
+
+const std::vector<std::string>& CryptoIdentity::our_identifiers() const {
+	return _our_identifiers;
 }
 
 // TODO: where to put these functions?
@@ -206,9 +211,9 @@ bool verify( const LinkPromise& promise
 }
 
 
-bool CryptoIdentity::verifyProposal( const LinkProposal& proposal
-                                   , const DeviceInfo& ldev
-		                           , LinkInfo& ret) {
+bool verify( const LinkProposal& proposal
+           , const DeviceInfo& ldev
+		   , LinkInfo& ret) {
 	ret.Clear(); // TODO: really not needed?::?
 	if ( ! proposal.has_link_info_msg()
 	  || ! proposal.left_sigs_size() 
@@ -219,8 +224,6 @@ bool CryptoIdentity::verifyProposal( const LinkProposal& proposal
 	return (1 
 	&& std::any_of( ldev.identifiers().begin(), ldev.identifiers().end()
 	              , [&](const std::string& id) {return id == ret.left ();} )
-	&& std::any_of( _our_identifiers.begin(), _our_identifiers.end()
-		          , [&](const std::string& id) {return id == ret.right();} )
 	&& std::any_of( proposal.left_sigs().begin(), proposal.left_sigs().end()
 	              , [&](const Signature& sig) {return verify(msg, sig, ldev);} )
 	);
