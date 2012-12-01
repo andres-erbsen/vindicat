@@ -18,10 +18,10 @@ private:
 	std::vector<Transport*>& _transports;
 	LinkNegotiator& _lneg;
 	void broadcast(const std::string&) const;
+	bool agreeWithFields(const LinkInfo&);
     // LinkProposal _createLinkProposal(DeviceBusinesscard,LinkStatus,LinkTransport);
     // LinkPromise _signLink(LinkProposal);
 };
 
 
 bool understandEverything(const LinkInfo&);
-

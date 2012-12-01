@@ -1,6 +1,7 @@
 // vim: set ts=4 sw=4 :
 #include "PacketHandler.hpp"
 #include "vindicat.pb.h"
+#include <ctime>
 
 PacketHandler::PacketHandler( NetworkMap& nm
                             , CryptoIdentity& ci
@@ -80,26 +81,29 @@ void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
 		if ( l_prop.ParseFromArray( packet.data()+1
 		                          , packet.size()-1 ) == 0 ) return;
 		
+		// Get DeviceInfo of left device according to TransportSocket
 		DeviceBusinesscard left_card;
+		if ( ! _nm.dev_bcard(trs, left_card) ) return;
+		
 		{
 			LinkInfo link_unchecked;
 			if ( ! link_unchecked.ParseFromString(l_prop.link_info_msg()) ) return;
 			// Make sure there are no unknown fields in l_prop
 			if ( ! understandEverything(link_unchecked) ) return;
-			// Get DeviceBusinesscard of left device
-			if ( ! _nm.dev_bcard(link_unchecked.left(), left_card) ) return;
+			// Test if agree with everything in the proposed link
+			if ( ! agreeWithFields(link_unchecked) ) return;
 		}
 		
 		// Verify signatures
 		DeviceInfo ldev;
-		LinkInfo link;
 		if ( ! verify(left_card, ldev) ) return;
+		LinkInfo link;
 		if ( ! verify(l_prop, ldev, link) ) return;
 		
-		// TODO: IMPORTANT
+		// IMPORTANT
 		// Before continuing beyond this point,
-		// it's wise to determine if all the fields in l_prop are ok by us.
-		// Right now, there's nothing to check.
+		// it's wise to determine if all the fields in l_prop are ok by us
+		// Right now, everything has been checked
 		
 		// Sign
 		Signature sig;
@@ -122,7 +126,7 @@ void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
 		_nm.mergeGraph(sg);
 		
 		// Broadcast
-		std::string sg_packet = "\0x02";
+		std::string sg_packet = "\2";
 		if ( ! sg.AppendToString(&sg_packet) ) assert(0);
 		broadcast(sg_packet);
 		
@@ -131,6 +135,7 @@ void PacketHandler::operator()(TransportSocket* trs, std::string packet) {
 		DeviceBusinesscard card;
 		if ( ! card.ParseFromArray( packet.data()+1, packet.size()-1 ) ) return;
 		_nm.beacon(trs, card);
+		if (! _nm.has_link(trs) ) _lneg.beacon(trs);
 	}
 }
 
@@ -140,6 +145,23 @@ void PacketHandler::broadcast(const std::string& packet) const {
 	}
 }
 
+bool PacketHandler::agreeWithFields(const LinkInfo& link) {
+    // Tests if we agree with every field in proposed link
+    // If necessary, add your own tests here
+    
+    // Status is public
+    if ( link.status() != LinkInfo::PUBLIC ) return 0;
+    // Left device is the one sending data - will be tested when verifying signatures
+    // Right device is us
+    if ( ! std::count(_crypto_identity.our_identifiers().begin(), _crypto_identity.our_identifiers().end(), link.right()) ) return 0;
+    // Time is approximately now
+    // Adequate values chosen to be between 20s in the past and 5s in the future
+    if ( (std::time(NULL) - link.time()) > 20 ) return 0;
+    if ( (link.time() - std::time(NULL)) >  5 ) return 0;
+    
+    return 1;
+}
+
 bool understandEverything(const LinkInfo& original) {
 	// Makes sure there are no fields unknown to us in the LinkProposal
 	// Copy all the fields we know,
@@ -147,6 +169,7 @@ bool understandEverything(const LinkInfo& original) {
 	LinkInfo replica;
 	replica.set_status (original.status());
 	replica.set_left   (original.left()  );
+	replica.set_right  (original.right() );
 	if ( original.has_time() ) {
 	  replica.set_time(original.time());
 	}

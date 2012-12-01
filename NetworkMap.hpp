@@ -15,6 +15,7 @@ class NetworkMap {
 	friend class LinkNegotiator;
 public:
 	NetworkMap();
+	void setOurDeviceBusinesscard(const DeviceBusinesscard&);
 
 	bool addSocket(TransportSocket*);
 
@@ -27,10 +28,12 @@ public:
 	void beacon(TransportSocket*, const DeviceBusinesscard&);
 	bool has_link(TransportSocket*);
 
-	TransportSocket* dev_socket(const std::string&);
 	bool dev_bcard(const std::string&, DeviceBusinesscard&) const;
-	const std::vector<std::string>& dev_ids(TransportSocket*);
-
+	bool dev_bcard(TransportSocket*,   DeviceBusinesscard&) const;
+	bool dev_info (const std::string&, DeviceInfo&) const; // with all identifiers
+	bool dev_info (TransportSocket*,   DeviceInfo&) const; // with all identifiers
+	TransportSocket* dev_socket(const std::string&) const;
+	const std::vector<std::string>& dev_ids(TransportSocket*) const;
 private:
     ListGraph::Node nodeForDevice(const DeviceInfo&);
     bool addLink(const LinkInfo&);

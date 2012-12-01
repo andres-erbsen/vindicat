@@ -45,8 +45,9 @@ void UDPServerTransport::incoming() {
 	} else {
 		s = new UDPServerSocket(*this,addr,port);
 		_who[id] = s;
+		_handler(s, "");
 	}
-	_handler(s,buf);
+	_handler(s, buf);
 }
 
 void UDPServerTransport::enable() {

@@ -25,6 +25,7 @@ int main (int argc, char** argv) {
 
 	NetworkMap nm;
 	CryptoIdentity ci;
+	{DeviceBusinesscard c; ci.our_businesscard(c); nm.setOurDeviceBusinesscard(c);}
 	LinkNegotiator lneg(nm, ci);
 	PacketHandler hn(nm, ci, transports, lneg);
 

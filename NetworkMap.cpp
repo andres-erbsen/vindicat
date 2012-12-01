@@ -19,6 +19,11 @@ NetworkMap::NetworkMap()
 	, _our_node( _graph.addNode() )
 	{}
 
+void NetworkMap::setOurDeviceBusinesscard(const DeviceBusinesscard& card) {
+	DeviceInfo dev; if ( ! verify(card, dev) ) assert(0);
+	mergeToGraph(card, _our_node, dev);
+}
+
 bool NetworkMap::addSocket(TransportSocket* trs) {
 	if ( _edge_by_sock.count(trs) ) return 0; // not new
 	// new edge, add a new node of which we know nothing and an edge to it
@@ -29,14 +34,15 @@ bool NetworkMap::addSocket(TransportSocket* trs) {
 	return 1;
 }
 
-TransportSocket* NetworkMap::dev_socket(const std::string& device_id) {
+TransportSocket* NetworkMap::dev_socket(const std::string& device_id) const {
 	auto it = _node_by_id.find( device_id );
 	if ( it == _node_by_id.end() ) return NULL;
 	ListGraph::Edge to_edge = findEdge(_graph, _our_node, it->second);
 	return _sockets[to_edge];
 }
 
-const std::vector<std::string>& NetworkMap::dev_ids(TransportSocket* trs) {
+const std::vector<std::string>&
+NetworkMap::dev_ids(TransportSocket* trs) const {
 	ListGraph::Edge edge = _edge_by_sock.at(trs);
 	ListGraph::Node node = _graph.oppositeNode(_our_node, edge);
 	return _dev_ids[node];
@@ -117,11 +123,19 @@ ListGraph::Node NetworkMap::nodeForDevice(const DeviceInfo& device) {
 }
 
 bool NetworkMap::dev_bcard( const std::string& id
-	                                  , DeviceBusinesscard& r) const {
+	                      , DeviceBusinesscard& r) const {
 	if ( _node_by_id.count(id) == 0 ) return 0;
 	r = _dev_bcards[_node_by_id.at(id)];
 	return 1;
 }
+
+bool NetworkMap::dev_bcard( TransportSocket* trs
+	                      , DeviceBusinesscard& r) const {
+	auto v = dev_ids(trs);
+	if (v.empty()) return 0;
+	return dev_bcard(dev_ids(trs)[0],r);
+}
+
 
 // Adding/updating devices in the graph
 
@@ -200,7 +214,7 @@ bool NetworkMap::mergeGraph( const Subgraph& sgr ) {
 		bool have_ldev = 0, have_rdev = 0;
 		for ( auto& id :ldev.identifiers() ) have_ldev |= _node_by_id.count(id);
 		for ( auto& id :rdev.identifiers() ) have_rdev |= _node_by_id.count(id);
-		if ( ! have_ldev && ! have_ldev ) return 0;
+		if ( ! (have_ldev || have_rdev) ) return 0;
 		mergeToGraph( sgr.devices(0), ldev);
 		mergeToGraph( sgr.devices(1), rdev);
 		return addLink(link);
