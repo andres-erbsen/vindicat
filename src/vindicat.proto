@@ -1,0 +1,68 @@
+// vim: set ts=4 sw=4 :
+option optimize_for = LITE_RUNTIME;
+
+// Algorithm specifiers
+enum SigAlgo   { ED25519 = 1; } // https://github.com/floodyberry/ed25519-donna
+enum PkencAlgo { CURVE25519XSALSA20POLY1305 = 1; } // http://nacl.cr.yp.to/box.html
+
+
+
+message DeviceInfo {
+	repeated SigAlgo   sig_algos = 1;
+	repeated PkencAlgo enc_algos = 2;
+	repeated bytes     sig_keys  = 3;
+	repeated bytes     enc_keys  = 4;
+	optional int64 time = 5; // unix "epoch" format
+}
+
+message DeviceBusinesscard {
+	required bytes device_info_msg = 1; // DeviceInfo
+	repeated bytes sigs = 2;
+}
+
+
+
+message LinkInfo {
+	enum Status { DEAD = 1; PUBLIC = 2;	}
+	  required Status status = 1;
+	required bytes left = 2;  // device identifier (hash prefix)
+	required bytes right = 3; // ^
+	optional int64 time = 4; // unix "epoch" format
+}
+
+message LinkProposal {
+	repeated SigAlgo left_sig_algos = 1;
+	required bytes link_info_msg = 3; // LinkInfo
+	repeated bytes left_sigs = 4;
+}
+
+
+message LinkPromise {
+	repeated SigAlgo left_sig_algos = 1;
+	repeated SigAlgo right_sig_algos = 2;
+	required bytes link_info_msg = 3; // LinkInfo
+	repeated bytes left_sigs = 4;
+	repeated bytes right_sigs = 5;
+}
+
+message Subgraph { // set of nodes and edges...
+	repeated DeviceBusinesscard devices = 1;
+	repeated LinkPromise links = 2;
+}
+
+
+
+message RoutingRequest { // follows static headers
+	required PkencAlgo enc_algo = 1;
+	optional bytes sender_pubkey = 2;
+	required bytes details = 3; // Encrypted Hop
+}
+
+message Hop {
+	enum Type {	UP = 1;	SIMPLE_ONEWAY = 2; SIMPLE_TWOWAY = 3; }
+	  required Type type = 1;
+	required bytes next = 2; // next device's identifier
+	optional PkencAlgo enc_algo = 3; // RoutingRequest.1 for next packet
+	optional bytes sender_pubkey = 4; // RoutingRequest.2 for next packet
+	optional bytes details = 5; // RoutingRequest.3 for next packet
+}
