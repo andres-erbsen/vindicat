@@ -23,8 +23,6 @@ public:
 	const NetworkMap& operator= (const NetworkMap& _) = delete;
 
 	void add(std::shared_ptr<Device>&&); // transfer ownership
-	void link(const Device&, const Device&, std::shared_ptr<Link>&&);
-	// The devices must already exist in the graph! Transfer link ownership.
 	
 	std::vector< std::tuple<
 			std::weak_ptr<Device>, std::weak_ptr<Link>, std::weak_ptr<Device>

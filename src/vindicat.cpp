@@ -1,7 +1,7 @@
 #include "transports/UDPServerTransport.h"
 #include "transports/UDPClientTransport.h"
-#include "Beacon.h"
 #include "PacketHandler.h"
+#include "Beacon.h"
 
 #include <ev++.h>
 
@@ -20,7 +20,8 @@ int main (int argc, char** argv) {
 		} else assert(0);
 	}
 
-	PacketHandler hn;
+	NetworkMap nm;
+	PacketHandler hn(nm);
 	for (Transport* tr : transports) tr->onPacket(hn);	
 	for (Transport* tr : transports) tr->enable();	
 

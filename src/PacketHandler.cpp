@@ -1,14 +1,18 @@
 #include "PacketHandler.h"
 
 #include "vindicat.pb.h"
-#include "Device.h"
 
 #include <iostream>
 
 #include <cstdint>
 
+PacketHandler::PacketHandler(NetworkMap& nm)
+	: _nm(nm)
+	{}
+
 void PacketHandler::operator()(std::shared_ptr<TransportSocket> trs, const std::string& packet) {
 	if (packet.size() == 0) {
+		return;
 	}
 	uint8_t tag = packet[0];
 	if (tag == 0) {
@@ -19,5 +23,7 @@ void PacketHandler::operator()(std::shared_ptr<TransportSocket> trs, const std::
 		auto dev = std::make_shared<Device>();
 		if ( ! dev->parseFrom( std::move(card) ) ) return;
 		std::cout << "received and parsed a card :)" << std::endl;
+
+		_nm.add( std::move(dev) );
 	}
 }
