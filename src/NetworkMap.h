@@ -3,7 +3,7 @@
 
 #include "Transport.h"
 #include "Device.h"
-#include "Link.h"
+class Link;
 
 #include <lemon/list_graph.h>
 

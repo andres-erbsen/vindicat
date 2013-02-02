@@ -24,6 +24,8 @@ public:
 	uint64_t mtime() const;
 	std::vector< std::weak_ptr<DeviceBusinesscard> > cards() const;
 
+	bool verifySignature(const std::string& message, const std::string& sig, SigAlgo algo) const;
+
 	// Pick the best
 	PkencAlgo enc_algo() const;
 	SigAlgo sig_algo() const;

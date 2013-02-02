@@ -1,4 +1,5 @@
 #include "NetworkMap.h"
+#include "Link.h"
 
 #include <lemon/dijkstra.h>
 #include <lemon/maps.h>

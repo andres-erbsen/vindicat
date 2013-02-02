@@ -2,7 +2,7 @@
 #define LINK_H_
 
 #include "vindicat.pb.h"
-#include "Transport.h"
+#include "NetworkMap.h"
 
 #include <vector>
 #include <memory>
@@ -41,7 +41,7 @@ private:
 };
 
 class ForeignLink : public Link {
-	bool parseFrom(std::shared_ptr<LinkPromise>&&);	
+	bool parseFrom(std::shared_ptr<LinkPromise>&&, const NetworkMap&);	
 };
 
 #endif // LINK_H_

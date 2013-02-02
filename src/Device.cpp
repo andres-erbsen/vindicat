@@ -46,6 +46,13 @@ static bool verifySig( const std::string& message
 	return 0;
 }
 
+bool Device::verifySignature(const std::string& message, const std::string& sig, SigAlgo algo) const {
+	auto it = std::find( _sig_algos.begin(), _sig_algos.end(), algo);
+	auto i = it - _sig_algos.begin();
+	return verifySig(message, sig, algo, _sig_keys[i]);
+}
+
+
 // Deserialization
 
 bool Device::parseFrom(std::shared_ptr<DeviceBusinesscard>&& card_p) {

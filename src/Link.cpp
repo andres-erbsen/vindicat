@@ -41,3 +41,8 @@ std::weak_ptr<TransportSocket> DirectLink::tsocket() const {
 	return _tsocket;
 }
 
+
+bool ForeignLink::parseFrom( std::shared_ptr<LinkPromise>&& promise
+                           , const NetworkMap& nm) {
+	
+}
