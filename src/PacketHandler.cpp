@@ -1,16 +1,14 @@
 #include "PacketHandler.h"
-
 #include "vindicat.pb.h"
 
 #include <iostream>
-
 #include <cstdint>
 
 PacketHandler::PacketHandler(NetworkMap& nm)
 	: _nm(nm)
 	{}
 
-void PacketHandler::operator()(std::shared_ptr<TransportSocket> trs, const std::string& packet) {
+void PacketHandler::operator()(std::shared_ptr<TransportSocket> ts, const std::string& packet) {
 	if (packet.size() == 0) {
 		return;
 	}
