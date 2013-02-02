@@ -12,6 +12,8 @@
 class Link {
 public:
 	Link() = default;
+	Link( const std::string&, const std::string&
+	    , uint64_t, std::shared_ptr<LinkPromise>&&);
 	Link(const Link&) = delete;
 	const Link& operator= (const Link&) = delete;
 	virtual ~Link() = default;
@@ -40,8 +42,16 @@ private:
 	std::shared_ptr<TransportSocket>  _tsocket;
 };
 
-class ForeignLink : public Link {
-	bool parseFrom(std::shared_ptr<LinkPromise>&&, const NetworkMap&);	
+class PublicLink : public Link {
+public:
+	PublicLink( const std::string&, const std::string&
+			  , uint64_t, std::shared_ptr<LinkPromise>&&);
+};
+
+class DeadLink : public Link {
+public:
+	DeadLink( const std::string&, const std::string&
+			, uint64_t, std::shared_ptr<LinkPromise>&&);
 };
 
 #endif // LINK_H_

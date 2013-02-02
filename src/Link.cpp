@@ -1,5 +1,13 @@
 #include "Link.h"
 
+Link::Link( const std::string& left_id, const std::string& right_id
+          , uint64_t mtime, std::shared_ptr<LinkPromise>&& promise)
+          : _left_id(left_id)
+          , _right_id(right_id)
+          , _promises{promise}
+          , _mtime(mtime)
+          {}
+
 const std::string& Link::left_id() const {
 	return _left_id;
 }
@@ -41,8 +49,10 @@ std::weak_ptr<TransportSocket> DirectLink::tsocket() const {
 	return _tsocket;
 }
 
+PublicLink::PublicLink( const std::string& left_id, const std::string& right_id
+                      , uint64_t mtime, std::shared_ptr<LinkPromise>&& promise)
+                      : Link(left_id, right_id, mtime, std::move(promise) ) {}
 
-bool ForeignLink::parseFrom( std::shared_ptr<LinkPromise>&& promise
-                           , const NetworkMap& nm) {
-	
-}
+DeadLink::DeadLink( const std::string& left_id, const std::string& right_id
+                  , uint64_t mtime, std::shared_ptr<LinkPromise>&& promise)
+                  : Link(left_id, right_id, mtime, std::move(promise) ) {}
