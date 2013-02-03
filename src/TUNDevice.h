@@ -1,5 +1,5 @@
-#ifndef TUNDEVICE_H
-#define TUNDEVICE_H
+#ifndef TUNDEVICE_H_
+#define TUNDEVICE_H_
 
 #include <string>
 
