@@ -24,7 +24,6 @@ private:
 class UDPClientTransport : public Transport {
 public:
 	UDPClientTransport(const std::string& host, const std::string& port = std::string("30307"));
-	virtual ~UDPClientTransport();
 	void onPacket(packet_callback);
 	void enable();
 	void broadcast(const std::string&);

@@ -37,8 +37,6 @@ void UDPServerTransport::onPacket(packet_callback handler) {
 
 void UDPServerTransport::incoming() {
 	// optmiize: with lower-level programming something lighter than strings
-	delete this; // after call trs->useless() never touch trs again
-	// http://www.parashift.com/c++-faq-lite/delete-this.html
 	// could be used to identify connections.
 	std::string addr, port, id, buf(1500,'\0'); // ethernet MTU size
 	_sock->rcvfrom(buf,addr,port);

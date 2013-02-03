@@ -7,6 +7,7 @@ Forwarding::~Forwarding() {
 	if (auto other = _pair_other.lock() ) {
 		other->detatch();
 		other->_pair_other.reset();
+		// shared_ptr other leaves scope
 	}
 	// The other Forwarding in this pair should be destructed by now
 	// It did not call this Forwarding's destructor again because we

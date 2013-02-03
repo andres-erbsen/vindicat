@@ -13,6 +13,7 @@ public:
 	virtual void send(const std::string&) = 0;
 
 protected:
+	TransportSocket() = default;
 	virtual ~TransportSocket() {};
 };
 
@@ -30,6 +31,9 @@ public:
 	// Transports start in a dormant state. activate this.
 	virtual void enable() = 0;
 	virtual void broadcast(const std::string&) = 0; // send to all
+
+protected:
+	Transport() = default;
 };
 
 #endif // TRANSPORT_H_

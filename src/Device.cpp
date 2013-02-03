@@ -1,5 +1,4 @@
 #include "Device.h"
-#include "Transport.h"
 #include "Forwarding.h"
 #include "CryptoIdentity.h"
 #include "keccak128.h"
@@ -46,6 +45,13 @@ static bool verifySig( const std::string& message
 	}
 	return 0;
 }
+
+bool Device::verifySignature(const std::string& message, const std::string& sig, SigAlgo algo) const {
+	auto it = std::find( _sig_algos.begin(), _sig_algos.end(), algo);
+	auto i = it - _sig_algos.begin();
+	return verifySig(message, sig, algo, _sig_keys[i]);
+}
+
 
 // Deserialization
 
@@ -115,15 +121,6 @@ std::weak_ptr<Forwarding> Device::getForwarding(uint32_t id) {
 
 void Device::removeForwarding(uint32_t id) {
 	_forwardings.erase(id);
-}
-
-
-void Device::tsocket(std::shared_ptr<TransportSocket> socket) {
-	_tsocket = socket;
-}
-
-bool Device::send(const std::string& packet) {
-	_tsocket->send(packet);
 }
 
 

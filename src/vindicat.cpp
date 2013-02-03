@@ -1,7 +1,7 @@
 #include "transports/UDPServerTransport.h"
 #include "transports/UDPClientTransport.h"
-#include "Beacon.h"
 #include "PacketHandler.h"
+#include "Beacon.h"
 
 #include <ev++.h>
 
@@ -20,12 +20,16 @@ int main (int argc, char** argv) {
 		} else assert(0);
 	}
 
-	PacketHandler hn;
+	CryptoIdentity ci;
+	auto our_bcard = std::make_shared<DeviceBusinesscard>();
+	ci.our_businesscard(*our_bcard);
+	auto our_device = std::make_shared<Device>();
+	our_device->parseFrom( std::move(our_bcard) );
+
+	NetworkMap nm( std::move(our_device) );
+	PacketHandler hn(nm);
 	for (Transport* tr : transports) tr->onPacket(hn);	
 	for (Transport* tr : transports) tr->enable();	
-
-	CryptoIdentity ci;
-	DeviceBusinesscard c;
 
 	Beacon bcn(3,ci,transports);
 	bcn.enable();

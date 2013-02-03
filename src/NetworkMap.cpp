@@ -1,15 +1,18 @@
 #include "NetworkMap.h"
+#include "Link.h"
 
 #include <lemon/dijkstra.h>
 #include <lemon/maps.h>
 #include <unordered_map>
 #include <assert.h>
 
-NetworkMap::NetworkMap()
+NetworkMap::NetworkMap(std::shared_ptr<Device>&& our_dev)
 	: _g_device(_graph)
 	, _g_link  (_graph)
 	, _our_node( _graph.addNode() )
-	{}
+	{
+		std::swap(_g_device[_our_node], our_dev);
+	}
 
 void NetworkMap::add(std::shared_ptr<Device>&& dev_p) {
 	assert(dev_p.unique());
@@ -35,6 +38,37 @@ void NetworkMap::add(std::shared_ptr<Device>&& dev_p) {
 		for ( const auto& id : dev_p->ids() ) _node_by_id[id] = node;
 		_g_device[node]->merge( std::move(*dev_p) );
 	}
+}
+
+bool NetworkMap::add(std::shared_ptr<Link>&& link) {
+	lemon::ListGraph::Node left, right;
+	{
+		auto it = _node_by_id.find( link->left_id() );
+		if ( it == _node_by_id.end() ) return 0;
+		left = it->second;
+	}
+	{
+		auto it = _node_by_id.find( link->right_id() );
+		if ( it == _node_by_id.end() ) return 0;
+		right = it->second;
+	}
+	auto edge = _graph.addEdge(left, right);	
+	std::swap(_g_link[edge], link);
+	return 1;
+}
+
+std::weak_ptr<Device> NetworkMap::device(const std::string& id) const {
+	auto it = _node_by_id.find(id);
+	if ( it == _node_by_id.end() ) return std::weak_ptr<Device>();
+	return _g_device[it->second];
+}
+
+std::weak_ptr<TransportSocket>
+NetworkMap::tsock_to(const std::string& id) const {
+	auto it = _node_by_id.find(id);
+	if ( it == _node_by_id.end() ) return std::weak_ptr<TransportSocket>();
+	auto edge = findEdge(_graph, _our_node, it->second);
+	return _g_link[edge]->tsocket();
 }
 
 class Measure {

@@ -2,7 +2,6 @@
 #define DEVICE_H_
 
 class Forwarding;
-class TransportSocket;
 
 #include "vindicat.pb.h"
 
@@ -25,6 +24,8 @@ public:
 	uint64_t mtime() const;
 	std::vector< std::weak_ptr<DeviceBusinesscard> > cards() const;
 
+	bool verifySignature(const std::string& message, const std::string& sig, SigAlgo algo) const;
+
 	// Pick the best
 	PkencAlgo enc_algo() const;
 	SigAlgo sig_algo() const;
@@ -36,9 +37,6 @@ public:
 	void addForwarding(std::shared_ptr<Forwarding>&&);
 	std::weak_ptr<Forwarding> getForwarding(uint32_t);
 	void removeForwarding(uint32_t);
-
-	void tsocket(std::shared_ptr<TransportSocket>);
-	bool send(const std::string&); // send a packet
 
 	void clear();
 
@@ -54,8 +52,6 @@ private:
 	std::vector<std::shared_ptr<DeviceBusinesscard> > _cards;
 
 	std::unordered_map<uint32_t, std::shared_ptr<Forwarding> > _forwardings;
-
-	std::shared_ptr<TransportSocket> _tsocket;
 };
 
 #endif // DEVICE_H_
