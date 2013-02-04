@@ -1,4 +1,5 @@
 #include "TUNDevice.h"
+#include "IPv6.h"
 
 #include <sys/socket.h>
 
@@ -48,12 +49,17 @@ TUNDevice::TUNDevice(const std::string &dev): _fd(-1)
   std::memset(&ifr6, 0, sizeof(struct in6_ifreq));
   ifr6.ifr6_ifindex = ifr.ifr_ifindex;
   // address 0400::/8
+  // TODO: Set this to the current node address
   ifr6.ifr6_addr.s6_addr[0] = 0x04;
   ifr6.ifr6_prefixlen = 8;
   if(ioctl(sockfd, SIOCSIFADDR, &ifr6) < 0)
     goto socket_error;  
   
   close(sockfd);
+  
+  _read_watcher.set<TUNDevice, &TUNDevice::read_cb>(this);
+	_read_watcher.start(_fd, ev::READ);
+  
   return;
 
 socket_error:
@@ -72,4 +78,16 @@ TUNDevice::~TUNDevice()
 int TUNDevice::fd()
 {
   return _fd;
+}
+
+void TUNDevice::read_cb(ev::io &w, int revents)
+{
+  IPv6::Packet packet(1500); 
+  read(_fd, packet.data(), 1500);
+  // Now what?
+}
+
+void TUNDevice::send(const IPv6::Packet &packet)
+{
+  write(_fd, packet.data(), IPv6::Packet::header_length+packet.payload_length());
 }

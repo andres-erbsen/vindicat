@@ -1,6 +1,9 @@
 #ifndef IPV6_H_
 #define IPV6_H_
 
+#include <cstdint>
+#include <ostream>
+
 namespace IPv6
 {
   struct Address
@@ -16,6 +19,7 @@ namespace IPv6
     std::uint8_t *_data;
     std::size_t _data_length;
   public:
+    const static int header_length = 40;
     // Allocate storage and set protocol version
     explicit Packet(std::size_t len);
 
@@ -27,112 +31,38 @@ namespace IPv6
     
     Packet &operator=(const Packet &packet);
     
-    unsigned version() const
-    {
-      return (_data[0] & 0xF0) >> 4;
-    }
+    unsigned version() const;    
+    void version(unsigned ver);
+        
+    unsigned traffic_class() const;    
+    void traffic_class(unsigned tr);
+        
+    std::uint32_t flow_label() const;
+    void flow_label(std::uint32_t label);
     
-    void version(unsigned ver)
-    {
-      _data[0] = (_data[0] & 0x0F) | ((ver << 4) & 0xF0);
-    }
+    std::uint16_t payload_length() const;
+    void payload_length(std::uint16_t len);
     
-    unsigned traffic_class() const
-    {
-      return (_data[0] & 0x0F) | (_data[1] & 0xF0);
-    }
+    unsigned next_header() const;    
+    void next_header(unsigned header);
+        
+    unsigned hop_limit() const;
+    void hop_limit(unsigned limit);
     
-    void traffic_class(unsigned tr)
-    {
-      _data[0] = (_data[0] & 0xF0) | ((tr >> 4) & 0x0F);
-      _data[1] = (_data[1] & 0x0F) | ((tr << 4) & 0xF0);
-    }
+    Address source() const;
+    void source(const Address &src);
     
-    std::uint32_t flow_label() const
-    {
-      return ntohl(((_data[1]&0x0F)<<8)|(_data[2]<<16)|(_data[3]<<24));
-    }
+    Address destination() const;
+    void destination(const Address &dst);
     
-    void flow_label(std::uint32_t label)
-    {
-      std::uint8_t label_n[4];
-      label = htonl(label);
-      memcpy(label_n, reinterpret_cast<void*>(&label), 4);
-      _data[1] = (_data[1] & 0xF0) | (label_n[1] & 0x0F);
-      _data[2] = label_n[2];
-      _data[3] = label_n[3];
-    }
+    std::uint8_t *payload();
+    const std::uint8_t *payload() const;
+    std::uint8_t *data();
+    const std::uint8_t *data() const;
     
-    std::uint16_t payload_length() const
-    {
-      return ntohs(_data[4] | (_data[5] << 8));
-    }
-    
-    void payload_length(std::uint16_t len)
-    {
-      len = htons(len);
-      _data[4] = len & 0xFF;
-      _data[5] = (len >> 8) & 0xFF;
-    }
-    
-    unsigned next_header() const
-    {
-      return _data[6];
-    }
-    
-    void next_header(unsigned header)
-    {
-      _data[6] = header;
-    }
-    
-    unsigned hop_limit() const
-    {
-      return _data[7];
-    }
-    
-    void hop_limit(unsigned limit) const
-    {
-      _data[7] = limit;
-    }
-    
-    Address source() const
-    {
-      Address ret;
-      std::memcpy(ret.address, _data+8, 16);
-      return ret;
-    }
-    
-    void source(const Address &src)
-    {
-      std::memcpy(_data+8, src.address, 16);
-    }
-    
-    Address destination() const
-    {
-      Address ret;
-      std::memcpy(ret.address, _data+24, 16);
-      return ret;
-    }
-    
-    void destination(const Address &dst)
-    {
-      std::memcpy(_data+24, dst.address, 16);
-    }
-    
-    std::uint8_t *payload()
-    {
-      return _data+40;
-    }
-    
-    std::uint8_t *data()
-    {
-      return _data;
-    }
+    static Packet reassemble(const Address &src, const Address &dst,
+      std::uint8_t next_header, const std::uint8_t *payload,
+      std::size_t payload_length);
   };
-  
-  Packet reassembleTCP(const Address &src, const Address &dst,
-    const std::uint8_t *payload, std::uint32_t length);  
-  Packet reassembleUDP(const Address &src, const Address &dst,
-    const std::uint8_t *payload, std::uint32_t length);
 }
 #endif
