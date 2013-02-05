@@ -21,8 +21,9 @@ include_directories(${PROTOBUF_INCLUDE_DIRS})
 include_directories(${LEMON_INCLUDE_DIRS})
 include_directories(${NACL_INCLUDE_DIRS})
 # The following are needed for compiling against internal nacl
-include_directories(${CMAKE_BINARY_DIR}/nacl_build/include_internal)
-include_directories(${CMAKE_BINARY_DIR}/nacl_build/crypto_box/curve25519xsalsa20poly1305)
+# Internal nacl is broken
+#include_directories(${CMAKE_BINARY_DIR}/nacl_build/include_internal)
+#include_directories(${CMAKE_BINARY_DIR}/nacl_build/crypto_box/curve25519xsalsa20poly1305)
 
 FILE(GLOB_RECURSE srcs src/*.c src/*.cc src/*.cpp)
 FILE(GLOB_RECURSE libs lib/libsocket/*.c lib/ed25519-donna/*.c lib/keccak/*.c lib/libev/ev.c lib/libev/event.c)
