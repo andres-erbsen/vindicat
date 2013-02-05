@@ -3,6 +3,9 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <iomanip>
+#include <stdexcept>
+#include <system_error>
+#include <unistd.h>
 
 IPv6::Address::Address()
 {
@@ -183,3 +186,24 @@ IPv6::Packet IPv6::Packet::reassemble(const IPv6::Address &src,
   std::memcpy(ret.payload(), payload, payload_length);
   return ret;
 }
+
+IPv6::Packet IPv6::Packet::read(int fd)
+{
+  IPv6::Packet header(IPv6::Packet::header_length);
+  ssize_t bytes = ::read(fd, header.data(), IPv6::Packet::header_length); 
+  if(bytes == -1)
+    throw std::system_error(errno, std::system_category());
+  if(bytes != IPv6::Packet::header_length)
+      throw std::runtime_error("Read error");
+  if(header.version() != 6)
+    throw std::runtime_error("IPv6 packet version mismatch");
+  IPv6::Packet packet(IPv6::Packet::header_length+packet.payload_length());
+  std::memcpy(packet.data(), header.data(), IPv6::Packet::header_length);
+  bytes = ::read(fd, packet.payload(), header.payload_length());
+  if(bytes == -1)
+    throw std::system_error(errno, std::system_category());
+  if(bytes != header.payload_length())
+    throw std::runtime_error("Read error");
+  return packet;
+}
+

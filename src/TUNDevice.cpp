@@ -82,8 +82,7 @@ int TUNDevice::fd()
 
 void TUNDevice::read_cb(ev::io &w, int revents)
 {
-  IPv6::Packet packet(1500); 
-  read(_fd, packet.data(), 1500);
+  IPv6::Packet packet = IPv6::Packet::read(_fd);
   // Now what?
 }
 
