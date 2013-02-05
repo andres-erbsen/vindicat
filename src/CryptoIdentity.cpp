@@ -6,7 +6,7 @@
 #include <ctime>
 #include <cassert>
 
-CryptoIdentity::CryptoIdentity() {
+CryptoIdentity::CryptoIdentity(): _our_businesscard(new DeviceBusinesscard) {
 	randombytes(_secretkey_edsig, sizeof(ed25519_secret_key));	
 	ed25519_publickey(_secretkey_edsig, &(_verkey_edsig[0]));
 
