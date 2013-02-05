@@ -11,6 +11,7 @@ CryptoIdentity::CryptoIdentity() {
 	ed25519_publickey(_secretkey_edsig, &(_verkey_edsig[0]));
 
 	_enckey_naclbox = crypto_box_keypair(&_secretkey_naclbox);;
+	update_businesscard();
 };
 
 bool CryptoIdentity::encrypt( const std::string& message
@@ -65,8 +66,7 @@ bool CryptoIdentity::sign(const std::string& message, SigAlgo algo, std::string&
 
 
 
-void CryptoIdentity::our_businesscard(DeviceBusinesscard& card) const {
-	// TODO: do not recompute this ecery time!
+void CryptoIdentity::update_businesscard() {
 	DeviceInfo dev;
 	dev.add_sig_algos( SigAlgo::ED25519 );
 	*dev.add_sig_keys() = std::string( reinterpret_cast<const char*>(_verkey_edsig)
@@ -77,7 +77,10 @@ void CryptoIdentity::our_businesscard(DeviceBusinesscard& card) const {
 
 	dev.set_time( std::time(NULL) );
 
-	card.set_device_info_msg( dev.SerializeAsString() );
-	sign(card.device_info_msg(), SigAlgo::ED25519, *card.add_sigs());
+	_our_businesscard->set_device_info_msg( dev.SerializeAsString() );
+	sign(_our_businesscard->device_info_msg(), SigAlgo::ED25519, *_our_businesscard->add_sigs());
 }
 
+std::shared_ptr<DeviceBusinesscard> CryptoIdentity::our_businesscard() const {
+	return _our_businesscard;
+}
