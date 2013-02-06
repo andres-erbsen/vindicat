@@ -19,7 +19,6 @@ public:
   TUNInterface(const TUNInterface &) = delete;
   ~TUNInterface();
   TUNInterface &operator=(const TUNInterface &) = delete;
-  int fd();
   void read_cb(ev::io &w, int revents);
   void send(const IPv6::Packet &packet);
 };

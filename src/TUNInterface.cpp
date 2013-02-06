@@ -75,11 +75,6 @@ TUNInterface::~TUNInterface()
   close(_fd);
 }
 
-int TUNInterface::fd()
-{
-  return _fd;
-}
-
 void TUNInterface::read_cb(ev::io &w, int revents)
 {
   IPv6::Packet packet = IPv6::Packet::read(_fd);
