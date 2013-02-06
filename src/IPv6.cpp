@@ -3,7 +3,7 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <iomanip>
-#include <stdexcept>
+#include <cassert>
 #include <system_error>
 #include <unistd.h>
 
@@ -187,23 +187,28 @@ IPv6::Packet IPv6::Packet::reassemble(const IPv6::Address &src,
   return ret;
 }
 
+IPv6::Packet IPv6::Packet::reassemble(const IPv6::Address &src,
+  const IPv6::Address &dst, std::uint8_t next_header,
+  const std::string &payload)
+{
+  return IPv6::Packet::reassemble(src, dst, next_header,
+    reinterpret_cast<const std::uint8_t*>(payload.c_str()), payload.size());
+}
+
 IPv6::Packet IPv6::Packet::read(int fd)
 {
   IPv6::Packet header(IPv6::Packet::header_length);
   ssize_t bytes = ::read(fd, header.data(), IPv6::Packet::header_length); 
   if(bytes == -1)
     throw std::system_error(errno, std::system_category());
-  if(bytes != IPv6::Packet::header_length)
-      throw std::runtime_error("Read error");
-  if(header.version() != 6)
-    throw std::runtime_error("IPv6 packet version mismatch");
+  assert(bytes == IPv6::Packet::header_length);
+  assert(header.version() == 6);
   IPv6::Packet packet(IPv6::Packet::header_length+packet.payload_length());
   std::memcpy(packet.data(), header.data(), IPv6::Packet::header_length);
   bytes = ::read(fd, packet.payload(), header.payload_length());
   if(bytes == -1)
     throw std::system_error(errno, std::system_category());
-  if(bytes != header.payload_length())
-    throw std::runtime_error("Read error");
+  assert(bytes == header.payload_length());
   return packet;
 }
 

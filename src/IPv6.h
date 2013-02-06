@@ -63,6 +63,8 @@ namespace IPv6
     static Packet reassemble(const Address &src, const Address &dst,
       std::uint8_t next_header, const std::uint8_t *payload,
       std::size_t payload_length);
+    static Packet reassemble(const Address &src, const Address &dst,
+      std::uint8_t next_header, const std::string &payload);
     static Packet read(int fd);
   };
 }

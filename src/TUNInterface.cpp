@@ -1,4 +1,4 @@
-#include "TUNDevice.h"
+#include "TUNInterface.h"
 #include "IPv6.h"
 
 #include <sys/socket.h>
@@ -15,7 +15,7 @@
 #include <system_error>
 #include <unistd.h>
 
-TUNDevice::TUNDevice(const std::string &device_hash, const std::string &dev): _fd(-1)
+TUNInterface::TUNInterface(const std::string &device_hash, const std::string &dev): _fd(-1)
 {
   struct ifreq ifr;
   struct in6_ifreq ifr6;
@@ -57,7 +57,7 @@ TUNDevice::TUNDevice(const std::string &device_hash, const std::string &dev): _f
   
   close(sockfd);
   
-  _read_watcher.set<TUNDevice, &TUNDevice::read_cb>(this);
+  _read_watcher.set<TUNInterface, &TUNInterface::read_cb>(this);
   _read_watcher.start(_fd, ev::READ);
   
   return;
@@ -70,23 +70,23 @@ throw_error:
   throw std::system_error(errno, std::system_category());
 }
 
-TUNDevice::~TUNDevice()
+TUNInterface::~TUNInterface()
 {
   close(_fd);
 }
 
-int TUNDevice::fd()
+int TUNInterface::fd()
 {
   return _fd;
 }
 
-void TUNDevice::read_cb(ev::io &w, int revents)
+void TUNInterface::read_cb(ev::io &w, int revents)
 {
   IPv6::Packet packet = IPv6::Packet::read(_fd);
   // Now what?
 }
 
-void TUNDevice::send(const IPv6::Packet &packet)
+void TUNInterface::send(const IPv6::Packet &packet)
 {
   write(_fd, packet.data(), IPv6::Packet::header_length+packet.payload_length());
 }
