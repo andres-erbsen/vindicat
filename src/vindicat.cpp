@@ -21,8 +21,7 @@ int main (int argc, char** argv) {
 	}
 
 	CryptoIdentity ci;
-	auto our_bcard = std::make_shared<DeviceBusinesscard>();
-	ci.our_businesscard(*our_bcard);
+	auto our_bcard = ci.our_businesscard();
 	auto our_device = std::make_shared<Device>();
 	our_device->parseFrom( std::move(our_bcard) );
 
