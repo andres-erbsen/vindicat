@@ -78,7 +78,7 @@ TUNInterface::~TUNInterface()
 void TUNInterface::read_cb(ev::io &w, int revents)
 {
   IPv6::Packet packet = IPv6::Packet::read(_fd);
-  // Now call _receive_cb(dst_device_hash, next_header_and_payload) 
+  // Now what?
 }
 
 void TUNInterface::send(const IPv6::Packet &packet)
