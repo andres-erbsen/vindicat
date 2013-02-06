@@ -9,12 +9,12 @@ class TransportSocket {
 public:
 	TransportSocket(const TransportSocket&) = delete;
 	const TransportSocket& operator= (const TransportSocket&) = delete;	
+	virtual ~TransportSocket() {};
 
 	virtual void send(const std::string&) = 0;
 
 protected:
 	TransportSocket() = default;
-	virtual ~TransportSocket() {};
 };
 
 
@@ -25,6 +25,7 @@ class Transport {
 public:
 	Transport(const Transport&) = delete;
 	const Transport& operator= (const Transport&) = delete;	
+	virtual ~Transport() {};
 
 	// set the receive callback
 	virtual void onPacket(packet_callback) = 0;	

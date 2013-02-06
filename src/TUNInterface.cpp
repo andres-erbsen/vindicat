@@ -77,7 +77,8 @@ TUNInterface::~TUNInterface()
 
 void TUNInterface::read_cb(ev::io &w, int revents) const
 {
-  _callback(*this, IPv6::Packet::read(_fd));
+  IPv6::Packet packet = IPv6::Packet::read(_fd);
+  // Now call _receive_cb(dst_device_hash, next_header_and_payload) 
 }
 
 void TUNInterface::onPacket(tun_callback cb)

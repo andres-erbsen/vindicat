@@ -1,6 +1,8 @@
 #include "transports/UDPServerTransport.h"
 #include "transports/UDPClientTransport.h"
 #include "PacketHandler.h"
+#include "InterfaceHandler.h"
+#include "TUNInterface.h"
 #include "Beacon.h"
 
 #include <ev++.h>
@@ -26,12 +28,19 @@ int main (int argc, char** argv) {
 	our_device->parseFrom( std::move(our_bcard) );
 
 	NetworkMap nm( std::move(our_device) );
-	PacketHandler hn(nm);
-	for (Transport* tr : transports) tr->onPacket(hn);	
+	ConnectionPool cp;
+
+	PacketHandler phn(nm);
+	for (Transport* tr : transports) tr->onPacket(phn);
 	for (Transport* tr : transports) tr->enable();	
+
+	InterfaceHandler ihn(nm, cp);
 
 	Beacon bcn(3,ci,transports);
 	bcn.enable();
+
+	TUNInterface tun(our_device->id());
+	tun.onPacket(ihn);
 
 	ev_run (EV_DEFAULT_ 0);	
 }
