@@ -57,7 +57,7 @@ TUNInterface::TUNInterface(const std::string &device_hash, const std::string &de
   
   close(sockfd);
   
-  _read_watcher.set<const TUNInterface, &TUNInterface::read_cb>(this);
+  _read_watcher.set<TUNInterface, &TUNInterface::read_cb>(this);
   _read_watcher.start(_fd, ev::READ);
   
   return;
@@ -75,18 +75,13 @@ TUNInterface::~TUNInterface()
   close(_fd);
 }
 
-void TUNInterface::read_cb(ev::io &w, int revents) const
+void TUNInterface::read_cb(ev::io &w, int revents)
 {
   IPv6::Packet packet = IPv6::Packet::read(_fd);
-  // Now what?
+  // Now call _receive_cb(dst_device_hash, next_header_and_payload) 
 }
 
-void TUNInterface::onPacket(tun_callback cb)
-{
-  _callback = cb;
-}
-
-void TUNInterface::send(const IPv6::Packet &packet) const
+void TUNInterface::send(const IPv6::Packet &packet)
 {
   write(_fd, packet.data(), IPv6::Packet::header_length+packet.payload_length());
 }
