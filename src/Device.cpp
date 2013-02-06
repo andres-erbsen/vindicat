@@ -57,7 +57,6 @@ bool Device::verifySignature(const std::string& message, const std::string& sig,
 
 bool Device::parseFrom(std::shared_ptr<DeviceBusinesscard>&& card_p) {
 	clear();
-	assert (card_p.unique());
 	// Is there any hope to use this bcard at all?
 	DeviceInfo dev_info;
 	if ( ! card_p->has_device_info_msg() 

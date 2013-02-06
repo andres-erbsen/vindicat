@@ -2,13 +2,9 @@
 #define TUNDEVICE_H_
 
 #include "Interface.h"
+#include "IPv6.h"
 #include <ev++.h>
 #include <string>
-
-namespace IPv6
-{
-  class Packet;
-}
 
 class TUNInterface : public Interface
 {
@@ -24,6 +20,7 @@ private:
   ev::io _read_watcher;
   int _fd;
   void read_cb(ev::io &w, int revents);
+  IPv6::Address _address;
 };
 
 #endif

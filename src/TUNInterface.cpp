@@ -48,9 +48,9 @@ TUNInterface::TUNInterface(const std::string &device_hash, const std::string &de
     goto socket_error;
   std::memset(&ifr6, 0, sizeof(struct in6_ifreq));
   ifr6.ifr6_ifindex = ifr.ifr_ifindex;
-  ifr6.ifr6_addr.s6_addr[0] = 0x04;
+  _address.address[0] = ifr6.ifr6_addr.s6_addr[0] = 0x04;
   for(int i = 0; i < 15; i++)
-    ifr6.ifr6_addr.s6_addr[i+1] = device_hash.at(i);
+    _address.address[i+1] = ifr6.ifr6_addr.s6_addr[i+1] = device_hash.at(i);
   ifr6.ifr6_prefixlen = 8;
   if(ioctl(sockfd, SIOCSIFADDR, &ifr6) < 0)
     goto socket_error;  
@@ -78,10 +78,31 @@ TUNInterface::~TUNInterface()
 void TUNInterface::read_cb(ev::io &w, int revents)
 {
   IPv6::Packet packet = IPv6::Packet::read(_fd);
-  // Now call _receive_cb(dst_device_hash, next_header_and_payload) 
+  // Now call _receive_cb(dst_device_hash, next_header_and_payload)
+  _receive_cb(std::string(reinterpret_cast<char*>(packet.destination().address)+1,
+                          15),
+	      std::string(1, packet.next_header())+
+	          std::string(reinterpret_cast<char*>(packet.payload()),
+                              packet.payload_length()));
 }
 
 void TUNInterface::send(const IPv6::Packet &packet)
 {
   write(_fd, packet.data(), IPv6::Packet::header_length+packet.payload_length());
 }
+
+void TUNInterface::send(const std::string &from_id, const std::string& packet)
+{
+  IPv6::Packet out(packet.size()-1+IPv6::Packet::header_length);
+  out.next_header(packet[0]);
+  out.payload_length(packet.size()-1);
+  out.destination(_address);
+  IPv6::Address src;
+  src.address[0] = 0x04;
+  for(int i = 0; i < 15; i++)
+    src.address[i+1] = from_id.at(i);
+  out.source(src);
+  std::memcpy(out.payload(), packet.c_str()+1, packet.size()-1);	
+  send(out);
+}
+
