@@ -1,0 +1,55 @@
+#include "nacl25519_nm.h"
+
+#include <randombytes.h>
+#include <cassert>
+
+nacl25519_nm::nacl25519_nm(const std::string& pubk, const std::string& seck) {
+	assert(seck.size() == crypto_box_SECRETKEYBYTES);
+	for (int i=0; i<crypto_box_SECRETKEYBYTES; ++i) _sk[i] = seck[i];
+	pk(pubk);
+}
+
+nacl25519_nm::nacl25519_nm(const std::string& pubk) {
+	randombytes(_sk, crypto_box_SECRETKEYBYTES);
+	pk(pubk);
+}
+
+
+void nacl25519_nm::pk(const std::string& pubk) {
+	assert(pubk.size() == crypto_box_PUBLICKEYBYTES);
+	for (int i=0; i<crypto_box_PUBLICKEYBYTES; ++i) _pk[i] = pubk[i];
+	crypto_box_beforenm(_k,_pk,_sk);
+}
+
+std::string nacl25519_nm::
+encrypt(const std::string& m, const std::string& n) const {
+	if (n.size() != crypto_box_NONCEBYTES) throw "incorrect nonce length";	
+	int mlen = m.size() + crypto_box_ZEROBYTES;
+	unsigned char mpad[mlen];
+	for (int i=0; i< crypto_box_ZEROBYTES; ++i) mpad[i] = 0;
+	for (int i=crypto_box_ZEROBYTES; i<mlen; ++i)
+		mpad[i] = m[i - crypto_box_ZEROBYTES];
+	unsigned char cpad[mlen];
+	crypto_box_afternm(cpad, mpad, mlen, (const unsigned char*) n.data(), _k);
+	return std::string(	(char*) cpad+crypto_box_BOXZEROBYTES,
+			mlen-crypto_box_BOXZEROBYTES );
+}
+
+bool nacl25519_nm::
+decrypt(const std::string& c, const std::string& n, std::string& m) const {
+	if (n.size() != crypto_box_NONCEBYTES) throw "incorrect nonce length";	
+	int clen = c.size() + crypto_box_BOXZEROBYTES;
+	unsigned char cpad[clen];
+	for (int i = 0;i < crypto_box_BOXZEROBYTES;++i) cpad[i] = 0;
+	for (int i = crypto_box_BOXZEROBYTES;i < clen;++i)
+		cpad[i] = c[i - crypto_box_BOXZEROBYTES];
+	unsigned char mpad[clen];
+	if (crypto_box_open_afternm(mpad,cpad,clen,
+			(const unsigned char *) n.data(), _k ) != 0) {
+		return 0;
+	}
+	m = std::string( (char *) mpad + crypto_box_ZEROBYTES,
+		clen - crypto_box_ZEROBYTES );	
+	return 1;
+}
+
