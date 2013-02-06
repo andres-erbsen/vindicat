@@ -6,9 +6,7 @@ Beacon::Beacon( int interval
               : _msg("\4")
               , _transports(v_tr)
 {
-	DeviceBusinesscard card;
-	ci.our_businesscard(card);
-	card.AppendToString(&_msg);
+	ci.our_businesscard()->AppendToString(&_msg);
 	_w.set(0.00001,interval);
 	_w.set(this);
 }
