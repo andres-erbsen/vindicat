@@ -25,9 +25,9 @@ class TUNInterface
   TUNInterface(const TUNInterface &) = delete;
   ~TUNInterface();
   TUNInterface &operator=(const TUNInterface &) = delete;
-  void read_cb(ev::io &w, int revents);
+  void read_cb(ev::io &w, int revents) const;
   void onPacket(tun_callback cb);
-  void send(const IPv6::Packet &packet);
+  void send(const IPv6::Packet &packet) const;
 };
 
 #endif

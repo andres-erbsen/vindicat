@@ -75,7 +75,7 @@ TUNInterface::~TUNInterface()
   close(_fd);
 }
 
-void TUNInterface::read_cb(ev::io &w, int revents)
+void TUNInterface::read_cb(ev::io &w, int revents) const
 {
   _callback(*this, IPv6::Packet::read(_fd));
 }
@@ -85,7 +85,7 @@ void TUNInterface::onPacket(tun_callback cb)
   _callback = cb;
 }
 
-void TUNInterface::send(const IPv6::Packet &packet)
+void TUNInterface::send(const IPv6::Packet &packet) const
 {
   write(_fd, packet.data(), IPv6::Packet::header_length+packet.payload_length());
 }
