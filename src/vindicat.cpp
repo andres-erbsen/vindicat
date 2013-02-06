@@ -27,6 +27,8 @@ int main (int argc, char** argv) {
 	auto our_device = std::make_shared<Device>();
 	our_device->parseFrom( std::move(our_bcard) );
 
+	TUNInterface tun(our_device->id());
+
 	NetworkMap nm( std::move(our_device) );
 	ConnectionPool cp;
 
@@ -39,7 +41,6 @@ int main (int argc, char** argv) {
 	Beacon bcn(3,ci,transports);
 	bcn.enable();
 
-	TUNInterface tun(our_device->id());
 	tun.onPacket(ihn);
 
 	ev_run (EV_DEFAULT_ 0);	
