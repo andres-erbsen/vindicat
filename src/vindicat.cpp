@@ -28,7 +28,6 @@ int main (int argc, char** argv) {
 	our_device->parseFrom( std::move(our_bcard) );
 
 	TUNInterface tun(our_device->id());
-
 	NetworkMap nm( std::move(our_device) );
 	ConnectionPool cp;
 
