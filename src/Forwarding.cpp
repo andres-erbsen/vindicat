@@ -18,6 +18,11 @@ uint32_t Forwarding::id() {
 	return _id;
 }
 
+bool Forwarding::forward(const std::string& packet) {
+    auto pair_other = _pair_other.lock();
+    assert(pair_other);
+    return pair_other->forward_out(packet);
+}
 
 
 void ForeignForwarding::detatch() {
@@ -26,8 +31,34 @@ void ForeignForwarding::detatch() {
 	owner->removeForwarding(id());
 }
 
-bool ForeignForwarding::forward_out(const std::string& packet) {
-	auto owner = _owner.lock();
-	assert(owner);
-	return owner->send(packet);
+
+SimpleForwarding::SimpleForwarding(NetworkMap& nm)
+    : _nm(nm)
+    {}
+
+bool SimpleForwarding::forward_out(const std::string& packet) {
+    auto owner = _owner.lock();
+    assert(owner);
+    // Get pointer to transportsocket to owner from NetworkMap
+    auto tsock = _nm.tsock_to(owner->id()).lock();
+    // Return false if no pointer to transportsocket
+    if (!tsock) return false;
+    // Send to tsock
+    tsock->send(packet);
+    return true;
+}
+
+
+bool NoForwarding::forward_out(const std::string& packet) {
+    (void)packet;
+    return false;
+}
+
+
+void UpForwarding::detach() {
+    assert(0); // TODO
+}
+
+bool UpForwarding::forward_out(const std::string& packet) {
+    assert(0); // TODO
 }
