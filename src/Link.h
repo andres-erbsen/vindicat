@@ -26,8 +26,6 @@ public:
 	virtual double measure() const;
 	virtual std::weak_ptr<TransportSocket> tsocket() const;
 
-	virtual void merge(Link&&); // TODO: implement	
-
 protected:
 	std::string _left_id, _right_id;
 	std::vector< std::shared_ptr<LinkPromise> > _promises;	
