@@ -57,7 +57,7 @@ TUNInterface::TUNInterface(const std::string &device_hash, const std::string &de
   
   close(sockfd);
   
-  _read_watcher.set<TUNInterface, &TUNInterface::read_cb>(this);
+  _read_watcher.set<const TUNInterface, &TUNInterface::read_cb>(this);
   _read_watcher.start(_fd, ev::READ);
   
   return;
