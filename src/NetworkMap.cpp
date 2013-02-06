@@ -53,8 +53,12 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
 		right = it->second;
 	}
 	auto edge = _graph.addEdge(left, right);	
-	std::swap(_g_link[edge], link);
-	return 1;
+	if ( _g_link[edge]->mtime() < link->mtime() ) {
+		std::swap(_g_link[edge], link);
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 std::weak_ptr<Device> NetworkMap::device(const std::string& id) const {
