@@ -15,7 +15,7 @@ class TUNDevice
   int _fd;
   ev::io _read_watcher;
 public:
-  TUNDevice(const std::string &dev = std::string("tun%d"));
+  TUNDevice(const std::string &device_hash, const std::string &dev = std::string("tun%d"));
   TUNDevice(const TUNDevice &) = delete;
   ~TUNDevice();
   TUNDevice &operator=(const TUNDevice &) = delete;

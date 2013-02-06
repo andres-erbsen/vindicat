@@ -15,7 +15,7 @@
 #include <system_error>
 #include <unistd.h>
 
-TUNDevice::TUNDevice(const std::string &dev): _fd(-1)
+TUNDevice::TUNDevice(const std::string &device_hash, const std::string &dev): _fd(-1)
 {
   struct ifreq ifr;
   struct in6_ifreq ifr6;
@@ -48,9 +48,9 @@ TUNDevice::TUNDevice(const std::string &dev): _fd(-1)
     goto socket_error;
   std::memset(&ifr6, 0, sizeof(struct in6_ifreq));
   ifr6.ifr6_ifindex = ifr.ifr_ifindex;
-  // address 0400::/8
-  // TODO: Set this to the current node address
   ifr6.ifr6_addr.s6_addr[0] = 0x04;
+  for(int i = 0; i < 15; i++)
+    ifr6.ifr6_addr.s6_addr[i+1] = device_hash.at(i);
   ifr6.ifr6_prefixlen = 8;
   if(ioctl(sockfd, SIOCSIFADDR, &ifr6) < 0)
     goto socket_error;  
@@ -58,7 +58,7 @@ TUNDevice::TUNDevice(const std::string &dev): _fd(-1)
   close(sockfd);
   
   _read_watcher.set<TUNDevice, &TUNDevice::read_cb>(this);
-	_read_watcher.start(_fd, ev::READ);
+  _read_watcher.start(_fd, ev::READ);
   
   return;
 
