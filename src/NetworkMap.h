@@ -3,6 +3,7 @@
 
 #include "Transport.h"
 #include "Device.h"
+#include "PrefixMap.h"
 class Link;
 
 #include <lemon/list_graph.h>
@@ -10,7 +11,6 @@ class Link;
 #include <memory>
 #include <vector>
 #include <tuple>
-#include <unordered_map>
 
 
 // TWO RESPONSIBILITIES :(
@@ -44,7 +44,7 @@ private:
 	lemon::ListGraph _graph;
 	lemon::ListGraph::NodeMap<std::shared_ptr<Device> > _g_device;
 	lemon::ListGraph::EdgeMap<std::shared_ptr<Link> > _g_link;
-	std::unordered_map<std::string,lemon::ListGraph::Node> _node_by_id;
+	PrefixMap<lemon::ListGraph::Node> _node_by_id;
 
 	lemon::ListGraph::Node _our_node;
 };
