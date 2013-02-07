@@ -27,12 +27,9 @@ int main (int argc, char** argv) {
 	auto our_device = std::make_shared<Device>();
 	our_device->parseFrom( std::move(our_bcard) );
 
-	std::unique_ptr<TUNInterface> tun;
-	try {
-		tun = std::unique_ptr<TUNInterface>(new TUNInterface(our_device->id()));
-	} catch(const std::exception& e) {
-		std::cerr << "TUN interface creation failed: " << e.what() << std::endl;
-	}
+	std::unique_ptr<TUNInterface> tun = TUNInterface::open(our_device->id());
+	if(!tun)
+		std::cerr << "TUN interface creation failed" << std::endl;
 	NetworkMap nm( std::move(our_device) );
 	ConnectionPool cp;
 
