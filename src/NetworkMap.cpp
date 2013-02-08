@@ -3,7 +3,7 @@
 
 #include <lemon/dijkstra.h>
 #include <lemon/maps.h>
-#include <unordered_map>
+#include <utility>
 #include <assert.h>
 
 NetworkMap::NetworkMap(std::shared_ptr<Device>&& our_dev)
@@ -29,13 +29,17 @@ void NetworkMap::add(std::shared_ptr<Device>&& dev_p) {
 	lemon::ListGraph::Node node;
 	if ( matching_nodes.empty() ) { // completely new device
 		node = _graph.addNode();
-		for ( const auto& id : dev_p->ids() ) _node_by_id[id] = node;
+		for ( const auto& id : dev_p->ids() ) {
+			_node_by_id.insert( std::make_pair(id,node) );
+		}
 		_g_device[node] = dev_p;
 	} else {
 		assert(matching_nodes.size() == 1);
 		// TODO: handle the case of mutiple matches; when nodes have merged.
 		node = *matching_nodes.begin();
-		for ( const auto& id : dev_p->ids() ) _node_by_id[id] = node;
+		for ( const auto& id : dev_p->ids() ) {
+			_node_by_id.insert( std::make_pair(id,node) );
+		}
 		_g_device[node]->merge( std::move(*dev_p) );
 	}
 }
