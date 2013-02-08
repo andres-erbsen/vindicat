@@ -27,7 +27,9 @@ int main (int argc, char** argv) {
 	auto our_device = std::make_shared<Device>();
 	our_device->parseFrom( std::move(our_bcard) );
 
-	TUNInterface tun(our_device->id());
+	std::unique_ptr<TUNInterface> tun = TUNInterface::open(our_device->id());
+	if(!tun)
+		std::cerr << "TUN interface creation failed" << std::endl;
 	NetworkMap nm( std::move(our_device) );
 	ConnectionPool cp;
 
@@ -39,8 +41,9 @@ int main (int argc, char** argv) {
 
 	Beacon bcn(3,ci,transports);
 	bcn.enable();
-
-	tun.onPacket(ihn);
+	
+	if(tun)
+		tun->onPacket(ihn);
 
 	ev_run (EV_DEFAULT_ 0);	
 }

@@ -3,6 +3,7 @@
 
 #include <sys/socket.h>
 
+#include <cassert>
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
@@ -15,25 +16,27 @@
 #include <system_error>
 #include <unistd.h>
 
-TUNInterface::TUNInterface(const std::string &device_hash, const std::string &dev): _fd(-1)
+std::unique_ptr<TUNInterface> TUNInterface::open(const std::string &device_hash,
+    const std::string &dev)
 {
+  std::unique_ptr<TUNInterface> ret(new TUNInterface);
   struct ifreq ifr;
   struct in6_ifreq ifr6;
   
-  if((_fd = open("/dev/net/tun", O_RDWR)) < 0)
-    goto throw_error;
+  if((ret->_fd = ::open("/dev/net/tun", O_RDWR)) < 0)
+    goto error;
 
-  memset(&ifr, 0, sizeof(ifr));
+  std::memset(&ifr, 0, sizeof(ifr));
 
   ifr.ifr_flags = IFF_TUN | IFF_NO_PI; 
   std::strncpy(ifr.ifr_name, dev.c_str(), IFNAMSIZ);
 
-  if(ioctl(_fd, TUNSETIFF, &ifr) < 0)
-    goto device_error;
+  if(ioctl(ret->_fd, TUNSETIFF, &ifr) < 0)
+    goto error;
 
   int sockfd;
   if((sockfd = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-    goto device_error;
+    goto error;
   if(setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, ifr.ifr_name, IFNAMSIZ) < 0)
     goto socket_error;
 
@@ -48,26 +51,24 @@ TUNInterface::TUNInterface(const std::string &device_hash, const std::string &de
     goto socket_error;
   std::memset(&ifr6, 0, sizeof(struct in6_ifreq));
   ifr6.ifr6_ifindex = ifr.ifr_ifindex;
-  _address.address[0] = ifr6.ifr6_addr.s6_addr[0] = 0x04;
+  ret->_address.address[0] = ifr6.ifr6_addr.s6_addr[0] = 0x04;
   for(int i = 0; i < 15; i++)
-    _address.address[i+1] = ifr6.ifr6_addr.s6_addr[i+1] = device_hash.at(i);
+    ret->_address.address[i+1] = ifr6.ifr6_addr.s6_addr[i+1] = device_hash.at(i);
   ifr6.ifr6_prefixlen = 8;
   if(ioctl(sockfd, SIOCSIFADDR, &ifr6) < 0)
     goto socket_error;  
   
   close(sockfd);
   
-  _read_watcher.set<TUNInterface, &TUNInterface::read_cb>(this);
-  _read_watcher.start(_fd, ev::READ);
+  ret->_read_watcher.set<TUNInterface, &TUNInterface::read_cb>(ret.get());
+  ret->_read_watcher.start(ret->_fd, ev::READ);
   
-  return;
+  return ret;
 
 socket_error:
   close(sockfd);
-device_error:
-  close(_fd);
-throw_error:
-  throw std::system_error(errno, std::system_category());
+error:
+  return std::unique_ptr<TUNInterface>();
 }
 
 TUNInterface::~TUNInterface()
@@ -79,6 +80,7 @@ void TUNInterface::read_cb(ev::io &w, int revents)
 {
   IPv6::Packet packet = IPv6::Packet::read(_fd);
   // Now call _receive_cb(dst_device_hash, next_header_and_payload)
+  assert(packet.destination().address[0] == 0x04);
   _receive_cb(std::string(reinterpret_cast<char*>(packet.destination().address)+1,
                           15),
 	      std::string(1, packet.next_header())+
