@@ -61,7 +61,7 @@ std::shared_ptr<Link> make_link( std::shared_ptr<LinkPromise>&& promise
                                     , info->right()
                                     , info->time()
                                     , std::move(promise) );
-	} else std::shared_ptr<Link>();
+	} else return std::shared_ptr<Link>();
 }
 
 
@@ -75,10 +75,14 @@ void PacketHandler::operator()(std::shared_ptr<TransportSocket> ts, const std::s
 		auto card = std::make_shared<DeviceBusinesscard>();
 		if ( ! card->ParseFromArray( packet.data()+1
 		                           , packet.size()-1 ) ) return;
+		std::cout << "received and parsed a card :)" << std::endl;
 		auto dev = std::make_shared<Device>();
 		if ( ! dev->parseFrom( std::move(card) ) ) return;
-		std::cout << "received and parsed a card :)" << std::endl;
 
-		_nm.add( std::move(dev) );
+		auto link = std::make_shared
+			<DirectLink>(_nm.our_device().id(),std::move(ts),dev->id());
+		_nm.add( std::move(dev)  );
+		_nm.add( std::move(link) );
+		std::cout << "   and added device,link :)" << std::endl;
 	}
 }

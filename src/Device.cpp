@@ -101,11 +101,6 @@ bool Device::parseFrom(std::shared_ptr<DeviceBusinesscard>&& card_p) {
 	return 1;
 }
 
-void Device::merge(Device&& other) {
-	assert(0); // TODO: implement
-}
-
-
 // Device is a container for forwardings...
 
 void Device::addForwarding(std::shared_ptr<Forwarding>&& fwd) {
@@ -122,6 +117,11 @@ void Device::removeForwarding(uint32_t id) {
 	_forwardings.erase(id);
 }
 
+std::shared_ptr<Device> Device::merge(Device&& a, Device&& b) {
+	// TODO: never lose information - merge, don't replace
+	if (a.mtime() > b.mtime()) return std::make_shared<Device>( std::move(a) );
+	else return std::make_shared<Device>( std::move(b) );
+}
 
 void Device::clear() {
 	_sig_keys.clear();

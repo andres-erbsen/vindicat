@@ -16,6 +16,7 @@ class Device {
 public:
 	Device() = default;
 	Device(const Device&) = delete;
+	Device(Device&&) = default;
 	const Device& operator= (const Device&) = delete;
 
 	const std::vector<std::string>& ids() const;
@@ -30,13 +31,14 @@ public:
 	PkencAlgo enc_algo() const;
 	SigAlgo sig_algo() const;
 
-	// Deserialization
-	bool parseFrom(std::shared_ptr<DeviceBusinesscard>&& card_p);
-	void merge(Device&& other); // TODO: implement
-
 	void addForwarding(std::shared_ptr<Forwarding>&&);
 	std::weak_ptr<Forwarding> getForwarding(uint32_t);
 	void removeForwarding(uint32_t);
+
+	// Deserialization
+	bool parseFrom(std::shared_ptr<DeviceBusinesscard>&& card_p);
+
+	static std::shared_ptr<Device> merge(Device&&, Device&&);
 
 	void clear();
 

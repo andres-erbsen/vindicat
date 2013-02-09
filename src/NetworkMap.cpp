@@ -11,6 +11,7 @@ NetworkMap::NetworkMap(std::shared_ptr<Device>&& our_dev)
 	, _g_link  (_graph)
 	, _our_node( _graph.addNode() )
 	{
+		_node_by_id.insert( std::make_pair(our_dev->id(), _our_node) );
 		std::swap(_g_device[_our_node], our_dev);
 	}
 
@@ -29,18 +30,21 @@ void NetworkMap::add(std::shared_ptr<Device>&& dev_p) {
 	lemon::ListGraph::Node node;
 	if ( matching_nodes.empty() ) { // completely new device
 		node = _graph.addNode();
-		for ( const auto& id : dev_p->ids() ) {
-			_node_by_id.insert( std::make_pair(id,node) );
-		}
 		_g_device[node] = dev_p;
 	} else {
 		assert(matching_nodes.size() == 1);
 		// TODO: handle the case of mutiple matches; when nodes have merged.
 		node = *matching_nodes.begin();
-		for ( const auto& id : dev_p->ids() ) {
-			_node_by_id.insert( std::make_pair(id,node) );
+		assert(_g_device[node].unique());
+		for ( const auto& id : _g_device[node]->ids() ) {
+			auto erased = _node_by_id.erase(id);
+			assert(erased == 1);
 		}
-		_g_device[node]->merge( std::move(*dev_p) );
+		_g_device[node] = Device::merge( std::move(*_g_device[node])
+		                               , std::move(*dev_p          ) );
+	}
+	for ( const auto& id : _g_device[node]->ids() ) {
+		_node_by_id.insert( std::make_pair(id,node) );
 	}
 }
 
@@ -57,7 +61,7 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
 		right = it->second;
 	}
 	auto edge = _graph.addEdge(left, right);	
-	if ( _g_link[edge]->mtime() < link->mtime() ) {
+	if ( ! _g_link[edge] || _g_link[edge]->mtime() < link->mtime() ) {
 		std::swap(_g_link[edge], link);
 		return 1;
 	} else {
@@ -69,6 +73,10 @@ std::weak_ptr<Device> NetworkMap::device(const std::string& id) const {
 	auto it = _node_by_id.find(id);
 	if ( it == _node_by_id.end() ) return std::weak_ptr<Device>();
 	return _g_device[it->second];
+}
+
+Device& NetworkMap::our_device() const {
+	return *_g_device[_our_node];
 }
 
 std::weak_ptr<TransportSocket>
