@@ -203,7 +203,7 @@ IPv6::Packet IPv6::Packet::read(int fd)
     throw std::system_error(errno, std::system_category());
   assert(bytes == IPv6::Packet::header_length);
   assert(header.version() == 6);
-  IPv6::Packet packet(IPv6::Packet::header_length+packet.payload_length());
+  IPv6::Packet packet(IPv6::Packet::header_length+header.payload_length());
   std::memcpy(packet.data(), header.data(), IPv6::Packet::header_length);
   bytes = ::read(fd, packet.payload(), header.payload_length());
   if(bytes == -1)
