@@ -61,7 +61,7 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
 		right = it->second;
 	}
 	auto edge = _graph.addEdge(left, right);	
-	if ( _g_link[edge]->mtime() < link->mtime() ) {
+	if ( ! _g_link[edge] || _g_link[edge]->mtime() < link->mtime() ) {
 		std::swap(_g_link[edge], link);
 		return 1;
 	} else {
