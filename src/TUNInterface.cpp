@@ -95,16 +95,10 @@ void TUNInterface::send(const IPv6::Packet &packet)
 
 void TUNInterface::send(const std::string &from_id, const std::string& packet)
 {
-  IPv6::Packet out(packet.size()-1+IPv6::Packet::header_length);
-  out.next_header(packet[0]);
-  out.payload_length(packet.size()-1);
-  out.destination(_address);
   IPv6::Address src;
   src.address[0] = 0x04;
   for(int i = 0; i < 15; i++)
     src.address[i+1] = from_id.at(i);
-  out.source(src);
-  std::memcpy(out.payload(), packet.c_str()+1, packet.size()-1);	
-  send(out);
+  send(IPv6::Packet::reassemble(src, _address, packet[0], packet.substr(1)));
 }
 
