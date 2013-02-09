@@ -99,7 +99,6 @@ void TUNInterface::send(const std::string &from_id, const std::string& packet)
   src.address[0] = 0x04;
   for(int i = 0; i < 15; i++)
     src.address[i+1] = from_id.at(i);
-  send(IPv6::Packet::reassemble(src, _address, packet[0],
-      reinterpret_cast<const std::uint8_t*>(packet.data())+1, packet.size()-1));
+  send(IPv6::Packet::reassemble(src, _address, packet[0], packet.substr(1)));
 }
 
