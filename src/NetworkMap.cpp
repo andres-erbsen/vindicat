@@ -11,6 +11,7 @@ NetworkMap::NetworkMap(std::shared_ptr<Device>&& our_dev)
 	, _g_link  (_graph)
 	, _our_node( _graph.addNode() )
 	{
+		_node_by_id.insert( std::make_pair(our_dev->id(), _our_node) );
 		std::swap(_g_device[_our_node], our_dev);
 	}
 
