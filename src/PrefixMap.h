@@ -53,7 +53,8 @@ size_t PrefixMap<T>::erase(const std::string& prefix) {
 	size_t ret = 0;
 	iterator it(_map.lower_bound(prefix));
 	while (it != _map.end() && it->first.substr(0, prefix.size()) == prefix) {
-		ret += _map.erase(it++);
+		_map.erase(it++);
+		ret++;
 	}
 	return ret;
 }
