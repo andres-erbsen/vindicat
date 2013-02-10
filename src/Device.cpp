@@ -10,6 +10,7 @@
 const std::vector<std::string>&  Device::ids()   const { return _ids;   }
 uint64_t                         Device::mtime() const { return _mtime; }
 PkencAlgo                     Device::enc_algo() const { return _enc_algo; }
+std::string                    Device::enc_key() const { return _enc_key; }
 
 // TOOD: move to an utils file
 template<typename C, typename E>

@@ -29,6 +29,7 @@ public:
 
 	// Pick the best
 	PkencAlgo enc_algo() const;
+	std::string enc_key() const;
 	SigAlgo sig_algo() const;
 
 	void addForwarding(std::shared_ptr<Forwarding>&&);
