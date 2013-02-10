@@ -1,4 +1,5 @@
 #include "nacl25519_nm.h"
+#include <crypto_scalarmult_curve25519.h>
 
 #include <randombytes.h>
 #include <cassert>
@@ -7,11 +8,13 @@ nacl25519_nm::nacl25519_nm(const std::string& pubk, const std::string& seck) {
 	assert(seck.size() == crypto_box_SECRETKEYBYTES);
 	for (int i=0; i<crypto_box_SECRETKEYBYTES; ++i) _sk[i] = seck[i];
 	pk(pubk);
+	crypto_scalarmult_curve25519_base(_our_pk,_sk);
 }
 
 nacl25519_nm::nacl25519_nm(const std::string& pubk) {
 	randombytes(_sk, crypto_box_SECRETKEYBYTES);
 	pk(pubk);
+	crypto_scalarmult_curve25519_base(_our_pk,_sk);
 }
 
 
@@ -20,6 +23,11 @@ void nacl25519_nm::pk(const std::string& pubk) {
 	for (int i=0; i<crypto_box_PUBLICKEYBYTES; ++i) _pk[i] = pubk[i];
 	crypto_box_beforenm(_k,_pk,_sk);
 }
+
+std::string nacl25519_nm::our_pk() {
+	return std::string((char *) _our_pk, crypto_box_PUBLICKEYBYTES);
+}
+
 
 std::string nacl25519_nm::
 encrypt(const std::string& m, const std::string& n) const {
