@@ -79,10 +79,10 @@ Device& NetworkMap::our_device() const {
 	return *_g_device[_our_node];
 }
 
-std::weak_ptr<TransportSocket>
+TransportSocket
 NetworkMap::tsock_to(const std::string& id) const {
 	auto it = _node_by_id.find(id);
-	if ( it == _node_by_id.end() ) return std::weak_ptr<TransportSocket>();
+	if ( it == _node_by_id.end() ) return no_socket;
 	auto edge = findEdge(_graph, _our_node, it->second);
 	return _g_link[edge]->tsocket();
 }
