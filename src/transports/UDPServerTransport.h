@@ -10,7 +10,6 @@
 
 class UDPServerTransport : public Transport {
 public:
-	friend class UDPServerSocket;
 	UDPServerTransport(const std::string&, const std::string&);
 	virtual ~UDPServerTransport() = default;
 
