@@ -28,7 +28,7 @@ public:
 
 	std::weak_ptr<Device> device(const std::string&) const;
 	Device& our_device() const;
-	std::weak_ptr<TransportSocket> tsock_to(const std::string&) const;
+	TransportSocket tsock_to(const std::string&) const;
 	
 	std::vector< std::tuple<
 			std::weak_ptr<Device>, std::weak_ptr<Link>, std::weak_ptr<Device>
