@@ -2,24 +2,6 @@
 #include "UDPServerTransport.h"
 #include <cassert>
 
-
-UDPServerSocket::
-UDPServerSocket(UDPServerTransport& tr, const std::string& host, const std::string& port)
-	: _tr(tr)
-	, _host(host)
-	, _port(port)
-	{}
-
-UDPServerSocket::~UDPServerSocket() {
-	_tr._who.erase(_host + std::string(":") + _port);
-}
-
-void UDPServerSocket::send(const std::string& buf) {
-	_tr._sock->sndto(buf.c_str(), buf.size(), _host, _port);
-}
-
-
-
 UDPServerTransport::
 UDPServerTransport( const std::string& host
                   , const std::string& port)
@@ -27,31 +9,24 @@ UDPServerTransport( const std::string& host
                   , _port(port)
                   {}
 
-UDPServerTransport::~UDPServerTransport() {
-	assert(_who.empty());
-}
-
 void UDPServerTransport::onPacket(packet_callback handler) {
 	_handler = handler;
+}
+
+bool UDPServerTransport::send(const std::string& buf, const std::string& host, const std::string& port)
+{
+	_sock->sndto(buf.c_str(), buf.size(), host, port);
+	return true;
 }
 
 void UDPServerTransport::incoming() {
 	// optmiize: with lower-level programming something lighter than strings
 	// could be used to identify connections.
-	std::string addr, port, id, buf(1500,'\0'); // ethernet MTU size
+	std::string addr, port, buf(1500,'\0'); // ethernet MTU size
 	_sock->rcvfrom(buf,addr,port);
-	id = addr + std::string(":") + port;
+	_who.insert(std::make_pair(addr, port));
 
-	std::shared_ptr<UDPServerSocket> s;
-	auto it = _who.find(id);
-	if ( it != _who.end() ) {
-		s = it->second.lock();
-		assert(s);
-	} else {
-		s.reset( new UDPServerSocket(*this,addr,port) );
-		_who[id] = s;
-	}
-	_handler(s, buf);
+	_handler(std::bind(std::mem_fn(&UDPServerTransport::send), this, std::placeholders::_1, addr, port), buf);
 }
 
 void UDPServerTransport::enable() {
@@ -68,9 +43,6 @@ void UDPServerTransport::read_cb(ev::io &w, int revents) {
 }
 
 void UDPServerTransport::broadcast(const std::string& buf) {
-	for (auto& kv : _who) {
-		auto tsock_p = kv.second.lock();
-		assert(tsock_p);
-		tsock_p->send(buf);
-	}
+	for (auto& kv : _who)
+		send(buf, kv.first, kv.second);
 }

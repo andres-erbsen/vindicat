@@ -5,27 +5,13 @@
 #include <cassert>
 #include <cerrno>
 
-UDPClientSocket::
-UDPClientSocket(packet_callback handler, const std::string& host, const std::string& port)
-	: _sock(host,port,get_address_family(host.c_str()),SOCK_NONBLOCK)
-	, _handler(handler)
-	{
-	// Setup libev for this socket
-	_read_watcher.set <UDPClientSocket, &UDPClientSocket::read_cb> (this);
-	_read_watcher.start (_sock.getfd(), ev::READ);
-    }
-
-void UDPClientSocket::send(const std::string& buf) {
-	_sock.snd(buf.c_str(), buf.size()); // should not throw
-}
-
-void UDPClientSocket::read_cb(ev::io &w, int revents) {
+void UDPClientTransport::read_cb(ev::io &w, int revents) {
 	// Callback for libev loop
 	// Reads data and gives it to handler
 	std::string buf(1500,'\0'); // ethernet MTU size
 	try {
 		_sock >> buf;
-		_handler(shared_from_this(), buf);
+		_handler(std::bind(std::mem_fn(&UDPClientTransport::send), this, std::placeholders::_1), buf);
 	} catch (libsocket::socket_exception exc) {
 		if ( exc.err == ECONNREFUSED) {} // not found? Just wait.
 		else {
@@ -35,13 +21,9 @@ void UDPClientSocket::read_cb(ev::io &w, int revents) {
 	}
 }
 
-
-
-
 UDPClientTransport::
 UDPClientTransport(const std::string& host, const std::string& port)
-	: _host(host)
-	, _port(port)
+	: _sock(host, port, get_address_family(host.c_str()), SOCK_NONBLOCK)
 	{}
 
 void UDPClientTransport::onPacket(packet_callback handler) {
@@ -49,10 +31,15 @@ void UDPClientTransport::onPacket(packet_callback handler) {
 }
 
 void UDPClientTransport::enable() {
-	assert(!_trs);
-	_trs.reset( new UDPClientSocket(_handler,_host,_port) );
+	_read_watcher.set<UDPClientTransport, &UDPClientTransport::read_cb>(this);
+	_read_watcher.start(_sock.getfd(), ev::READ);
 }
 
 void UDPClientTransport::broadcast(const std::string& buf) {
-	_trs->send(buf);
+	send(buf);
+}
+
+bool UDPClientTransport::send(const std::string& buf) {
+	_sock.snd(buf.c_str(), buf.size());
+	return true;
 }

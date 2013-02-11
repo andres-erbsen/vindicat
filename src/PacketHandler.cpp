@@ -65,7 +65,7 @@ std::shared_ptr<Link> make_link( std::shared_ptr<LinkPromise>&& promise
 }
 
 
-void PacketHandler::operator()(std::shared_ptr<TransportSocket> ts, const std::string& packet) {
+void PacketHandler::operator()(TransportSocket ts, const std::string& packet) {
 	if (packet.size() == 0) {
 		return;
 	}

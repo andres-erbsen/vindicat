@@ -5,20 +5,11 @@
 #include <string>
 #include <memory>
 
-class TransportSocket {
-public:
-	TransportSocket(const TransportSocket&) = delete;
-	const TransportSocket& operator= (const TransportSocket&) = delete;	
-	virtual ~TransportSocket() {};
+typedef std::function<bool(const std::string&)> TransportSocket;
 
-	virtual void send(const std::string&) = 0;
+bool no_socket(const std::string&);
 
-protected:
-	TransportSocket() = default;
-};
-
-
-typedef std::function< void(std::shared_ptr<TransportSocket>, const std::string&) > packet_callback;
+typedef std::function< void(const TransportSocket&, const std::string&) > packet_callback;
 
 
 class Transport {
