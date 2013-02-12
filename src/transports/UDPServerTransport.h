@@ -20,9 +20,15 @@ public:
     void read_cb(ev::io& w, int revents);
     bool send(const std::string&, const struct sockaddr*, socklen_t);
 
+    class compare
+    {
+	    public:
+    	bool operator()(const std::pair<struct sockaddr*, socklen_t>&,
+		    const std::pair<struct sockaddr*, socklen_t>&);
+    };
 private:
 	void incoming();
-	std::set<std::pair<struct sockaddr*,socklen_t>> _who;
+	std::set<std::pair<struct sockaddr*,socklen_t>, compare> _who;
 	struct sockaddr* _group;
 	socklen_t _group_length;
 	packet_callback _handler;

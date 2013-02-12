@@ -146,3 +146,14 @@ void UDPServerTransport::broadcast(const std::string& buf) {
 		send(buf, kv.first, kv.second);
 	sendto(_fd, _advert.c_str(), _advert.size(), 0, _group, _group_length);
 }
+
+bool UDPServerTransport::compare::operator()(const std::pair<struct sockaddr*, socklen_t>& a, const std::pair<struct sockaddr*, socklen_t>& b)
+{
+	if(a.first->sa_family != b.first->sa_family)
+		return a.first->sa_family < b.first->sa_family;
+	if(a.first->sa_family == AF_INET) // IPv4
+		return reinterpret_cast<struct sockaddr_in*>(a.first)->sin_addr.s_addr < reinterpret_cast<struct sockaddr_in*>(b.first)->sin_addr.s_addr;
+	if(a.first->sa_family == AF_INET6) // IPv6
+		return std::memcmp(reinterpret_cast<struct sockaddr_in6*>(a.first)->sin6_addr.s6_addr, reinterpret_cast<struct sockaddr_in6*>(b.first)->sin6_addr.s6_addr, sizeof(in6_addr));
+	return a < b;
+}

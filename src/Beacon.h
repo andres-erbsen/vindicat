@@ -16,7 +16,7 @@ public:
 	void operator()(ev::timer &w, int revents);
 private:
 	std::string _msg;
-	std::vector<Transport*> _transports;
+	const std::vector<Transport*> &_transports;
 	ev::timer _w;
 };
 
