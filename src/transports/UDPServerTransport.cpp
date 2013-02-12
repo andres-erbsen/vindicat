@@ -7,6 +7,8 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 #include <cstring>
 #include <iostream>
@@ -54,6 +56,14 @@ else
 			group->sin_port = htons(30307);
 			_group = reinterpret_cast<struct sockaddr*>(group);
 			_group_length = sizeof(struct sockaddr_in);
+			
+			if(setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_IF,
+			    &reinterpret_cast<struct sockaddr_in*>(i->ai_addr)->sin_addr, sizeof(struct in_addr)) == -1)
+			{
+				close(_fd);
+				_fd = -1;
+				continue;
+			}
 		}
 		else if(i->ai_addr->sa_family == AF_INET6)
 		{
@@ -65,12 +75,14 @@ else
 			group->sin6_port = htons(30307);
 			_group = reinterpret_cast<struct sockaddr*>(group);
 			_group_length = sizeof(struct sockaddr_in6);
-		}
 
-		if(setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_IF, i->ai_addr, i->ai_addrlen) == -1)
-		{
-			close(_fd);
-			continue;
+			if(setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
+			    &reinterpret_cast<struct sockaddr_in6*>(i->ai_addr)->sin6_addr, sizeof(struct in6_addr)) == -1)
+			{
+				close(_fd);
+				_fd = -1;
+				continue;
+			}
 		}
 
 		break;

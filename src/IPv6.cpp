@@ -14,15 +14,8 @@ IPv6::Address::Address()
 
 std::ostream &IPv6::operator<<(std::ostream &out, const IPv6::Address &addr)
 {
-  const std::uint16_t *address = reinterpret_cast<const std::uint16_t*>(addr.address);
-  auto flags = out.flags();
-  auto fill = out.fill();
-  out.fill('0');
-  out << std::hex << std::setw(4) << ntohs(address[0]);
-  for(int i = 1; i < 8; i++)
-    out << ':' << std::setw(4) << ntohs(address[i]);
-  out.fill(fill);
-  out.flags(flags);
+  char buf[40];
+  out << inet_ntop(AF_INET6, addr.address, buf, 40);
   return out;
 }
 
