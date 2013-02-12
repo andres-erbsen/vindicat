@@ -2,14 +2,15 @@
 #define UDPCLIENTTRANSPORT_H_
 
 #include "Transport.h"
-#include <ev++.h> // include before <inetclientdgram.hpp>
+#include <ev++.h>
 
-#include <memory>
-#include <inetclientdgram.hpp> // pollutes namespace?
+#include <sys/socket.h>
 
 class UDPClientTransport : public Transport {
 public:
 	UDPClientTransport(const std::string& host, const std::string& port = std::string("30307"));
+	UDPClientTransport(struct sockaddr *addr, socklen_t addrlen);
+	~UDPClientTransport();
 	void onPacket(packet_callback);
 	void enable();
 	void broadcast(const std::string&);
@@ -17,8 +18,10 @@ public:
 	void read_cb(ev::io& w, int revents);
 private:
 	packet_callback _handler;
-	libsocket::inet_dgram_client _sock;
+	int _fd;
 	ev::io _read_watcher;
+	struct sockaddr* _addr;
+	socklen_t _addrlen;
 };
 
 
