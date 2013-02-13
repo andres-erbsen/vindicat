@@ -104,17 +104,18 @@ bool Device::parseFrom(std::shared_ptr<DeviceBusinesscard>&& card_p) {
 
 // Device is a container for forwardings...
 
-void Device::addForwarding(std::shared_ptr<Forwarding>&& fwd) {
+void Device::addForwarding(std::shared_ptr<ForeignForwarding>&& fwd) {
+	fwd->owner(shared_from_this());
 	_forwardings.insert(std::make_pair(fwd->id(), std::move(fwd)));
 }
 
-std::weak_ptr<Forwarding> Device::getForwarding(uint32_t id) {
+std::weak_ptr<ForeignForwarding> Device::getForwarding(uint64_t id) {
 	auto it = _forwardings.find(id);
-	if (it == _forwardings.end() ) return std::weak_ptr<Forwarding>();
+	if (it == _forwardings.end() ) return std::weak_ptr<ForeignForwarding>();
 	return it->second;
 }
 
-void Device::removeForwarding(uint32_t id) {
+void Device::removeForwarding(uint64_t id) {
 	_forwardings.erase(id);
 }
 
