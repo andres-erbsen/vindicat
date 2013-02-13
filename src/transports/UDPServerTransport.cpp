@@ -56,6 +56,11 @@ else
 			_group[0] = reinterpret_cast<struct sockaddr*>(group);
 			_group_length[0] = sizeof(struct sockaddr_in);
 			_group[1] = nullptr;
+
+			{
+				int loop = 0;
+				setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(int));
+			}
 			
 			if(setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_IF,
 			    &reinterpret_cast<struct sockaddr_in*>(i->ai_addr)->sin_addr, sizeof(struct in_addr)) == -1)
@@ -86,6 +91,10 @@ else
 			_group[1] = reinterpret_cast<struct sockaddr*>(group);
 			_group_length[1] = sizeof(struct sockaddr_in6);
 
+			{
+				int loop = 0;
+				setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &loop, sizeof(int));
+			}
 
 			if(setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
 			    &reinterpret_cast<struct sockaddr_in6*>(i->ai_addr)->sin6_addr, sizeof(struct in6_addr)) == -1)

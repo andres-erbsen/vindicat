@@ -79,8 +79,11 @@ TUNInterface::~TUNInterface()
 void TUNInterface::read_cb(ev::io &w, int revents)
 {
   IPv6::Packet packet = IPv6::Packet::read(_fd);
-  // Now call _receive_cb(dst_device_hash, next_header_and_payload)
-  assert(packet.destination().address[0] == 0x04);
+  
+  // For now ignore foreign traffic
+  if(packet.destination().address[0] != 0x04)
+    return;
+  
   _receive_cb(std::string(reinterpret_cast<char*>(packet.destination().address)+1,
                           15),
 	      std::string(1, packet.next_header())+
