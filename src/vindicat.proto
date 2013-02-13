@@ -61,8 +61,15 @@ message RoutingRequest { // follows static headers
 message Hop {
 	enum Type {	UP = 1;	SIMPLE_ONEWAY = 2; SIMPLE_TWOWAY = 3; }
 	  required Type type = 1;
-	required bytes next = 2; // next device's identifier
+	optional bytes next = 2; // next device's identifier
 	optional PkencAlgo enc_algo = 3; // RoutingRequest.1 for next packet
 	optional bytes sender_pubkey = 4; // RoutingRequest.2 for next packet
 	optional bytes details = 5; // RoutingRequest.3 for next packet
+}
+
+
+message ConnectionAccept {
+	enum Auth { AUTHENC_BCARD = 1; }
+	required Auth auth = 1;
+	required bytes cookie = 2;
 }

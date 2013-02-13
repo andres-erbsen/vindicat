@@ -19,6 +19,7 @@ void protobuf_ShutdownFile_vindicat_2eproto() {
   delete Subgraph::default_instance_;
   delete RoutingRequest::default_instance_;
   delete Hop::default_instance_;
+  delete ConnectionAccept::default_instance_;
 }
 
 void protobuf_AddDesc_vindicat_2eproto() {
@@ -35,6 +36,7 @@ void protobuf_AddDesc_vindicat_2eproto() {
   Subgraph::default_instance_ = new Subgraph();
   RoutingRequest::default_instance_ = new RoutingRequest();
   Hop::default_instance_ = new Hop();
+  ConnectionAccept::default_instance_ = new ConnectionAccept();
   DeviceInfo::default_instance_->InitAsDefaultInstance();
   DeviceBusinesscard::default_instance_->InitAsDefaultInstance();
   LinkInfo::default_instance_->InitAsDefaultInstance();
@@ -43,6 +45,7 @@ void protobuf_AddDesc_vindicat_2eproto() {
   Subgraph::default_instance_->InitAsDefaultInstance();
   RoutingRequest::default_instance_->InitAsDefaultInstance();
   Hop::default_instance_->InitAsDefaultInstance();
+  ConnectionAccept::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_vindicat_2eproto);
 }
 
@@ -2018,7 +2021,7 @@ bool Hop::MergePartialFromCodedStream(
         break;
       }
       
-      // required bytes next = 2;
+      // optional bytes next = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -2102,7 +2105,7 @@ void Hop::SerializeWithCachedSizes(
       1, this->type(), output);
   }
   
-  // required bytes next = 2;
+  // optional bytes next = 2;
   if (has_next()) {
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       2, this->next(), output);
@@ -2138,7 +2141,7 @@ int Hop::ByteSize() const {
         ::google::protobuf::internal::WireFormatLite::EnumSize(this->type());
     }
     
-    // required bytes next = 2;
+    // optional bytes next = 2;
     if (has_next()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
@@ -2205,7 +2208,7 @@ void Hop::CopyFrom(const Hop& from) {
 }
 
 bool Hop::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
+  if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
   
   return true;
 }
@@ -2224,6 +2227,224 @@ void Hop::Swap(Hop* other) {
 
 ::std::string Hop::GetTypeName() const {
   return "Hop";
+}
+
+
+// ===================================================================
+
+bool ConnectionAccept_Auth_IsValid(int value) {
+  switch(value) {
+    case 1:
+      return true;
+    default:
+      return false;
+  }
+}
+
+#ifndef _MSC_VER
+const ConnectionAccept_Auth ConnectionAccept::AUTHENC_BCARD;
+const ConnectionAccept_Auth ConnectionAccept::Auth_MIN;
+const ConnectionAccept_Auth ConnectionAccept::Auth_MAX;
+const int ConnectionAccept::Auth_ARRAYSIZE;
+#endif  // _MSC_VER
+#ifndef _MSC_VER
+const int ConnectionAccept::kAuthFieldNumber;
+const int ConnectionAccept::kCookieFieldNumber;
+#endif  // !_MSC_VER
+
+ConnectionAccept::ConnectionAccept()
+  : ::google::protobuf::MessageLite() {
+  SharedCtor();
+}
+
+void ConnectionAccept::InitAsDefaultInstance() {
+}
+
+ConnectionAccept::ConnectionAccept(const ConnectionAccept& from)
+  : ::google::protobuf::MessageLite() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void ConnectionAccept::SharedCtor() {
+  _cached_size_ = 0;
+  auth_ = 1;
+  cookie_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+ConnectionAccept::~ConnectionAccept() {
+  SharedDtor();
+}
+
+void ConnectionAccept::SharedDtor() {
+  if (cookie_ != &::google::protobuf::internal::kEmptyString) {
+    delete cookie_;
+  }
+  if (this != default_instance_) {
+  }
+}
+
+void ConnectionAccept::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ConnectionAccept& ConnectionAccept::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_vindicat_2eproto();  return *default_instance_;
+}
+
+ConnectionAccept* ConnectionAccept::default_instance_ = NULL;
+
+ConnectionAccept* ConnectionAccept::New() const {
+  return new ConnectionAccept;
+}
+
+void ConnectionAccept::Clear() {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    auth_ = 1;
+    if (has_cookie()) {
+      if (cookie_ != &::google::protobuf::internal::kEmptyString) {
+        cookie_->clear();
+      }
+    }
+  }
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+bool ConnectionAccept::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // required .ConnectionAccept.Auth auth = 1;
+      case 1: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+          int value;
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
+                 input, &value)));
+          if (::ConnectionAccept_Auth_IsValid(value)) {
+            set_auth(static_cast< ::ConnectionAccept_Auth >(value));
+          }
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(18)) goto parse_cookie;
+        break;
+      }
+      
+      // required bytes cookie = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_cookie:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_cookie()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectAtEnd()) return true;
+        break;
+      }
+      
+      default: {
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          return true;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(input, tag));
+        break;
+      }
+    }
+  }
+  return true;
+#undef DO_
+}
+
+void ConnectionAccept::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // required .ConnectionAccept.Auth auth = 1;
+  if (has_auth()) {
+    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+      1, this->auth(), output);
+  }
+  
+  // required bytes cookie = 2;
+  if (has_cookie()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytes(
+      2, this->cookie(), output);
+  }
+  
+}
+
+int ConnectionAccept::ByteSize() const {
+  int total_size = 0;
+  
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // required .ConnectionAccept.Auth auth = 1;
+    if (has_auth()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::EnumSize(this->auth());
+    }
+    
+    // required bytes cookie = 2;
+    if (has_cookie()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::BytesSize(
+          this->cookie());
+    }
+    
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void ConnectionAccept::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const ConnectionAccept*>(&from));
+}
+
+void ConnectionAccept::MergeFrom(const ConnectionAccept& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_auth()) {
+      set_auth(from.auth());
+    }
+    if (from.has_cookie()) {
+      set_cookie(from.cookie());
+    }
+  }
+}
+
+void ConnectionAccept::CopyFrom(const ConnectionAccept& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool ConnectionAccept::IsInitialized() const {
+  if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
+  
+  return true;
+}
+
+void ConnectionAccept::Swap(ConnectionAccept* other) {
+  if (other != this) {
+    std::swap(auth_, other->auth_);
+    std::swap(cookie_, other->cookie_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::std::string ConnectionAccept::GetTypeName() const {
+  return "ConnectionAccept";
 }
 
 
