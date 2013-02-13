@@ -15,12 +15,11 @@
 
 UDPServerTransport::
 UDPServerTransport( const std::string& host
-                  , const std::string& port):
-	_advert(host+':'+port)
+                  , const std::string& port)
 {
 	struct addrinfo hints, *res;
         std::memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_UNSPEC;
+	hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_DGRAM;
         int err;
         if((err=getaddrinfo(host.c_str(), port.c_str(), &hints, &res)) != 0)
@@ -54,14 +53,16 @@ else
 			// Multicast address reserved for experimentation
 			group->sin_addr.s_addr = inet_addr("224.0.0.254");
 			group->sin_port = htons(30307);
-			_group = reinterpret_cast<struct sockaddr*>(group);
-			_group_length = sizeof(struct sockaddr_in);
+			_group[0] = reinterpret_cast<struct sockaddr*>(group);
+			_group_length[0] = sizeof(struct sockaddr_in);
+			_group[1] = nullptr;
 			
 			if(setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_IF,
 			    &reinterpret_cast<struct sockaddr_in*>(i->ai_addr)->sin_addr, sizeof(struct in_addr)) == -1)
 			{
 				close(_fd);
 				_fd = -1;
+				delete _group[0];
 				continue;
 			}
 		}
@@ -73,12 +74,24 @@ else
 			// An unused link-local multicast address
 			inet_pton(AF_INET6, "ff02::dc", group->sin6_addr.s6_addr);
 			group->sin6_port = htons(30307);
-			_group = reinterpret_cast<struct sockaddr*>(group);
-			_group_length = sizeof(struct sockaddr_in6);
+			_group[0] = reinterpret_cast<struct sockaddr*>(group);
+			_group_length[0] = sizeof(struct sockaddr_in6);
+
+			// UDPv4 clients can connect to UDPv6 sockets
+			group = new struct sockaddr_in6;
+			std::memset(group, 0, sizeof(sockaddr_in6));
+			group->sin6_family = AF_INET6;
+			inet_pton(AF_INET6, "::ffff:224.0.0.254", group->sin6_addr.s6_addr);
+			group->sin6_port = htons(30307);
+			_group[1] = reinterpret_cast<struct sockaddr*>(group);
+			_group_length[1] = sizeof(struct sockaddr_in6);
+
 
 			if(setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
 			    &reinterpret_cast<struct sockaddr_in6*>(i->ai_addr)->sin6_addr, sizeof(struct in6_addr)) == -1)
 			{
+				delete _group[0];
+				delete _group[1];
 				close(_fd);
 				_fd = -1;
 				continue;
@@ -144,7 +157,9 @@ void UDPServerTransport::read_cb(ev::io &w, int revents) {
 void UDPServerTransport::broadcast(const std::string& buf) {
 	for (auto& kv : _who)
 		send(buf, kv.first, kv.second);
-	sendto(_fd, _advert.c_str(), _advert.size(), 0, _group, _group_length);
+	sendto(_fd, nullptr, 0, 0, _group[0], _group_length[0]);
+	if(_group[1])
+		sendto(_fd, nullptr, 0, 0, _group[1], _group_length[1]);
 }
 
 bool UDPServerTransport::compare::operator()(const std::pair<struct sockaddr*, socklen_t>& a, const std::pair<struct sockaddr*, socklen_t>& b)

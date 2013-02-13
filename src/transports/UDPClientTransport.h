@@ -16,6 +16,10 @@ public:
 	void broadcast(const std::string&);
 	bool send(const std::string&);
 	void read_cb(ev::io& w, int revents);
+	const struct sockaddr* address() const
+	{
+		return _addr;
+	}
 private:
 	packet_callback _handler;
 	int _fd;

@@ -4,6 +4,7 @@
 #include "InterfaceHandler.h"
 #include "TUNInterface.h"
 #include "Beacon.h"
+#include "LinkLocalDiscovery.h"
 
 #include <ev++.h>
 
@@ -41,6 +42,9 @@ int main (int argc, char** argv) {
 
 	Beacon bcn(3,ci,transports);
 	bcn.enable();
+
+	LinkLocalDiscovery lld(transports);
+	lld.enable();
 	
 	if(tun)
 		tun->onPacket(ihn);

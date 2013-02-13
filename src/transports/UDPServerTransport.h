@@ -29,12 +29,12 @@ public:
 private:
 	void incoming();
 	std::set<std::pair<struct sockaddr*,socklen_t>, compare> _who;
-	struct sockaddr* _group;
-	socklen_t _group_length;
+	// UDPv6 shares port space with UDPv4
+	struct sockaddr* _group[2];
+	socklen_t _group_length[2];
 	packet_callback _handler;
 	int _fd;
     ev::io _read_watcher;
-    std::string _advert;
 };
 
 #endif // UDPSERVERTRANSPORT_H_
