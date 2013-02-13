@@ -11,6 +11,7 @@
 
 #include <cstring>
 
+#include <algorithm>
 #include <iostream>
 
 LinkLocalDiscovery::LinkLocalDiscovery(std::vector<Transport*> &transports, const PacketHandler &phn):
@@ -97,17 +98,16 @@ void LinkLocalDiscovery::read_cb(ev::io &w, int revents)
   ssize_t read = recvfrom(_fd, buf, 1500, 0, reinterpret_cast<struct sockaddr*>(&src), &srclen);
   if(read != -1)
   {
-    bool found = false;
-    for(auto &tr: _transports)
-    {
-      UDPClientTransport *client = dynamic_cast<UDPClientTransport*>(tr);
-      if(client && client->address()->sa_family == AF_INET6 && std::memcmp(reinterpret_cast<const struct sockaddr_in6*>(client->address())->sin6_addr.s6_addr, src.sin6_addr.s6_addr, 16) == 0)
-      {
-        found = true;
-        break;
-      }
-    }
-    if(!found)
+    bool exists =
+    std::any_of(_transports.begin(), _transports.end(),
+        [&src](const Transport *tr)
+	{
+	  const UDPClientTransport *client = dynamic_cast<const UDPClientTransport*>(tr);
+          return client && client->address()->sa_family == AF_INET6 && std::memcmp(reinterpret_cast<const struct sockaddr_in6*>(client->address())->sin6_addr.s6_addr, src.sin6_addr.s6_addr, 16) == 0;
+        }
+    );
+
+    if(exists)
     {
       char ip[40];
       std::cout << "Connecting to [" << inet_ntop(AF_INET6, src.sin6_addr.s6_addr, ip, 40) << "]:" << ntohs(src.sin6_port) << std::endl;
