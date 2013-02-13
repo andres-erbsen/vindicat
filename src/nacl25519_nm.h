@@ -14,6 +14,7 @@ public:
 	nacl25519_nm(const std::string& pk, const std::string& sk);
 
 	void pk(const std::string& pk);
+	std::string pk();
 	std::string our_pk();
 
 	std::string encrypt(const std::string&, const std::string&) const;
