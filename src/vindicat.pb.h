@@ -37,6 +37,7 @@ class LinkPromise;
 class Subgraph;
 class RoutingRequest;
 class Hop;
+class ConnectionAccept;
 
 enum LinkInfo_Status {
   LinkInfo_Status_DEAD = 1,
@@ -56,6 +57,14 @@ bool Hop_Type_IsValid(int value);
 const Hop_Type Hop_Type_Type_MIN = Hop_Type_UP;
 const Hop_Type Hop_Type_Type_MAX = Hop_Type_SIMPLE_TWOWAY;
 const int Hop_Type_Type_ARRAYSIZE = Hop_Type_Type_MAX + 1;
+
+enum ConnectionAccept_Auth {
+  ConnectionAccept_Auth_AUTHENC_BCARD = 1
+};
+bool ConnectionAccept_Auth_IsValid(int value);
+const ConnectionAccept_Auth ConnectionAccept_Auth_Auth_MIN = ConnectionAccept_Auth_AUTHENC_BCARD;
+const ConnectionAccept_Auth ConnectionAccept_Auth_Auth_MAX = ConnectionAccept_Auth_AUTHENC_BCARD;
+const int ConnectionAccept_Auth_Auth_ARRAYSIZE = ConnectionAccept_Auth_Auth_MAX + 1;
 
 enum SigAlgo {
   ED25519 = 1
@@ -886,7 +895,7 @@ class Hop : public ::google::protobuf::MessageLite {
   inline ::Hop_Type type() const;
   inline void set_type(::Hop_Type value);
   
-  // required bytes next = 2;
+  // optional bytes next = 2;
   inline bool has_next() const;
   inline void clear_next();
   static const int kNextFieldNumber = 2;
@@ -954,6 +963,101 @@ class Hop : public ::google::protobuf::MessageLite {
   
   void InitAsDefaultInstance();
   static Hop* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class ConnectionAccept : public ::google::protobuf::MessageLite {
+ public:
+  ConnectionAccept();
+  virtual ~ConnectionAccept();
+  
+  ConnectionAccept(const ConnectionAccept& from);
+  
+  inline ConnectionAccept& operator=(const ConnectionAccept& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  static const ConnectionAccept& default_instance();
+  
+  void Swap(ConnectionAccept* other);
+  
+  // implements Message ----------------------------------------------
+  
+  ConnectionAccept* New() const;
+  void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from);
+  void CopyFrom(const ConnectionAccept& from);
+  void MergeFrom(const ConnectionAccept& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::std::string GetTypeName() const;
+  
+  // nested types ----------------------------------------------------
+  
+  typedef ConnectionAccept_Auth Auth;
+  static const Auth AUTHENC_BCARD = ConnectionAccept_Auth_AUTHENC_BCARD;
+  static inline bool Auth_IsValid(int value) {
+    return ConnectionAccept_Auth_IsValid(value);
+  }
+  static const Auth Auth_MIN =
+    ConnectionAccept_Auth_Auth_MIN;
+  static const Auth Auth_MAX =
+    ConnectionAccept_Auth_Auth_MAX;
+  static const int Auth_ARRAYSIZE =
+    ConnectionAccept_Auth_Auth_ARRAYSIZE;
+  
+  // accessors -------------------------------------------------------
+  
+  // required .ConnectionAccept.Auth auth = 1;
+  inline bool has_auth() const;
+  inline void clear_auth();
+  static const int kAuthFieldNumber = 1;
+  inline ::ConnectionAccept_Auth auth() const;
+  inline void set_auth(::ConnectionAccept_Auth value);
+  
+  // required bytes cookie = 2;
+  inline bool has_cookie() const;
+  inline void clear_cookie();
+  static const int kCookieFieldNumber = 2;
+  inline const ::std::string& cookie() const;
+  inline void set_cookie(const ::std::string& value);
+  inline void set_cookie(const char* value);
+  inline void set_cookie(const void* value, size_t size);
+  inline ::std::string* mutable_cookie();
+  inline ::std::string* release_cookie();
+  
+  // @@protoc_insertion_point(class_scope:ConnectionAccept)
+ private:
+  inline void set_has_auth();
+  inline void clear_has_auth();
+  inline void set_has_cookie();
+  inline void clear_has_cookie();
+  
+  ::std::string* cookie_;
+  int auth_;
+  
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  
+  friend void  protobuf_AddDesc_vindicat_2eproto();
+  friend void protobuf_AssignDesc_vindicat_2eproto();
+  friend void protobuf_ShutdownFile_vindicat_2eproto();
+  
+  void InitAsDefaultInstance();
+  static ConnectionAccept* default_instance_;
 };
 // ===================================================================
 
@@ -1958,7 +2062,7 @@ inline void Hop::set_type(::Hop_Type value) {
   type_ = value;
 }
 
-// required bytes next = 2;
+// optional bytes next = 2;
 inline bool Hop::has_next() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
@@ -2151,6 +2255,91 @@ inline ::std::string* Hop::release_details() {
   } else {
     ::std::string* temp = details_;
     details_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// -------------------------------------------------------------------
+
+// ConnectionAccept
+
+// required .ConnectionAccept.Auth auth = 1;
+inline bool ConnectionAccept::has_auth() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void ConnectionAccept::set_has_auth() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void ConnectionAccept::clear_has_auth() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void ConnectionAccept::clear_auth() {
+  auth_ = 1;
+  clear_has_auth();
+}
+inline ::ConnectionAccept_Auth ConnectionAccept::auth() const {
+  return static_cast< ::ConnectionAccept_Auth >(auth_);
+}
+inline void ConnectionAccept::set_auth(::ConnectionAccept_Auth value) {
+  GOOGLE_DCHECK(::ConnectionAccept_Auth_IsValid(value));
+  set_has_auth();
+  auth_ = value;
+}
+
+// required bytes cookie = 2;
+inline bool ConnectionAccept::has_cookie() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void ConnectionAccept::set_has_cookie() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void ConnectionAccept::clear_has_cookie() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void ConnectionAccept::clear_cookie() {
+  if (cookie_ != &::google::protobuf::internal::kEmptyString) {
+    cookie_->clear();
+  }
+  clear_has_cookie();
+}
+inline const ::std::string& ConnectionAccept::cookie() const {
+  return *cookie_;
+}
+inline void ConnectionAccept::set_cookie(const ::std::string& value) {
+  set_has_cookie();
+  if (cookie_ == &::google::protobuf::internal::kEmptyString) {
+    cookie_ = new ::std::string;
+  }
+  cookie_->assign(value);
+}
+inline void ConnectionAccept::set_cookie(const char* value) {
+  set_has_cookie();
+  if (cookie_ == &::google::protobuf::internal::kEmptyString) {
+    cookie_ = new ::std::string;
+  }
+  cookie_->assign(value);
+}
+inline void ConnectionAccept::set_cookie(const void* value, size_t size) {
+  set_has_cookie();
+  if (cookie_ == &::google::protobuf::internal::kEmptyString) {
+    cookie_ = new ::std::string;
+  }
+  cookie_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ConnectionAccept::mutable_cookie() {
+  set_has_cookie();
+  if (cookie_ == &::google::protobuf::internal::kEmptyString) {
+    cookie_ = new ::std::string;
+  }
+  return cookie_;
+}
+inline ::std::string* ConnectionAccept::release_cookie() {
+  clear_has_cookie();
+  if (cookie_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = cookie_;
+    cookie_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
