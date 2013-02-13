@@ -1,5 +1,13 @@
 #include "Forwarding.h"
 
+void Forwarding::pair( std::shared_ptr<Forwarding> l
+                     , std::shared_ptr<Forwarding> r ) {
+	l->_pair_other = r;
+	r->_pair_other = l;
+}
+
+Forwarding::Forwarding(uint64_t id) : _id(id) {}
+
 Forwarding::~Forwarding() {
 	// There is no need to detatch this Forwarding, because it is destructed
 	// exactly when there are no shared pointers to it anymore.
@@ -14,14 +22,26 @@ Forwarding::~Forwarding() {
 	// reset the pointer and the if(.lock()) failed
 }
 
-uint32_t Forwarding::id() {
+uint64_t Forwarding::id() {
 	return _id;
 }
+
+ForeignForwarding::
+ForeignForwarding( NetworkMap& nm
+                 , uint64_t id)
+	: Forwarding(id)
+    , _nm(nm)
+    {}
 
 bool Forwarding::forward(const std::string& packet) {
     auto pair_other = _pair_other.lock();
     assert(pair_other);
     return pair_other->forward_out(packet);
+}
+
+void ForeignForwarding::owner(std::weak_ptr<Device>&& owner) {
+	assert(!_owner.lock());
+	_owner = owner;
 }
 
 
@@ -32,8 +52,10 @@ void ForeignForwarding::detatch() {
 }
 
 
-SimpleForwarding::SimpleForwarding(NetworkMap& nm)
-    : _nm(nm)
+SimpleForwarding::
+SimpleForwarding( NetworkMap& nm
+                , uint64_t id)
+    : ForeignForwarding(nm, id)
     {}
 
 bool SimpleForwarding::forward_out(const std::string& packet) {
@@ -54,11 +76,3 @@ bool NoForwarding::forward_out(const std::string& packet) {
     return false;
 }
 
-
-void UpForwarding::detach() {
-    assert(0); // TODO
-}
-
-bool UpForwarding::forward_out(const std::string& packet) {
-    assert(0); // TODO
-}

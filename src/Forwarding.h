@@ -16,49 +16,47 @@ class Device;
 
 class Forwarding {
 public:
-    Forwarding() = default;
+	static void pair( std::shared_ptr<Forwarding>
+	                , std::shared_ptr<Forwarding> );
+
+    Forwarding(uint64_t);
     Forwarding(const Forwarding&) = delete;
     Forwarding& operator=(const Forwarding&) = delete;
 	virtual ~Forwarding(); // remove the other in this pair
 
-	uint32_t id();
+	uint64_t id();
 
 	// Forwardings come in pairs...
 	virtual void detatch() = 0;
 	// remove registrered pointer to this forwarding
 	virtual bool forward_out(const std::string&) = 0;
 	// called by other forwarding in the pair to send the packet out
-	bool forward(const std::string&);
+	virtual bool forward(const std::string&);
     // calls forward_out of the other forwarding in the pair
 
 protected:
 	std::weak_ptr<Forwarding> _pair_other;
-	uint32_t _id;
+	uint64_t _id;
 };
 
 class ForeignForwarding : public Forwarding {
 public:
+	ForeignForwarding(NetworkMap&, uint64_t);
+	void owner(std::weak_ptr<Device>&&);
     void detatch();
 protected:
+    NetworkMap& _nm;
     std::weak_ptr<Device> _owner;
 };
 
 class SimpleForwarding : public ForeignForwarding {
 public:
-    SimpleForwarding(NetworkMap&); // move to ForeignForwarding w _nm if necessary
+    SimpleForwarding(NetworkMap&, uint64_t);
     bool forward_out(const std::string&);
-private:
-    NetworkMap& _nm; // move to ForeignForwarding w constructor if necessary
 };
 
 class NoForwarding : public ForeignForwarding {
 public:
-    bool forward_out(const std::string&);
-};
-
-class UpForwarding : public Forwarding {
-public:
-    void detach();
     bool forward_out(const std::string&);
 };
 
