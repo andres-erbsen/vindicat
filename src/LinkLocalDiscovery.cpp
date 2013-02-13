@@ -105,7 +105,7 @@ void LinkLocalDiscovery::read_cb(ev::io &w, int revents)
         [&src](const Transport *tr)
 	{
 	  const UDPClientTransport *client = dynamic_cast<const UDPClientTransport*>(tr);
-          return client && client->address()->sa_family == AF_INET6 && std::memcmp(reinterpret_cast<const struct sockaddr_in6*>(client->address())->sin6_addr.s6_addr, src.sin6_addr.s6_addr, 16) == 0;
+          return client && client->address()->sa_family == AF_INET6 && std::memcmp(reinterpret_cast<const struct sockaddr_in6*>(client->address())->sin6_addr.s6_addr, src.sin6_addr.s6_addr, 16) == 0 && reinterpret_cast<const struct sockaddr_in6*>(client->address())->sin6_port == src.sin6_port;
         }
     );
 
