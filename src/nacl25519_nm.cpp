@@ -24,6 +24,10 @@ void nacl25519_nm::pk(const std::string& pubk) {
 	crypto_box_beforenm(_k,_pk,_sk);
 }
 
+std::string nacl25519_nm::pk() {
+	return std::string((char *) _pk, crypto_box_PUBLICKEYBYTES);
+}
+
 std::string nacl25519_nm::our_pk() {
 	return std::string((char *) _our_pk, crypto_box_PUBLICKEYBYTES);
 }
