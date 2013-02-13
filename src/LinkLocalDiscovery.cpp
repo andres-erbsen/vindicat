@@ -43,6 +43,7 @@ LinkLocalDiscovery::LinkLocalDiscovery(std::vector<Transport*> &transports, cons
   if(bind(_fd, reinterpret_cast<struct sockaddr*>(&local_ipv6),
           sizeof(struct sockaddr_in6)) == -1)
   {
+    std::perror("LinkLocalDiscovery::LinkLocalDiscovery");
     close(_fd);
     _fd = -1;
   }
@@ -64,11 +65,12 @@ LinkLocalDiscovery::LinkLocalDiscovery(std::vector<Transport*> &transports, cons
 	  ipv4_request.imr_ifindex = if_nametoindex(i->ifa_name);
 	  ipv4_request.imr_address = reinterpret_cast<struct sockaddr_in*>(i->ifa_addr)->sin_addr;
 	  if(setsockopt(_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ipv4_request, sizeof(struct ip_mreqn)) != 0)
-		  perror("setsockopt IPv4");
+	    perror("setsockopt IPv4");
 	  break;
 	case AF_INET6:
 	  ipv6_request.ipv6mr_interface = if_nametoindex(i->ifa_name);
-	  setsockopt(_fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &ipv6_request, sizeof(struct ipv6_mreq));
+	  if(setsockopt(_fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &ipv6_request, sizeof(struct ipv6_mreq)) != 0)
+	    std::perror("setsockopt IPv6");
 	  break;
       }
     }
@@ -107,7 +109,7 @@ void LinkLocalDiscovery::read_cb(ev::io &w, int revents)
         }
     );
 
-    if(exists)
+    if(!exists)
     {
       char ip[40];
       std::cout << "Connecting to [" << inet_ntop(AF_INET6, src.sin6_addr.s6_addr, ip, 40) << "]:" << ntohs(src.sin6_port) << std::endl;
