@@ -43,7 +43,7 @@ int main (int argc, char** argv) {
 	Beacon bcn(3,ci,transports);
 	bcn.enable();
 
-	LinkLocalDiscovery lld(transports);
+	LinkLocalDiscovery lld(transports, phn);
 	lld.enable();
 	
 	if(tun)

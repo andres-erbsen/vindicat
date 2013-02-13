@@ -13,8 +13,8 @@
 
 #include <iostream>
 
-LinkLocalDiscovery::LinkLocalDiscovery(std::vector<Transport*> &transports):
-    _transports(transports), _fd(-1)
+LinkLocalDiscovery::LinkLocalDiscovery(std::vector<Transport*> &transports, const PacketHandler &phn):
+    _transports(transports), _phn(phn), _fd(-1)
 {
   struct ifaddrs *ifap;
   if(getifaddrs(&ifap) == -1)
@@ -111,7 +111,10 @@ void LinkLocalDiscovery::read_cb(ev::io &w, int revents)
     {
       char ip[40];
       std::cout << "Connecting to [" << inet_ntop(AF_INET6, src.sin6_addr.s6_addr, ip, 40) << "]:" << ntohs(src.sin6_port) << std::endl;
-      _transports.push_back(new UDPClientTransport(reinterpret_cast<struct sockaddr*>(&src), sizeof(struct sockaddr_in6)));
+      UDPClientTransport *client = new UDPClientTransport(reinterpret_cast<struct sockaddr*>(&src), sizeof(struct sockaddr_in6));
+      client->onPacket(_phn);
+      client->enable();
+      _transports.push_back(client);
     }
   }
   else
