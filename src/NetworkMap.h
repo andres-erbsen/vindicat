@@ -12,6 +12,9 @@ class Link;
 #include <vector>
 #include <tuple>
 
+typedef std::vector< std::tuple<
+			std::weak_ptr<Link>, std::weak_ptr<Device>
+		> > Path;
 
 // TWO RESPONSIBILITIES :(
 // 1) Maintain information containers for the $k$ closest devices
@@ -36,9 +39,7 @@ public:
 	// Return the links and the respective devices that were added to the map
 	// Remove and discard all that we tried to add but had no room for
 
-	std::vector< std::tuple<
-			std::weak_ptr<Link>, std::weak_ptr<Device>
-		> > path_to(const Device&) const;
+	Path path_to(const Device&) const;
 	// Return the "best" path to the specified Device. Empty if none.
 	
 private:

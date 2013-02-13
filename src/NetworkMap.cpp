@@ -60,7 +60,8 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
 		if ( it == _node_by_id.end() ) return 0;
 		right = it->second;
 	}
-	auto edge = _graph.addEdge(left, right);	
+	auto edge = lemon::findEdge(_graph, left, right);
+	if (edge == lemon::INVALID) edge = _graph.addEdge(left, right);	
 	if ( ! _g_link[edge] || _g_link[edge]->mtime() < link->mtime() ) {
 		std::swap(_g_link[edge], link);
 		return 1;
