@@ -1,13 +1,52 @@
 #include "InterfaceHandler.h"
-#include <cassert>
-#include <utility>
+#include "Connection.h"
 
-InterfaceHandler::InterfaceHandler(NetworkMap& nm, ConnectionPool& cp)
-	: _nm(nm)
+#include <iostream>
+
+InterfaceHandler::
+InterfaceHandler(CryptoIdentity& ci, NetworkMap& nm, ConnectionPool& cp)
+	: _ci(ci)
+	, _nm(nm)
 	, _cp(cp)
 	{}
 
-void InterfaceHandler::operator()(std::string&& to, std::string&& packet)
-{
-	assert(0);
+static std::string hex(const std::string& input) {
+    static const char* const lut = "0123456789abcdef";
+    size_t len = input.length();
+
+    std::string output;
+    output.reserve(2 * len);
+    for (size_t i = 0; i < len; ++i)
+    {
+        const unsigned char c = input[i];
+        output.push_back(lut[c >> 4]);
+        output.push_back(lut[c & 15]);
+    }
+    return output;
+}
+
+void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
+	std::cout << "To: " << hex(to) << " (" << packet.size() << " bytes)\n"
+		<< packet << "\n" << std::endl;
+	auto it = _cp.find(to);
+	if (it != _cp.end() ) {
+		it->second->forward(packet);
+	} else {
+		Path path;
+		{
+			auto dst_dev = _nm.device(to).lock();
+			if (!dst_dev) return;
+			path = _nm.path_to(*dst_dev);
+		}
+		auto conn = std::make_shared<Connection>(_ci, _cp, path);
+		auto rfwd = std::make_shared<SimpleForwarding>(_nm, conn->id());
+		Forwarding::pair(conn, rfwd);
+
+		_cp.insert( std::make_pair(to, conn) );
+
+		auto next_dev = std::get<1>(path.at(0)).lock();
+		next_dev->addForwarding(rfwd);
+
+		conn->hello();
+	}
 }

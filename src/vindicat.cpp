@@ -34,11 +34,11 @@ int main (int argc, char** argv) {
 	NetworkMap nm( std::move(our_device) );
 	ConnectionPool cp;
 
-	PacketHandler phn(nm);
+	PacketHandler phn(nm, ci);
 	for (Transport* tr : transports) tr->onPacket(phn);
 	for (Transport* tr : transports) tr->enable();	
 
-	InterfaceHandler ihn(nm, cp);
+	InterfaceHandler ihn(ci, nm, cp);
 
 	Beacon bcn(3,ci,transports);
 	bcn.enable();

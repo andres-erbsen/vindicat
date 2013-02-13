@@ -1,7 +1,7 @@
 #ifndef DEVICE_H_
 #define DEVICE_H_
 
-class Forwarding;
+class ForeignForwarding;
 
 #include "vindicat.pb.h"
 
@@ -12,7 +12,7 @@ class Forwarding;
 
 #include <stdint.h>
 
-class Device {
+class Device : public std::enable_shared_from_this<Device> {
 public:
 	Device() = default;
 	Device(const Device&) = delete;
@@ -32,9 +32,9 @@ public:
 	std::string enc_key() const;
 	SigAlgo sig_algo() const;
 
-	void addForwarding(std::shared_ptr<Forwarding>&&);
-	std::weak_ptr<Forwarding> getForwarding(uint32_t);
-	void removeForwarding(uint32_t);
+	void addForwarding(std::shared_ptr<ForeignForwarding>&&);
+	std::weak_ptr<ForeignForwarding> getForwarding(uint64_t);
+	void removeForwarding(uint64_t);
 
 	// Deserialization
 	bool parseFrom(std::shared_ptr<DeviceBusinesscard>&& card_p);
@@ -54,7 +54,7 @@ private:
 	uint64_t _mtime;
 	std::vector<std::shared_ptr<DeviceBusinesscard> > _cards;
 
-	std::unordered_map<uint32_t, std::shared_ptr<Forwarding> > _forwardings;
+	std::unordered_map<uint64_t, std::shared_ptr<ForeignForwarding> > _forwardings;
 };
 
 #endif // DEVICE_H_
