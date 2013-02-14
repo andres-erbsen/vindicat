@@ -37,7 +37,7 @@ double Link::measure() const {
 
 
 DirectLink::DirectLink( const std::string& left_id
-                      , TransportSocket&& ts
+                      , const TransportSocket& ts
                       , const std::string& right_id )
                       : _tsocket(ts) {
 	_left_id = left_id;
