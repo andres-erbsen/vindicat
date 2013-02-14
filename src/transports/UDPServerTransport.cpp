@@ -144,7 +144,7 @@ void UDPServerTransport::incoming() {
 	}
 	auto iter = _who.insert(std::make_pair(addr, addrlen));
 
-	_handler(std::bind(std::mem_fn(&UDPServerTransport::send), this, std::placeholders::_1, addr, addrlen), std::string(buf, read));
+	_handler(TransportSocket(std::bind(std::mem_fn(&UDPServerTransport::send), this, std::placeholders::_1, addr, addrlen), std::string(reinterpret_cast<char*>(addr), addrlen)), std::string(buf, read));
 
 	if(!iter.second)
 		delete addr;

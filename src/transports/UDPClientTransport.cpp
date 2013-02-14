@@ -21,7 +21,7 @@ void UDPClientTransport::read_cb(ev::io &w, int revents) {
 		std::perror("UDPClientTransport::read_cb");
 		std::abort();
 	}
-	_handler(std::bind(std::mem_fn(&UDPClientTransport::send), this, std::placeholders::_1), std::string(buf, read));
+	_handler(TransportSocket(std::bind(std::mem_fn(&UDPClientTransport::send), this, std::placeholders::_1), std::string(reinterpret_cast<char*>(_addr), _addrlen)), std::string(buf, read));
 	delete[] buf;
 }
 
