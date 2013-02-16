@@ -10,7 +10,7 @@
 class PacketHandler {
 public:
 	PacketHandler(NetworkMap& nm, CryptoIdentity& ci);
-    void operator()(const TransportSocket &trs, const std::string& packet);
+    void operator()(const TransportSocket &trs, const std::string& addr, const std::string& packet);
 private:
 	NetworkMap& _nm;
 	CryptoIdentity& _ci;

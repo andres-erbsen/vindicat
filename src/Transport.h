@@ -5,37 +5,11 @@
 #include <string>
 #include <memory>
 
-class TransportSocket
-{
- public:
-  TransportSocket(std::function<bool(const std::string&)> &&s, std::string &&a):
-      _send(s), _addr(a)
-  {
-  }
+typedef std::function<bool(const std::string&)> TransportSocket;
 
-  bool operator()(const std::string& msg) const
-  {
-    return _send(msg);
-  }
+const static TransportSocket no_socket([](const std::string&){return false;});
 
-  bool operator==(const TransportSocket &other) const
-  {
-    return _addr == other._addr;
-  }
-
-  bool operator<(const TransportSocket &other) const
-  {
-    return _addr < other._addr;
-  }
-
- protected:
-  std::function<bool(const std::string&)> _send;
-  std::string _addr;
-};
-
-const static TransportSocket no_socket([](const std::string&){return false;}, "");
-
-typedef std::function< void(const TransportSocket&, const std::string&) > packet_callback;
+typedef std::function< void(const TransportSocket&, const std::string&, const std::string&) > packet_callback;
 
 
 class Transport {

@@ -85,8 +85,8 @@ static std::string ipv6ify(const std::string& input) {
 }
 
 
-void PacketHandler::operator()(const TransportSocket &ts
-	                          , const std::string& packet) {
+void PacketHandler::operator()(const TransportSocket &ts, const std::string& addr,
+	                          const std::string& packet) {
 	if (packet.size() == 0) {
 		return;
 	}

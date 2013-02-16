@@ -144,7 +144,15 @@ void UDPServerTransport::incoming() {
 	}
 	auto iter = _who.insert(std::make_pair(addr, addrlen));
 
-	_handler(TransportSocket(std::bind(std::mem_fn(&UDPServerTransport::send), this, std::placeholders::_1, addr, addrlen), std::string(reinterpret_cast<char*>(addr), addrlen)), std::string(buf, read));
+	std::string addr_UID;
+	if(addr->sa_family == AF_INET)
+		addr_UID = "IPv4"+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(addr)->sin_addr.s_addr), 4)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(addr)->sin_port), 2);
+	else if(addr->sa_family == AF_INET6)
+		addr_UID = "IPv6"+std::string(reinterpret_cast<char*>(reinterpret_cast<sockaddr_in6*>(addr)->sin6_addr.s6_addr), 16)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in6*>(addr)->sin6_port), 2);
+	else
+		addr_UID = std::string(reinterpret_cast<char*>(addr), addrlen);
+
+	_handler(std::bind(std::mem_fn(&UDPServerTransport::send), this, std::placeholders::_1, addr, addrlen), addr_UID, std::string(buf, read));
 
 	if(!iter.second)
 		delete addr;
@@ -178,6 +186,6 @@ bool UDPServerTransport::compare::operator()(const std::pair<struct sockaddr*, s
 	if(a.first->sa_family == AF_INET) // IPv4
 		return reinterpret_cast<struct sockaddr_in*>(a.first)->sin_addr.s_addr < reinterpret_cast<struct sockaddr_in*>(b.first)->sin_addr.s_addr;
 	if(a.first->sa_family == AF_INET6) // IPv6
-		return std::memcmp(reinterpret_cast<struct sockaddr_in6*>(a.first)->sin6_addr.s6_addr, reinterpret_cast<struct sockaddr_in6*>(b.first)->sin6_addr.s6_addr, sizeof(in6_addr));
+		return std::memcmp(reinterpret_cast<struct sockaddr_in6*>(a.first)->sin6_addr.s6_addr, reinterpret_cast<struct sockaddr_in6*>(b.first)->sin6_addr.s6_addr, sizeof(in6_addr)) < 0;
 	return a < b;
 }

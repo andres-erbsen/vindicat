@@ -26,6 +26,7 @@ private:
 	ev::io _read_watcher;
 	struct sockaddr* _addr;
 	socklen_t _addrlen;
+	std::string _addr_UID;
 };
 
 
