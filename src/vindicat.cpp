@@ -1,5 +1,6 @@
 #include "transports/UDPServerTransport.h"
 #include "transports/UDPClientTransport.h"
+#include "transports/EthernetTransport.h"
 #include "PacketHandler.h"
 #include "InterfaceHandler.h"
 #include "TUNInterface.h"
@@ -22,6 +23,7 @@ int main (int argc, char** argv) {
 			i += 2;
 		} else assert(0);
 	}
+	transports.push_back(new EthernetTransport);
 
 	CryptoIdentity ci;
 	auto our_bcard = ci.our_businesscard();
