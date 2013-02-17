@@ -4,6 +4,9 @@
 #include <iostream>
 #include <cassert>
 #include <cstring>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 EthernetTransport::EthernetTransport(const std::string& d)
 {
@@ -37,6 +40,23 @@ EthernetTransport::EthernetTransport(const std::string& d)
     pcap_perror(_pcap, "pcap_setfilter");
     std::abort();
   }
+
+  ifreq ifr;
+  int sock = socket(PF_INET, SOCK_DGRAM, 0);
+  if(sock == -1)
+  {
+    std::perror("socket");
+    std::abort();
+  }
+  std::memset(&ifr, 0, sizeof(ifreq));
+  std::strcpy(ifr.ifr_name, device);
+  if(ioctl(sock, SIOCGIFHWADDR, &ifr) == -1)
+  {
+    std::perror("ioctl");
+    std::abort();
+  }
+  close(sock);
+  std::memcpy(_mac, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 }
 
 EthernetTransport::~EthernetTransport()
