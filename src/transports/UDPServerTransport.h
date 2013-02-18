@@ -14,10 +14,8 @@ public:
 	UDPServerTransport(const std::string&, const std::string&);
 	virtual ~UDPServerTransport();
 
-	void onPacket(packet_callback);
 	void enable();
 	void broadcast(const std::string&);
-    void read_cb(ev::io& w, int revents);
     bool send(const std::string&, const struct sockaddr*, socklen_t);
 
     class compare
@@ -27,6 +25,8 @@ public:
 		    const std::pair<struct sockaddr*, socklen_t>&);
     };
 private:
+    void read_cb(ev::io&, int);
+    friend ev::io;
 	void incoming();
 	std::set<std::pair<struct sockaddr*,socklen_t>, compare> _who;
 	// UDPv6 shares port space with UDPv4

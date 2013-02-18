@@ -59,15 +59,6 @@ EthernetTransport::EthernetTransport(const std::string& d)
   std::memcpy(_mac, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 }
 
-EthernetTransport::~EthernetTransport()
-{
-}
-
-void EthernetTransport::onPacket(packet_callback handler)
-{
-  _handler = handler;
-}
-
 void EthernetTransport::enable()
 {
   _read_watcher.set<EthernetTransport, &EthernetTransport::read_cb>(this);
@@ -109,7 +100,7 @@ void EthernetTransport::read_cb(ev::io &watcher, int revents)
   else if(res != 1)
     return;
   const ether_header *eth = reinterpret_cast<const ether_header*>(packet);
-  _handler(
+  _receive_cb(
            std::bind(std::mem_fn(&EthernetTransport::send),
                      this, std::placeholders::_1,
 		     std::string(reinterpret_cast<const char*>(eth->ether_shost),

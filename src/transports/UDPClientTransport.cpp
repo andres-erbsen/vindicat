@@ -21,7 +21,7 @@ void UDPClientTransport::read_cb(ev::io &w, int revents) {
 		std::perror("UDPClientTransport::read_cb");
 		std::abort();
 	}
-	_handler(std::bind(std::mem_fn(&UDPClientTransport::send), this, std::placeholders::_1), _addr_UID, std::string(buf, read));
+	_receive_cb(std::bind(std::mem_fn(&UDPClientTransport::send), this, std::placeholders::_1), _addr_UID, std::string(buf, read));
 	delete[] buf;
 }
 
@@ -87,10 +87,6 @@ UDPClientTransport::UDPClientTransport(struct sockaddr *addr, socklen_t addrlen)
 UDPClientTransport::~UDPClientTransport()
 {
 	close(_fd);
-}
-
-void UDPClientTransport::onPacket(packet_callback handler) {
-	_handler = handler;
 }
 
 void UDPClientTransport::enable() {

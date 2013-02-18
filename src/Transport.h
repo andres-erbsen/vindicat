@@ -16,16 +16,17 @@ class Transport {
 public:
 	Transport(const Transport&) = delete;
 	const Transport& operator= (const Transport&) = delete;	
-	virtual ~Transport() {};
+	virtual ~Transport() = default;
 
 	// set the receive callback
-	virtual void onPacket(packet_callback) = 0;	
+	void onPacket(packet_callback);	
 	// Transports start in a dormant state. activate this.
 	virtual void enable() = 0;
 	virtual void broadcast(const std::string&) = 0; // send to all
 
 protected:
 	Transport() = default;
+	packet_callback _receive_cb;
 };
 
 #endif // TRANSPORT_H_
