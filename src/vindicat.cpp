@@ -21,9 +21,11 @@ int main (int argc, char** argv) {
 		} else if (arg == "-c") {
 			transports.push_back( new UDPClientTransport(argv[i+1], argv[i+2]) );
 			i += 2;
+		} else if (arg == "-e") {
+			transports.push_back( new EthernetTransport(argv[i+1]) );
+			i += 1;
 		} else assert(0);
 	}
-	transports.push_back(new EthernetTransport);
 
 	CryptoIdentity ci;
 	auto our_bcard = ci.our_businesscard();

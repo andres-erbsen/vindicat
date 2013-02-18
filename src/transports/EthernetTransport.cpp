@@ -22,7 +22,7 @@ EthernetTransport::EthernetTransport(const std::string& d)
     std::abort();
   }
   errbuf[0] = 0;
-  _pcap = pcap_open_live(device, (1<<16)-1, true, -1, errbuf);
+  _pcap = pcap_open_live(device, (1<<16)-1, false, -1, errbuf);
   if(!_pcap)
   {
     std::cerr << "pcap_open_live: " << errbuf << std::endl;
@@ -30,7 +30,7 @@ EthernetTransport::EthernetTransport(const std::string& d)
   }
   if(errbuf[0] != 0)
     std::clog << "pcap_open_live: " << errbuf << std::endl;
-  if(pcap_compile(_pcap, &_filter, "ether proto 0xDCDC", true, PCAP_NETMASK_UNKNOWN) == -1)
+  if(pcap_compile(_pcap, &_filter, "ether proto 0xDCDC", false, PCAP_NETMASK_UNKNOWN) == -1)
   {
     pcap_perror(_pcap, "pcap_compile");
     std::abort();
@@ -109,5 +109,14 @@ void EthernetTransport::read_cb(ev::io &watcher, int revents)
   else if(res != 1)
     return;
   const ether_header *eth = reinterpret_cast<const ether_header*>(packet);
-  _handler(std::bind(std::mem_fn(&EthernetTransport::send), this, std::placeholders::_1, std::string(reinterpret_cast<const char*>(eth->ether_shost), ETH_ALEN)), std::string(reinterpret_cast<const char*>(packet+sizeof(ether_header)), header->caplen-sizeof(ether_header)), "ETHER"+std::string(reinterpret_cast<const char*>(eth->ether_shost), ETH_ALEN));
+  _handler(
+           std::bind(std::mem_fn(&EthernetTransport::send),
+                     this, std::placeholders::_1,
+		     std::string(reinterpret_cast<const char*>(eth->ether_shost),
+			         ETH_ALEN)),
+	   "ETHER"+std::string(reinterpret_cast<const char*>(eth->ether_shost),
+                               ETH_ALEN),
+	   std::string(reinterpret_cast<const char*>(packet+sizeof(ether_header)),
+                       header->caplen-sizeof(ether_header))
+  );
 }
