@@ -11,14 +11,16 @@ class Link;
 #include <memory>
 #include <vector>
 #include <tuple>
+#include <unordered_map>
 
 typedef std::vector< std::tuple<
 			std::weak_ptr<Link>, std::weak_ptr<Device>
 		> > Path;
 
-// TWO RESPONSIBILITIES :(
+// THREE RESPONSIBILITIES
 // 1) Maintain information containers for the $k$ closest devices
 // 2) Maintain a many-to-one mapping between device id-s and devices
+// 3) Mainain a one-to-one mapping between tsockets and devices behind them
 
 class NetworkMap {
 public:
@@ -29,9 +31,10 @@ public:
 	void add(std::shared_ptr<Device>&&);
 	bool add(std::shared_ptr<Link>&&);
 
-	std::weak_ptr<Device> device(const std::string&) const;
+	std::shared_ptr<Device> device(const std::string&) const;
+	std::shared_ptr<Device> device(std::shared_ptr<TransportSocket>) const;
 	Device& our_device() const;
-	std::weak_ptr<TransportSocket> tsock_to(const std::string&) const;
+	std::shared_ptr<TransportSocket> tsock_to(const std::string&) const;
 	
 	std::vector< std::tuple<
 			std::weak_ptr<Device>, std::weak_ptr<Link>, std::weak_ptr<Device>
@@ -47,6 +50,11 @@ private:
 	lemon::ListGraph::NodeMap<std::shared_ptr<Device> > _g_device;
 	lemon::ListGraph::EdgeMap<std::shared_ptr<Link> > _g_link;
 	PrefixMap<lemon::ListGraph::Node> _node_by_id;
+	std::unordered_map< std::shared_ptr<TransportSocket>
+	                  , lemon::ListGraph::Node           > _node_by_socket;
+	// C++11: acoording to cppreference, std::shared_ptr<T> p =>
+	// std::hash<std::shared_ptr<T>>()(p) == std::hash<T*>()(p.get()).
+	// std::shared_ptr<T> p, q => p.get() == q.get().
 
 	lemon::ListGraph::Node _our_node;
 };

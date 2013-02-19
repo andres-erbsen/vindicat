@@ -64,15 +64,30 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
 	if (edge == lemon::INVALID) edge = _graph.addEdge(left, right);	
 	if ( ! _g_link[edge] || _g_link[edge]->mtime() < link->mtime() ) {
 		std::swap(_g_link[edge], link);
+		if ( auto ts = link->tsocket() ) {
+			assert( left == _our_node || right == _our_node);
+			if (left == _our_node) {
+				_node_by_socket.insert( std::make_pair(ts,right) );
+			} else {
+				_node_by_socket.insert( std::make_pair(ts,left) );
+			}
+		}
 		return 1;
 	} else {
 		return 0;
 	}
 }
 
-std::weak_ptr<Device> NetworkMap::device(const std::string& id) const {
+std::shared_ptr<Device> NetworkMap::
+device(std::shared_ptr<TransportSocket> ts) const {
+	auto it = _node_by_socket.find(ts);
+	if ( it == _node_by_socket.end() ) return nullptr;
+	return _g_device[it->second];
+}
+
+std::shared_ptr<Device> NetworkMap::device(const std::string& id) const {
 	auto it = _node_by_id.find(id);
-	if ( it == _node_by_id.end() ) return std::weak_ptr<Device>();
+	if ( it == _node_by_id.end() ) return nullptr;
 	return _g_device[it->second];
 }
 
@@ -80,10 +95,10 @@ Device& NetworkMap::our_device() const {
 	return *_g_device[_our_node];
 }
 
-std::weak_ptr<TransportSocket>
+std::shared_ptr<TransportSocket>
 NetworkMap::tsock_to(const std::string& id) const {
 	auto it = _node_by_id.find(id);
-	if ( it == _node_by_id.end() ) return std::weak_ptr<TransportSocket>();
+	if ( it == _node_by_id.end() ) return nullptr;
 	auto edge = findEdge(_graph, _our_node, it->second);
 	return _g_link[edge]->tsocket();
 }
