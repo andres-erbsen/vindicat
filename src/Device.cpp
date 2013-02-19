@@ -2,6 +2,7 @@
 #include "Forwarding.h"
 #include "CryptoIdentity.h"
 #include "keccak128.h"
+#include "Util.h"
 
 #include <ed25519.h>
 #include <algorithm>
@@ -11,12 +12,6 @@ const std::vector<std::string>&  Device::ids()   const { return _ids;   }
 uint64_t                         Device::mtime() const { return _mtime; }
 PkencAlgo                     Device::enc_algo() const { return _enc_algo; }
 std::string                    Device::enc_key() const { return _enc_key; }
-
-// TOOD: move to an utils file
-template<typename C, typename E>
-static bool contains(C c,E e) {
-	return std::find(c.begin(), c.end(), e) != c.end();
-}
 
 SigAlgo Device::sig_algo() const {
 	if ( contains(_sig_algos, SigAlgo::ED25519) ) return SigAlgo::ED25519;
@@ -109,9 +104,9 @@ void Device::addForwarding(std::shared_ptr<ForeignForwarding>&& fwd) {
 	_forwardings.insert(std::make_pair(fwd->id(), std::move(fwd)));
 }
 
-std::weak_ptr<ForeignForwarding> Device::getForwarding(uint64_t id) {
+std::shared_ptr<ForeignForwarding> Device::getForwarding(uint64_t id) {
 	auto it = _forwardings.find(id);
-	if (it == _forwardings.end() ) return std::weak_ptr<ForeignForwarding>();
+	if (it == _forwardings.end() ) return nullptr;
 	return it->second;
 }
 

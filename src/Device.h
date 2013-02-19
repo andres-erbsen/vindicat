@@ -33,7 +33,7 @@ public:
 	SigAlgo sig_algo() const;
 
 	void addForwarding(std::shared_ptr<ForeignForwarding>&&);
-	std::weak_ptr<ForeignForwarding> getForwarding(uint64_t);
+	std::shared_ptr<ForeignForwarding> getForwarding(uint64_t);
 	void removeForwarding(uint64_t);
 
 	// Deserialization

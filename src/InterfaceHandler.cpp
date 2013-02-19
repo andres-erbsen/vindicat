@@ -34,7 +34,7 @@ void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
 	} else {
 		Path path;
 		{
-			auto dst_dev = _nm.device(to).lock();
+			auto dst_dev = _nm.device(to);
 			if (!dst_dev) return;
 			path = _nm.path_to(*dst_dev);
 		}
