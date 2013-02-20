@@ -87,8 +87,7 @@ static std::string ipv6ify(const std::string& input) {
 }
 
 
-void PacketHandler::operator()( std::shared_ptr<TransportSocket> ts
-	                          , const std::string& packet) {
+void PacketHandler::operator()(TransportSocket&& ts, std::string&& packet) {
 	if (packet.size() == 0) {
 		return;
 	}
@@ -137,7 +136,7 @@ void PacketHandler::operator()( std::shared_ptr<TransportSocket> ts
 						   , enc_algo, their_connection_pk, encpart);
 				cookie_packet.append(encpart);
 			}
-			ts->send(cookie_packet);
+			ts.send(cookie_packet);
 		}
 
 

@@ -27,8 +27,8 @@ uint64_t Link::mtime() const {
 	return _mtime;
 }
 
-std::shared_ptr<TransportSocket> Link::tsocket() const {
-	return nullptr;
+TransportSocket Link::tsocket() const {
+	return TransportSocket::no_socket();
 }
 
 double Link::measure() const {
@@ -37,7 +37,7 @@ double Link::measure() const {
 
 
 DirectLink::DirectLink( const std::string& left_id
-                      , std::shared_ptr<TransportSocket>&& ts
+                      , TransportSocket&& ts
                       , const std::string& right_id )
                       : _tsocket(ts) {
 	_left_id = left_id;
@@ -45,7 +45,7 @@ DirectLink::DirectLink( const std::string& left_id
 	_mtime = std::time(NULL);
 }
 
-std::shared_ptr<TransportSocket> DirectLink::tsocket() const {
+TransportSocket DirectLink::tsocket() const {
 	return _tsocket;
 }
 

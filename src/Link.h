@@ -24,7 +24,7 @@ public:
 
 	uint64_t mtime() const;	
 	virtual double measure() const;
-	virtual std::shared_ptr<TransportSocket> tsocket() const;
+	virtual TransportSocket tsocket() const;
 
 protected:
 	std::string _left_id, _right_id;
@@ -34,10 +34,11 @@ protected:
 
 class DirectLink : public Link {
 public:
-	DirectLink(const std::string&, std::shared_ptr<TransportSocket>&&, const std::string& );
-	std::shared_ptr<TransportSocket> tsocket() const;
+	DirectLink(const std::string&, TransportSocket&&, const std::string& );
+	virtual ~DirectLink() noexcept {}
+	TransportSocket tsocket() const;
 private:
-	std::shared_ptr<TransportSocket>  _tsocket;
+	TransportSocket _tsocket;
 };
 
 class PublicLink : public Link {

@@ -35,7 +35,6 @@ void NetworkMap::add(std::shared_ptr<Device>&& dev_p) {
 		assert(matching_nodes.size() == 1);
 		// TODO: handle the case of mutiple matches; when nodes have merged.
 		node = *matching_nodes.begin();
-		assert(_g_device[node].unique());
 		for ( const auto& id : _g_device[node]->ids() ) {
 			auto erased = _node_by_id.erase(id);
 			assert(erased == 1);
@@ -63,7 +62,8 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
 	auto edge = lemon::findEdge(_graph, left, right);
 	if (edge == lemon::INVALID) edge = _graph.addEdge(left, right);	
 	if ( ! _g_link[edge] || _g_link[edge]->mtime() < link->mtime() ) {
-		if ( auto ts = link->tsocket() ) {
+		auto ts = link->tsocket();
+		if ( ! (ts == TransportSocket::no_socket()) ) {
 			assert( left == _our_node || right == _our_node);
 			if (left == _our_node) {
 				_node_by_socket.insert( std::make_pair(ts,right) );
@@ -79,7 +79,7 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
 }
 
 std::shared_ptr<Device> NetworkMap::
-device(std::shared_ptr<TransportSocket> ts) const {
+device(const TransportSocket& ts) const {
 	auto it = _node_by_socket.find(ts);
 	if ( it == _node_by_socket.end() ) return nullptr;
 	return _g_device[it->second];
@@ -95,10 +95,10 @@ Device& NetworkMap::our_device() const {
 	return *_g_device[_our_node];
 }
 
-std::shared_ptr<TransportSocket>
+TransportSocket
 NetworkMap::tsock_to(const std::string& id) const {
 	auto it = _node_by_id.find(id);
-	if ( it == _node_by_id.end() ) return nullptr;
+	if ( it == _node_by_id.end() ) return TransportSocket::no_socket();
 	auto edge = findEdge(_graph, _our_node, it->second);
 	return _g_link[edge]->tsocket();
 }

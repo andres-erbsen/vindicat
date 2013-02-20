@@ -2,35 +2,30 @@
 #define UDPCLIENTTRANSPORT_H_
 
 #include "Transport.h"
-#include <ev++.h> // include before <inetclientdgram.hpp>
+#include <ev++.h>
 
-#include <memory>
-#include <inetclientdgram.hpp> // pollutes namespace?
-
-class UDPClientSocket : public TransportSocket, public std::enable_shared_from_this<UDPClientSocket> {
-public:
-	UDPClientSocket(packet_callback, const std::string&, const std::string&);
-
-	void send(const std::string&);
-	void read_cb(ev::io& w, int revents);
-
-private:
-	libsocket::inet_dgram_client _sock;
-	ev::io _read_watcher;
-	packet_callback _handler;
-};
-
+#include <sys/socket.h>
 
 class UDPClientTransport : public Transport {
 public:
 	UDPClientTransport(const std::string& host, const std::string& port = std::string("30307"));
-	void onPacket(packet_callback);
+	UDPClientTransport(struct sockaddr *addr, socklen_t addrlen);
+	~UDPClientTransport();
 	void enable();
 	void broadcast(const std::string&);
+	bool send(const std::string&);
+	const struct sockaddr* address() const
+	{
+		return _addr;
+	}
 private:
-	std::string _host, _port;
-	packet_callback _handler;
-	std::shared_ptr<UDPClientSocket> _trs;
+	void read_cb(ev::io&, int);
+	friend ev::io;
+	int _fd;
+	ev::io _read_watcher;
+	struct sockaddr* _addr;
+	socklen_t _addrlen;
+	std::string _addr_UID;
 };
 
 
