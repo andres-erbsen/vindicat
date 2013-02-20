@@ -63,7 +63,6 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
 	auto edge = lemon::findEdge(_graph, left, right);
 	if (edge == lemon::INVALID) edge = _graph.addEdge(left, right);	
 	if ( ! _g_link[edge] || _g_link[edge]->mtime() < link->mtime() ) {
-		std::swap(_g_link[edge], link);
 		if ( auto ts = link->tsocket() ) {
 			assert( left == _our_node || right == _our_node);
 			if (left == _our_node) {
@@ -72,6 +71,7 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
 				_node_by_socket.insert( std::make_pair(ts,left) );
 			}
 		}
+		std::swap(_g_link[edge], link);
 		return 1;
 	} else {
 		return 0;
