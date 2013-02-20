@@ -95,8 +95,12 @@ void PacketHandler::operator()( std::shared_ptr<TransportSocket> ts
 	uint8_t tag = packet[0];
 	if ( tag == 0 ) {
 		if (packet.size() < 1+8+8) return;
-		uint64_t route_id = *( reinterpret_cast<const uint32_t*>(packet.data()+1) );
-		_nm.device(ts)->getForwarding(route_id)->forward(packet);
+		uint64_t route_id = *( reinterpret_cast<const uint64_t*>(packet.data()+1) );
+		auto dev =_nm.device(ts);
+		if (!dev) return;
+		auto fwd = dev->getForwarding(route_id);
+		if (!fwd) return;
+		fwd->forward(packet);
 	} else if (tag == 1) {
 		if (packet.size() < 1+8+8) return;
 
@@ -146,15 +150,17 @@ void PacketHandler::operator()( std::shared_ptr<TransportSocket> ts
 		std::cout << "Beacon from " << ipv6ify(dev->id()) << std::endl;
 
 		bool relevant = 0;
-		auto prev_dev = _nm.device(ts);
-		if (!prev_dev) relevant = 1; // first valid card from this socket
-		else { // tsocket already taken
-			// the new device description replaces the old one if and only if
-			// the latter was signed using at least one of the keys in the former
-			for ( const auto& old_id : prev_dev->ids() ) {
-				if ( contains(dev->ids(), old_id) ) {
-					relevant = 1;
-					break;
+		{
+			auto prev_dev = _nm.device(ts);
+			if (!prev_dev) relevant = 1; // first valid card from this socket
+			else { // tsocket already taken
+				// the new device description replaces the old one if and only if
+				// the latter was signed using at least one of the keys in the former
+				for ( const auto& old_id : prev_dev->ids() ) {
+					if ( contains(dev->ids(), old_id) ) {
+						relevant = 1;
+						break;
+					}
 				}
 			}
 		}
@@ -162,7 +168,10 @@ void PacketHandler::operator()( std::shared_ptr<TransportSocket> ts
 
 		auto link = std::make_shared
 			<DirectLink>(_nm.our_device().id(),std::move(ts),dev->id());
+		assert(link);
 		_nm.add( std::move(dev)  );
 		_nm.add( std::move(link) );
+	} else {
+		std::cerr << "Packet with unkown tag " << tag << std::endl;
 	}
 }
