@@ -115,9 +115,13 @@ void Device::removeForwarding(uint64_t id) {
 }
 
 std::shared_ptr<Device> Device::merge(Device&& a, Device&& b) {
-	// TODO: never lose information - merge, don't replace
-	if (a.mtime() > b.mtime()) return std::make_shared<Device>( std::move(a) );
-	else return std::make_shared<Device>( std::move(b) );
+	Device* old = &a;
+	Device* ret = &b;
+	if (a.mtime() > b.mtime()) std::swap(old, ret);
+	assert( ret->mtime() >= old->mtime() );
+
+	ret->_forwardings.insert(old->_forwardings.begin(), old->_forwardings.end());
+	return std::make_shared<Device>(std::move( *ret ));
 }
 
 void Device::clear() {
