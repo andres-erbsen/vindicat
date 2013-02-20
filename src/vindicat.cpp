@@ -1,9 +1,11 @@
 #include "transports/UDPServerTransport.h"
 #include "transports/UDPClientTransport.h"
+#include "transports/EthernetTransport.h"
 #include "PacketHandler.h"
 #include "InterfaceHandler.h"
 #include "TUNInterface.h"
 #include "Beacon.h"
+#include "LinkLocalDiscovery.h"
 
 #include <ev++.h>
 
@@ -19,6 +21,9 @@ int main (int argc, char** argv) {
 		} else if (arg == "-c") {
 			transports.push_back( new UDPClientTransport(argv[i+1], argv[i+2]) );
 			i += 2;
+		} else if (arg == "-e") {
+			transports.push_back( new EthernetTransport(argv[i+1]) );
+			i += 1;
 		} else assert(0);
 	}
 
@@ -41,6 +46,9 @@ int main (int argc, char** argv) {
 
 	Beacon bcn(3,ci,transports);
 	bcn.enable();
+
+	LinkLocalDiscovery lld(transports, phn);
+	lld.enable();
 	
 	if(tun)
 		tun->onPacket(ihn);
