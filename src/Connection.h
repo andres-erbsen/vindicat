@@ -17,10 +17,11 @@ public:
     bool forward_out(const std::string&) override;
     bool forward(const std::string&) override;
 
-	// packet generation
 	void hello();
-	void auth(std::string&& cookie_packet);
 private:
+	void _auth(const std::string& cookie_packet);
+	void _incoming(const std::string& cookie_packet);
+
 	CryptoIdentity& _ci;
 	ConnectionPool& _cp;
 	Path _path;
@@ -30,6 +31,7 @@ private:
 
 	void _gen_hello_packet();
 	std::string _hello_packet;
+	bool _authenticated;
 
 	std::deque<std::string> _packet_queue;
 };

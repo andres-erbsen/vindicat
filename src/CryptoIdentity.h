@@ -2,6 +2,7 @@
 #define CRYPTOIDENTITY_H_
 
 #include "vindicat.pb.h" // just for algorithm numbers, maybe move them...
+#include "TemporalCookies.h"
 
 #include <ed25519.h>
 #include <string>
@@ -20,6 +21,8 @@ public:
 	std::shared_ptr<DeviceBusinesscard> our_businesscard() const;
 
 	void update_businesscard();
+
+	TemporalCookies cookies;
 private:
 	ed25519_secret_key _secretkey_edsig;
 	ed25519_public_key _verkey_edsig;

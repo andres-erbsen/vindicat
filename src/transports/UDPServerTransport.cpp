@@ -148,7 +148,7 @@ void UDPServerTransport::incoming() {
 	else
 		addr_UID = std::string(reinterpret_cast<char*>(addr), addrlen);
 
-	_receive_cb(std::bind(std::mem_fn(&UDPServerTransport::send), this, std::placeholders::_1, addr, addrlen), addr_UID, std::string(buf, read));
+	_receive_cb(TransportSocket(std::bind(std::mem_fn(&UDPServerTransport::send), this, std::placeholders::_1, addr, addrlen), addr_UID), std::string(buf, read));
 
 	if(!iter.second)
 		delete addr;

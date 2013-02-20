@@ -34,8 +34,8 @@ protected:
 
 class DirectLink : public Link {
 public:
-	DirectLink(const std::string&, const TransportSocket&, const std::string& );
-	~DirectLink() throw() {}
+	DirectLink(const std::string&, TransportSocket&&, const std::string& );
+	virtual ~DirectLink() noexcept {}
 	TransportSocket tsocket() const;
 private:
 	TransportSocket _tsocket;

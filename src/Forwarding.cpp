@@ -61,10 +61,10 @@ SimpleForwarding( NetworkMap& nm
 bool SimpleForwarding::forward_out(const std::string& packet) {
     auto owner = _owner.lock();
     assert(owner);
-    // Get transportsocket to owner from NetworkMap
+    // Get pointer to transportsocket to owner from NetworkMap
     auto tsock = _nm.tsock_to(owner->id());
     // Send to tsock
-    return tsock(packet);
+    return tsock.send(packet);
 }
 
 

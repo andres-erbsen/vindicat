@@ -28,7 +28,7 @@ uint64_t Link::mtime() const {
 }
 
 TransportSocket Link::tsocket() const {
-	return no_socket;
+	return TransportSocket::no_socket();
 }
 
 double Link::measure() const {
@@ -37,7 +37,7 @@ double Link::measure() const {
 
 
 DirectLink::DirectLink( const std::string& left_id
-                      , const TransportSocket& ts
+                      , TransportSocket&& ts
                       , const std::string& right_id )
                       : _tsocket(ts) {
 	_left_id = left_id;

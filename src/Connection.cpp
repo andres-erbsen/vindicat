@@ -20,14 +20,11 @@ Connection::Connection(CryptoIdentity& ci, ConnectionPool& cp, Path path)
 	, _naclsession( std::get<1>(path.at(path.size()-1)) .lock()->enc_key() )
 	, _dst_id(      std::get<1>(path.at(path.size()-1)) .lock()->id() )
 	, _route_id( bytes( id() ) )
+	, _authenticated(false)
 	{}
 
 void Connection::detatch() {
 	_cp.erase(_dst_id);
-}
-
-bool Connection::forward_out(const std::string& _) {
-	assert(0); // TODO
 }
 
 bool Connection::forward(const std::string& packet) {
@@ -38,6 +35,12 @@ bool Connection::forward(const std::string& packet) {
 void Connection::hello() {
 	if (_hello_packet.empty()) _gen_hello_packet();
 	_pair_other.lock()->forward_out(_hello_packet);
+}
+
+bool Connection::forward_out(const std::string& packet) {
+	if (!_authenticated) _auth(packet);
+	else _incoming(packet);
+	return 1;
 }
 
 void Connection::_gen_hello_packet() {
@@ -65,7 +68,7 @@ void Connection::_gen_hello_packet() {
 }
 
 
-void Connection::auth(std::string&& cookie_packet) {
+void Connection::_auth(const std::string& cookie_packet) {
 	// cookie packet: ppttype, nonce (24 bytes), [B',ConnectionAccept](B<>A')
 	std::string m;
 	if ( ! _naclsession.decrypt( cookie_packet.substr(1+24)
@@ -83,9 +86,9 @@ void Connection::auth(std::string&& cookie_packet) {
 		cookie = ack.cookie();
 	}
 
-	// client_auth packet: pkttype,rid,pktid,cookie,[A.bcard,[A'](A<>B')](A'<>B')
-	std::string auth_packet("\0");
-
+	// client_auth packet: pkttype,rid,pktid,cookie,[[A'](A<>B'),bcard_A](A'<>B')
+	std::string auth_packet;
+	auth_packet.push_back('\0');
 	auth_packet.append(route_id);
 	std::string packet_id = randomstring(8); // FIXME: generate deterministically
 	auth_packet.append(packet_id);
@@ -94,13 +97,21 @@ void Connection::auth(std::string&& cookie_packet) {
 		std::string message;
 		std::string nonce = route_id+packet_id;
 		nonce.resize(24,'\0');
-		_ci.our_businesscard()->AppendToString(&message);
 		{
-			std::string vouch; // [A'](A<>B')
+			std::string vouch;
 			_ci.encrypt(_naclsession.our_pk(), nonce, PkencAlgo::CURVE25519XSALSA20POLY1305, _naclsession.pk(), vouch);
-			message.append(vouch);
+			message.append(vouch); // [A'](A<>B')
 		}
+		_ci.our_businesscard()->AppendToString(&message);
 		auth_packet.append( _naclsession.encrypt(message, nonce) );
 	}
 	_pair_other.lock()->forward_out(auth_packet);
+}
+
+void Connection::_incoming(const std::string& packet) {
+	// data packet: '\0',rid,pktid, [data type, data](A'<>B')
+	std::string m;
+	if ( ! _naclsession.decrypt( packet.substr(1+16)
+	                           , packet.substr(1,16)
+                               , m ) ) return;
 }

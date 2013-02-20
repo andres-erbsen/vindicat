@@ -1,7 +1,9 @@
 #include "PacketHandler.h"
+#include "Forwarding.h"
 #include "Link.h"
 #include "vindicat.pb.h"
 #include "randomstring.h"
+#include "Util.h"
 
 #include <iostream>
 #include <cstdint>
@@ -26,8 +28,8 @@ std::shared_ptr<Link> make_link( std::shared_ptr<LinkPromise>&& promise
 	}
 	
 	// Look up the relevant devices from the network map
-	std::shared_ptr<Device> left_device  = nm.device(info->left() ).lock();
-	std::shared_ptr<Device> right_device = nm.device(info->right()).lock();
+	std::shared_ptr<Device> left_device  = nm.device(info->left() );
+	std::shared_ptr<Device> right_device = nm.device(info->right());
 	if ( ! left_device || ! right_device ) return std::shared_ptr<Link>();
 
 	// verify the signatures
@@ -85,13 +87,16 @@ static std::string ipv6ify(const std::string& input) {
 }
 
 
-void PacketHandler::operator()(const TransportSocket &ts, const std::string& addr,
-	                          const std::string& packet) {
+void PacketHandler::operator()(TransportSocket&& ts, std::string&& packet) {
 	if (packet.size() == 0) {
 		return;
 	}
 	uint8_t tag = packet[0];
-	if (tag == 1) {
+	if ( tag == 0 ) {
+		if (packet.size() < 1+8+8) return;
+		uint64_t route_id = *( reinterpret_cast<const uint32_t*>(packet.data()+1) );
+		_nm.device(ts)->getForwarding(route_id)->forward(packet);
+	} else if (tag == 1) {
 		if (packet.size() < 1+8+8) return;
 
 		std::string hop_info;
@@ -120,15 +125,14 @@ void PacketHandler::operator()(const TransportSocket &ts, const std::string& add
 				std::string connection_pk = crypto_box_keypair(&connection_sk);
 				ConnectionAccept ack;
 				ack.set_auth( ConnectionAccept::AUTHENC_BCARD );
-				ack.set_cookie( randomstring(96) );
-				// FIXME: [their_connection_pk,connection_sk](minutekey)
-
+				ack.set_cookie( _ci.cookies.cookie(
+							their_connection_pk + connection_sk ) );
 				std::string encpart;
 				_ci.encrypt( connection_pk+ack.SerializeAsString(), nonce
 						   , enc_algo, their_connection_pk, encpart);
 				cookie_packet.append(encpart);
 			}
-			ts(cookie_packet);
+			ts.send(cookie_packet);
 		}
 
 
@@ -139,6 +143,21 @@ void PacketHandler::operator()(const TransportSocket &ts, const std::string& add
 		auto dev = std::make_shared<Device>();
 		if ( ! dev->parseFrom( std::move(card) ) ) return;
 		std::cout << "Beacon from " << ipv6ify(dev->id()) << std::endl;
+
+		bool relevant = 0;
+		auto prev_dev = _nm.device(ts);
+		if (!prev_dev) relevant = 1; // first valid card from this socket
+		else { // tsocket already taken
+			// the new device description replaces the old one if and only if
+			// the latter was signed using at least one of the keys in the former
+			for ( const auto& old_id : prev_dev->ids() ) {
+				if ( contains(dev->ids(), old_id) ) {
+					relevant = 1;
+					break;
+				}
+			}
+		}
+		if (!relevant) return;
 
 		auto link = std::make_shared
 			<DirectLink>(_nm.our_device().id(),std::move(ts),dev->id());

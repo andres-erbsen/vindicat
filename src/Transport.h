@@ -5,11 +5,33 @@
 #include <string>
 #include <memory>
 
-typedef std::function<bool(const std::string&)> TransportSocket;
+class TransportSocket
+{
+public:
+	typedef std::function<bool(const std::string&)> send_function;
+	TransportSocket(send_function, const std::string&);
+	bool send(const std::string&) const;
+	bool operator==(const TransportSocket&) const;
+	bool operator<(const TransportSocket&) const;
+	std::hash<std::string>::result_type hash() const;
+	static TransportSocket no_socket();
+private:
+	send_function _send;
+	std::string _id;
+};
 
-const static TransportSocket no_socket([](const std::string&){return false;});
+namespace std
+{
+	template <> struct hash<TransportSocket>
+	{
+		hash<string>::result_type operator()(const TransportSocket& ts) const
+		{
+			return ts.hash();
+		}
+	};
+}
 
-typedef std::function< void(const TransportSocket&, const std::string&, const std::string&) > packet_callback;
+typedef std::function< void(TransportSocket&&, std::string&&) > packet_callback;
 
 
 class Transport {

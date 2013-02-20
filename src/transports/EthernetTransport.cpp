@@ -101,13 +101,13 @@ void EthernetTransport::read_cb(ev::io &watcher, int revents)
     return;
   const ether_header *eth = reinterpret_cast<const ether_header*>(packet);
   _receive_cb(
-           std::bind(std::mem_fn(&EthernetTransport::send),
-                     this, std::placeholders::_1,
-		     std::string(reinterpret_cast<const char*>(eth->ether_shost),
-			         ETH_ALEN)),
-	   "ETHER"+std::string(reinterpret_cast<const char*>(eth->ether_shost),
-                               ETH_ALEN),
-	   std::string(reinterpret_cast<const char*>(packet+sizeof(ether_header)),
-                       header->caplen-sizeof(ether_header))
-  );
+      TransportSocket(
+          std::bind(std::mem_fn(&EthernetTransport::send),
+                    this, std::placeholders::_1,
+                    std::string(reinterpret_cast<const char*>(eth->ether_shost),
+                                ETH_ALEN)),
+	  "ETHER"+std::string(reinterpret_cast<const char*>(eth->ether_shost),
+                              ETH_ALEN)),
+      std::string(reinterpret_cast<const char*>(packet+sizeof(ether_header)),
+                  header->caplen-sizeof(ether_header)));
 }
