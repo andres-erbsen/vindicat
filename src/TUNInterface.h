@@ -16,7 +16,7 @@ public:
   ~TUNInterface();
   TUNInterface &operator=(const TUNInterface &) = delete;
   void send(const IPv6::Packet &packet);
-  void send(const std::string &from_id, const std::string& packet);
+  void send(const std::string&, uint8_t, const std::string&);
 private:
   TUNInterface() = default;
   friend ev::io;

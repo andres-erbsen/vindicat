@@ -28,8 +28,7 @@ int main (int argc, char** argv) {
 	our_device->parseFrom( std::move(our_bcard) );
 
 	std::unique_ptr<TUNInterface> tun = TUNInterface::open(our_device->id());
-	if(!tun)
-		std::cerr << "TUN interface creation failed" << std::endl;
+
 	NetworkMap nm( std::move(our_device) );
 	ConnectionPool cp;
 
@@ -37,13 +36,15 @@ int main (int argc, char** argv) {
 	for (Transport* tr : transports) tr->onPacket(phn);
 	for (Transport* tr : transports) tr->enable();	
 
-	InterfaceHandler ihn(ci, nm, cp);
-
 	Beacon bcn(3,ci,transports);
 	bcn.enable();
 	
-	if(tun)
+	if (tun) {
+		InterfaceHandler ihn(ci, nm, cp, *tun);
 		tun->onPacket(ihn);
+	} else {
+		std::cerr << "TUN interface creation failed" << std::endl;
+	}
 
 	ev_run (EV_DEFAULT_ 0);	
 }

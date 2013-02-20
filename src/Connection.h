@@ -2,6 +2,7 @@
 #define CONNECTION_H_
 
 #include "Forwarding.h"
+#include "Interface.h"
 #include "ConnectionPool.h"
 #include "NetworkMap.h"
 #include "CryptoIdentity.h"
@@ -12,7 +13,7 @@
 
 class Connection : public Forwarding {
 public:
-	Connection(CryptoIdentity&, ConnectionPool&, Path);
+	Connection(CryptoIdentity&, ConnectionPool&, Interface&, Path);
     void detatch() override;
     bool forward_out(const std::string&) override;
     bool forward(const std::string&) override;
@@ -24,6 +25,7 @@ private:
 
 	CryptoIdentity& _ci;
 	ConnectionPool& _cp;
+	Interface& _if;
 	Path _path;
 	nacl25519_nm _naclsession;
 	std::string _dst_id;

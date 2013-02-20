@@ -12,10 +12,11 @@ std::string bytes(uint64_t n) {
 	return std::string(p,8);
 }
 
-Connection::Connection(CryptoIdentity& ci, ConnectionPool& cp, Path path)
+Connection::Connection(CryptoIdentity& ci, ConnectionPool& cp, Interface& iface, Path path)
 	: Forwarding(randint64())
 	, _ci(ci)
 	, _cp(cp)
+	, _if(iface)
 	, _path(path)
 	, _naclsession( std::get<1>(path.at(path.size()-1)) .lock()->enc_key() )
 	, _dst_id(      std::get<1>(path.at(path.size()-1)) .lock()->id() )
@@ -114,4 +115,5 @@ void Connection::_incoming(const std::string& packet) {
 	if ( ! _naclsession.decrypt( packet.substr(1+16)
 	                           , packet.substr(1,16)
                                , m ) ) return;
+	_if.send(_dst_id,m[0],m.substr(0));
 }

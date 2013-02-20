@@ -3,11 +3,12 @@
 
 #include <iostream>
 
-InterfaceHandler::
-InterfaceHandler(CryptoIdentity& ci, NetworkMap& nm, ConnectionPool& cp)
+InterfaceHandler::InterfaceHandler
+	(CryptoIdentity& ci, NetworkMap& nm, ConnectionPool& cp, Interface& iface)
 	: _ci(ci)
 	, _nm(nm)
 	, _cp(cp)
+	, _if(iface)
 	{}
 
 static std::string hex(const std::string& input) {
@@ -26,7 +27,7 @@ static std::string hex(const std::string& input) {
 }
 
 void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
-	std::cout << "To: " << hex(to) << " (" << packet.size() << " bytes)\n"
+	std::cerr << "To: " << hex(to) << " (" << packet.size() << " bytes)\n"
 		<< packet << "\n" << std::endl;
 	auto it = _cp.find(to);
 	if (it != _cp.end() ) {
@@ -38,7 +39,7 @@ void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
 			if (!dst_dev) return;
 			path = _nm.path_to(*dst_dev);
 		}
-		auto conn = std::make_shared<Connection>(_ci, _cp, path);
+		auto conn = std::make_shared<Connection>(_ci, _cp, _if, path);
 		auto rfwd = std::make_shared<SimpleForwarding>(_nm, conn->id());
 		Forwarding::pair(conn, rfwd);
 

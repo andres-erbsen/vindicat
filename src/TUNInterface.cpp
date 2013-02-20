@@ -93,12 +93,12 @@ void TUNInterface::send(const IPv6::Packet &packet)
   write(_fd, packet.data(), IPv6::Packet::header_length+packet.payload_length());
 }
 
-void TUNInterface::send(const std::string &from_id, const std::string& packet)
+void TUNInterface::send(const std::string& from_id, uint8_t protocol_number, const std::string& payload)
 {
   IPv6::Address src;
   src.address[0] = 0x04;
   for(int i = 0; i < 15; i++)
     src.address[i+1] = from_id.at(i);
-  send(IPv6::Packet::reassemble(src, _address, packet[0], packet.substr(1)));
+  send(IPv6::Packet::reassemble(src, _address, protocol_number, payload));
 }
 

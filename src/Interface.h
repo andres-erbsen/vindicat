@@ -1,6 +1,7 @@
 #ifndef INTERFACE_H_
 #define INTERFACE_H_
 
+#include <cstdint>
 #include <string>
 #include <functional>
 
@@ -14,7 +15,7 @@ public:
 	virtual ~Interface() = default;
 
 	void onPacket(interface_callback);
-	virtual void send(const std::string &from_id, const std::string& packet) = 0;
+	virtual void send(const std::string&, uint8_t, const std::string&) = 0;
 
 protected:
 	interface_callback _receive_cb;
