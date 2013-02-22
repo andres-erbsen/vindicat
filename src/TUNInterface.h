@@ -22,7 +22,7 @@ private:
   friend ev::io;
   ev::io _read_watcher;
   int _fd;
-  void read_cb(ev::io &w, int revents);
+  void read_cb(ev::io&, int);
   IPv6::Address _address;
 };
 

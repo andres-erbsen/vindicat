@@ -14,7 +14,7 @@ class LinkLocalDiscovery
   LinkLocalDiscovery(std::vector<Transport*>&, const PacketHandler&);
   virtual ~LinkLocalDiscovery();
   void enable();
-  void read_cb(ev::io &w, int revents);
+  void read_cb(ev::io&, int);
  private:
   std::vector<Transport*> &_transports;
   PacketHandler _phn;

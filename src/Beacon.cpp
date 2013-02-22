@@ -15,6 +15,6 @@ void Beacon::enable() {
 	_w.start();
 }
 
-void Beacon::operator() (ev::timer &w, int revents) {
+void Beacon::operator() (ev::timer& /*w*/, int /*revents*/) {
 	for (auto tr : _transports) tr->broadcast(_msg);
 }

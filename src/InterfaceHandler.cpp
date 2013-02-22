@@ -39,7 +39,7 @@ void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
 			if (!dst_dev) return;
 			path = _nm.path_to(*dst_dev);
 		}
-		auto conn = std::make_shared<Connection>(_ci, _cp, _if, path);
+		auto conn = std::make_shared<Connection>(_ci, path, _cp, _if);
 		auto rfwd = std::make_shared<SimpleForwarding>(_nm, conn->id());
 		Forwarding::pair(conn, rfwd);
 
@@ -48,6 +48,6 @@ void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
 		auto next_dev = std::get<1>(path.at(0)).lock();
 		next_dev->addForwarding(rfwd);
 
-		conn->hello();
+		conn->request();
 	}
 }

@@ -1,6 +1,6 @@
 #include "CryptoIdentity.h"
 
-#include <randombytes.h>
+#include <Util.h>
 #include <crypto_box.h>
 
 #include <ctime>

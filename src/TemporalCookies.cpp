@@ -1,5 +1,5 @@
 #include "TemporalCookies.h"
-#include "randombytes.h"
+#include "Util.h"
 #include <cassert>
 
 TemporalCookies::TemporalCookies(float refresh_interval) {
@@ -56,7 +56,7 @@ open(const std::string& cookie, std::string& ret) {
 }
 
 
-void TemporalCookies::operator() (ev::timer& w, int revents) {
+void TemporalCookies::operator() (ev::timer& /*w*/, int /*revents*/) {
 	unsigned int i;
 	for (i=0; i<sizeof(_minutekey); ++i) _lastminutekey[i] = _minutekey[i];
 	randombytes(_minutekey, sizeof(_minutekey));

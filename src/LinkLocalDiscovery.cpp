@@ -91,7 +91,7 @@ void LinkLocalDiscovery::enable()
     _read_watcher.start(_fd, ev::READ);
 }
 
-void LinkLocalDiscovery::read_cb(ev::io &w, int revents)
+void LinkLocalDiscovery::read_cb(ev::io& /*w*/, int /*revents*/)
 {
   char buf[1500];
   socklen_t srclen = sizeof(struct sockaddr_in6);

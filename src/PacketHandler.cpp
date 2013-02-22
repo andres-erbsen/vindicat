@@ -2,7 +2,6 @@
 #include "Forwarding.h"
 #include "Link.h"
 #include "vindicat.pb.h"
-#include "randomstring.h"
 #include "Util.h"
 #include "nacl25519_nm.h"
 

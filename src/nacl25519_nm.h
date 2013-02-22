@@ -8,6 +8,7 @@ class nacl25519_nm {
 public:
 	nacl25519_nm() = delete;
 	nacl25519_nm(const nacl25519_nm&) = delete;
+	nacl25519_nm(nacl25519_nm&&) = default;
 	const nacl25519_nm& operator= (const nacl25519_nm&) = delete;
 
 	nacl25519_nm(const std::string& pk); // generates secret key

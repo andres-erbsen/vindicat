@@ -1,7 +1,7 @@
 #include "nacl25519_nm.h"
 #include <crypto_scalarmult_curve25519.h>
 
-#include <randombytes.h>
+#include <Util.h>
 #include <cassert>
 
 nacl25519_nm::nacl25519_nm(const std::string& pubk, const std::string& seck) {
