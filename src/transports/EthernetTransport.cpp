@@ -16,14 +16,14 @@ EthernetTransport::EthernetTransport(const std::string& d)
     device = pcap_lookupdev(errbuf);
   else
     device = d.c_str();
-  if(!device)
+  if(device == nullptr)
   {
     std::cerr << "pcap_lookupdev: " << errbuf << std::endl;
     std::abort();
   }
   errbuf[0] = 0;
   _pcap = pcap_open_live(device, (1<<16)-1, false, -1, errbuf);
-  if(!_pcap)
+  if(_pcap == nullptr)
   {
     std::cerr << "pcap_open_live: " << errbuf << std::endl;
     std::abort();
@@ -100,14 +100,14 @@ void EthernetTransport::read_cb(ev::io &watcher, int revents)
   else if(res != 1)
     return;
   const ether_header *eth = reinterpret_cast<const ether_header*>(packet);
-  _receive_cb(
-      TransportSocket(
-          std::bind(std::mem_fn(&EthernetTransport::send),
-                    this, std::placeholders::_1,
-                    std::string(reinterpret_cast<const char*>(eth->ether_shost),
-                                ETH_ALEN)),
-	  "ETHER"+std::string(reinterpret_cast<const char*>(eth->ether_shost),
-                              ETH_ALEN)),
-      std::string(reinterpret_cast<const char*>(packet+sizeof(ether_header)),
-                  header->caplen-sizeof(ether_header)));
+  const std::string from_mac( reinterpret_cast<const char*>(eth->ether_shost)
+                            , ETH_ALEN );
+  std::string payload(reinterpret_cast<const char*>(packet+sizeof(ether_header))
+                     ,header->caplen-sizeof(ether_header));
+  _receive_cb( TransportSocket( std::bind( std::mem_fn(&EthernetTransport::send)
+                                         , this
+                                         , std::placeholders::_1
+                                         , from_mac )
+                              , "ETHER"+from_mac )
+             , std::move(payload) );
 }
