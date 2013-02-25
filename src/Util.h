@@ -20,4 +20,9 @@ std::string bytes(T n) {
 	return std::string(p, sizeof(T) );
 }
 
+template <typename T>
+typename std::underlying_type<T>::type enumval(const T& x) {
+	return static_cast<typename std::underlying_type<T>::type>(x);
+}
+
 #endif // UTIL_H_

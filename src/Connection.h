@@ -14,6 +14,11 @@
 
 class Connection : public Forwarding {
 public:
+	static void handle_request(const CryptoIdentity&, const RoutingRequest&,
+			const Hop&, const std::string&, TransportSocket);
+	static void handle_auth(const CryptoIdentity& ci,
+			const std::string& packet, TransportSocket ts, ConnectionPool& cp, Interface& iface);
+
 	// initiate a connection
 	Connection(CryptoIdentity&, Path, ConnectionPool&, Interface&);
 	// incoming connection

@@ -12,8 +12,8 @@ public:
 	TemporalCookies(TemporalCookies&&) = default;
 	const TemporalCookies& operator= (const TemporalCookies&) = delete;
 
-	std::string cookie(const std::string&);
-	bool open(const std::string&, std::string&);
+	std::string cookie(const std::string&) const;
+	bool open(const std::string&, std::string&) const;
 
 	void operator() (ev::timer&, int);
 private:

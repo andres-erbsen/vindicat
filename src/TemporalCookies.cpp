@@ -10,7 +10,7 @@ TemporalCookies::TemporalCookies(float refresh_interval) {
 	_w.start();
 }
 
-std::string TemporalCookies::cookie(const std::string& plain) {
+std::string TemporalCookies::cookie(const std::string& plain) const {
 	size_t len = plain.size() + crypto_secretbox_ZEROBYTES;
 	unsigned char mpad[len];
 	unsigned int i;
@@ -29,7 +29,7 @@ std::string TemporalCookies::cookie(const std::string& plain) {
 }
 
 bool TemporalCookies::
-open(const std::string& cookie, std::string& ret) {
+open(const std::string& cookie, std::string& ret) const {
 	if (cookie.size() < 32) return 0;
 	// 16 first bytes are nonce
 	unsigned char nonce[crypto_secretbox_NONCEBYTES];

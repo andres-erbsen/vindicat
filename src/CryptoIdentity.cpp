@@ -39,7 +39,7 @@ bool CryptoIdentity::open( const std::string& ct
                          ) const {
 	if ( algo == PkencAlgo::CURVE25519XSALSA20POLY1305 ) {
 		nonce.resize(crypto_box_NONCEBYTES);
-		try {
+		try { // TODO: remove exceptions
 			ret = crypto_box_open( ct, nonce, pk, _secretkey_naclbox );
 			return 1;
 		} catch(...) {
@@ -68,11 +68,11 @@ bool CryptoIdentity::sign(const std::string& message, SigAlgo algo, std::string&
 
 void CryptoIdentity::update_businesscard() {
 	DeviceInfo dev;
-	dev.add_sig_algos( SigAlgo::ED25519 );
+	dev.add_sig_algos( enumval(SigAlgo::ED25519) );
 	*dev.add_sig_keys() = std::string( reinterpret_cast<const char*>(_verkey_edsig)
 	                                 , sizeof(_verkey_edsig));
 
-	dev.add_enc_algos( PkencAlgo::CURVE25519XSALSA20POLY1305 );
+	dev.add_enc_algos( enumval(PkencAlgo::CURVE25519XSALSA20POLY1305) );
 	*dev.add_enc_keys() = _enckey_naclbox;
 
 	dev.set_time( std::time(NULL) );

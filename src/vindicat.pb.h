@@ -66,22 +66,6 @@ const ConnectionAccept_Auth ConnectionAccept_Auth_Auth_MIN = ConnectionAccept_Au
 const ConnectionAccept_Auth ConnectionAccept_Auth_Auth_MAX = ConnectionAccept_Auth_AUTHENC_BCARD;
 const int ConnectionAccept_Auth_Auth_ARRAYSIZE = ConnectionAccept_Auth_Auth_MAX + 1;
 
-enum SigAlgo {
-  ED25519 = 1
-};
-bool SigAlgo_IsValid(int value);
-const SigAlgo SigAlgo_MIN = ED25519;
-const SigAlgo SigAlgo_MAX = ED25519;
-const int SigAlgo_ARRAYSIZE = SigAlgo_MAX + 1;
-
-enum PkencAlgo {
-  CURVE25519XSALSA20POLY1305 = 1
-};
-bool PkencAlgo_IsValid(int value);
-const PkencAlgo PkencAlgo_MIN = CURVE25519XSALSA20POLY1305;
-const PkencAlgo PkencAlgo_MAX = CURVE25519XSALSA20POLY1305;
-const int PkencAlgo_ARRAYSIZE = PkencAlgo_MAX + 1;
-
 // ===================================================================
 
 class DeviceInfo : public ::google::protobuf::MessageLite {
@@ -127,25 +111,29 @@ class DeviceInfo : public ::google::protobuf::MessageLite {
   
   // accessors -------------------------------------------------------
   
-  // repeated .SigAlgo sig_algos = 1;
+  // repeated uint32 sig_algos = 1;
   inline int sig_algos_size() const;
   inline void clear_sig_algos();
   static const int kSigAlgosFieldNumber = 1;
-  inline SigAlgo sig_algos(int index) const;
-  inline void set_sig_algos(int index, SigAlgo value);
-  inline void add_sig_algos(SigAlgo value);
-  inline const ::google::protobuf::RepeatedField<int>& sig_algos() const;
-  inline ::google::protobuf::RepeatedField<int>* mutable_sig_algos();
+  inline ::google::protobuf::uint32 sig_algos(int index) const;
+  inline void set_sig_algos(int index, ::google::protobuf::uint32 value);
+  inline void add_sig_algos(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      sig_algos() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_sig_algos();
   
-  // repeated .PkencAlgo enc_algos = 2;
+  // repeated uint32 enc_algos = 2;
   inline int enc_algos_size() const;
   inline void clear_enc_algos();
   static const int kEncAlgosFieldNumber = 2;
-  inline PkencAlgo enc_algos(int index) const;
-  inline void set_enc_algos(int index, PkencAlgo value);
-  inline void add_enc_algos(PkencAlgo value);
-  inline const ::google::protobuf::RepeatedField<int>& enc_algos() const;
-  inline ::google::protobuf::RepeatedField<int>* mutable_enc_algos();
+  inline ::google::protobuf::uint32 enc_algos(int index) const;
+  inline void set_enc_algos(int index, ::google::protobuf::uint32 value);
+  inline void add_enc_algos(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      enc_algos() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_enc_algos();
   
   // repeated bytes sig_keys = 3;
   inline int sig_keys_size() const;
@@ -191,8 +179,8 @@ class DeviceInfo : public ::google::protobuf::MessageLite {
   inline void set_has_time();
   inline void clear_has_time();
   
-  ::google::protobuf::RepeatedField<int> sig_algos_;
-  ::google::protobuf::RepeatedField<int> enc_algos_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > sig_algos_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > enc_algos_;
   ::google::protobuf::RepeatedPtrField< ::std::string> sig_keys_;
   ::google::protobuf::RepeatedPtrField< ::std::string> enc_keys_;
   ::google::protobuf::int64 time_;
@@ -462,15 +450,17 @@ class LinkProposal : public ::google::protobuf::MessageLite {
   
   // accessors -------------------------------------------------------
   
-  // repeated .SigAlgo left_sig_algos = 1;
+  // repeated uint32 left_sig_algos = 1;
   inline int left_sig_algos_size() const;
   inline void clear_left_sig_algos();
   static const int kLeftSigAlgosFieldNumber = 1;
-  inline SigAlgo left_sig_algos(int index) const;
-  inline void set_left_sig_algos(int index, SigAlgo value);
-  inline void add_left_sig_algos(SigAlgo value);
-  inline const ::google::protobuf::RepeatedField<int>& left_sig_algos() const;
-  inline ::google::protobuf::RepeatedField<int>* mutable_left_sig_algos();
+  inline ::google::protobuf::uint32 left_sig_algos(int index) const;
+  inline void set_left_sig_algos(int index, ::google::protobuf::uint32 value);
+  inline void add_left_sig_algos(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      left_sig_algos() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_left_sig_algos();
   
   // required bytes link_info_msg = 3;
   inline bool has_link_info_msg() const;
@@ -504,7 +494,7 @@ class LinkProposal : public ::google::protobuf::MessageLite {
   inline void set_has_link_info_msg();
   inline void clear_has_link_info_msg();
   
-  ::google::protobuf::RepeatedField<int> left_sig_algos_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > left_sig_algos_;
   ::std::string* link_info_msg_;
   ::google::protobuf::RepeatedPtrField< ::std::string> left_sigs_;
   
@@ -563,25 +553,29 @@ class LinkPromise : public ::google::protobuf::MessageLite {
   
   // accessors -------------------------------------------------------
   
-  // repeated .SigAlgo left_sig_algos = 1;
+  // repeated uint32 left_sig_algos = 1;
   inline int left_sig_algos_size() const;
   inline void clear_left_sig_algos();
   static const int kLeftSigAlgosFieldNumber = 1;
-  inline SigAlgo left_sig_algos(int index) const;
-  inline void set_left_sig_algos(int index, SigAlgo value);
-  inline void add_left_sig_algos(SigAlgo value);
-  inline const ::google::protobuf::RepeatedField<int>& left_sig_algos() const;
-  inline ::google::protobuf::RepeatedField<int>* mutable_left_sig_algos();
+  inline ::google::protobuf::uint32 left_sig_algos(int index) const;
+  inline void set_left_sig_algos(int index, ::google::protobuf::uint32 value);
+  inline void add_left_sig_algos(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      left_sig_algos() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_left_sig_algos();
   
-  // repeated .SigAlgo right_sig_algos = 2;
+  // repeated uint32 right_sig_algos = 2;
   inline int right_sig_algos_size() const;
   inline void clear_right_sig_algos();
   static const int kRightSigAlgosFieldNumber = 2;
-  inline SigAlgo right_sig_algos(int index) const;
-  inline void set_right_sig_algos(int index, SigAlgo value);
-  inline void add_right_sig_algos(SigAlgo value);
-  inline const ::google::protobuf::RepeatedField<int>& right_sig_algos() const;
-  inline ::google::protobuf::RepeatedField<int>* mutable_right_sig_algos();
+  inline ::google::protobuf::uint32 right_sig_algos(int index) const;
+  inline void set_right_sig_algos(int index, ::google::protobuf::uint32 value);
+  inline void add_right_sig_algos(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      right_sig_algos() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_right_sig_algos();
   
   // required bytes link_info_msg = 3;
   inline bool has_link_info_msg() const;
@@ -631,8 +625,8 @@ class LinkPromise : public ::google::protobuf::MessageLite {
   inline void set_has_link_info_msg();
   inline void clear_has_link_info_msg();
   
-  ::google::protobuf::RepeatedField<int> left_sig_algos_;
-  ::google::protobuf::RepeatedField<int> right_sig_algos_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > left_sig_algos_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > right_sig_algos_;
   ::std::string* link_info_msg_;
   ::google::protobuf::RepeatedPtrField< ::std::string> left_sigs_;
   ::google::protobuf::RepeatedPtrField< ::std::string> right_sigs_;
@@ -777,12 +771,12 @@ class RoutingRequest : public ::google::protobuf::MessageLite {
   
   // accessors -------------------------------------------------------
   
-  // required .PkencAlgo enc_algo = 1;
+  // required uint32 enc_algo = 1;
   inline bool has_enc_algo() const;
   inline void clear_enc_algo();
   static const int kEncAlgoFieldNumber = 1;
-  inline PkencAlgo enc_algo() const;
-  inline void set_enc_algo(PkencAlgo value);
+  inline ::google::protobuf::uint32 enc_algo() const;
+  inline void set_enc_algo(::google::protobuf::uint32 value);
   
   // optional bytes sender_pubkey = 2;
   inline bool has_sender_pubkey() const;
@@ -817,7 +811,7 @@ class RoutingRequest : public ::google::protobuf::MessageLite {
   
   ::std::string* sender_pubkey_;
   ::std::string* details_;
-  int enc_algo_;
+  ::google::protobuf::uint32 enc_algo_;
   
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
@@ -906,12 +900,12 @@ class Hop : public ::google::protobuf::MessageLite {
   inline ::std::string* mutable_next();
   inline ::std::string* release_next();
   
-  // optional .PkencAlgo enc_algo = 3;
+  // optional uint32 enc_algo = 3;
   inline bool has_enc_algo() const;
   inline void clear_enc_algo();
   static const int kEncAlgoFieldNumber = 3;
-  inline PkencAlgo enc_algo() const;
-  inline void set_enc_algo(PkencAlgo value);
+  inline ::google::protobuf::uint32 enc_algo() const;
+  inline void set_enc_algo(::google::protobuf::uint32 value);
   
   // optional bytes sender_pubkey = 4;
   inline bool has_sender_pubkey() const;
@@ -950,7 +944,7 @@ class Hop : public ::google::protobuf::MessageLite {
   
   ::std::string* next_;
   int type_;
-  int enc_algo_;
+  ::google::protobuf::uint32 enc_algo_;
   ::std::string* sender_pubkey_;
   ::std::string* details_;
   
@@ -1066,56 +1060,52 @@ class ConnectionAccept : public ::google::protobuf::MessageLite {
 
 // DeviceInfo
 
-// repeated .SigAlgo sig_algos = 1;
+// repeated uint32 sig_algos = 1;
 inline int DeviceInfo::sig_algos_size() const {
   return sig_algos_.size();
 }
 inline void DeviceInfo::clear_sig_algos() {
   sig_algos_.Clear();
 }
-inline SigAlgo DeviceInfo::sig_algos(int index) const {
-  return static_cast< SigAlgo >(sig_algos_.Get(index));
+inline ::google::protobuf::uint32 DeviceInfo::sig_algos(int index) const {
+  return sig_algos_.Get(index);
 }
-inline void DeviceInfo::set_sig_algos(int index, SigAlgo value) {
-  GOOGLE_DCHECK(SigAlgo_IsValid(value));
+inline void DeviceInfo::set_sig_algos(int index, ::google::protobuf::uint32 value) {
   sig_algos_.Set(index, value);
 }
-inline void DeviceInfo::add_sig_algos(SigAlgo value) {
-  GOOGLE_DCHECK(SigAlgo_IsValid(value));
+inline void DeviceInfo::add_sig_algos(::google::protobuf::uint32 value) {
   sig_algos_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField<int>&
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
 DeviceInfo::sig_algos() const {
   return sig_algos_;
 }
-inline ::google::protobuf::RepeatedField<int>*
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
 DeviceInfo::mutable_sig_algos() {
   return &sig_algos_;
 }
 
-// repeated .PkencAlgo enc_algos = 2;
+// repeated uint32 enc_algos = 2;
 inline int DeviceInfo::enc_algos_size() const {
   return enc_algos_.size();
 }
 inline void DeviceInfo::clear_enc_algos() {
   enc_algos_.Clear();
 }
-inline PkencAlgo DeviceInfo::enc_algos(int index) const {
-  return static_cast< PkencAlgo >(enc_algos_.Get(index));
+inline ::google::protobuf::uint32 DeviceInfo::enc_algos(int index) const {
+  return enc_algos_.Get(index);
 }
-inline void DeviceInfo::set_enc_algos(int index, PkencAlgo value) {
-  GOOGLE_DCHECK(PkencAlgo_IsValid(value));
+inline void DeviceInfo::set_enc_algos(int index, ::google::protobuf::uint32 value) {
   enc_algos_.Set(index, value);
 }
-inline void DeviceInfo::add_enc_algos(PkencAlgo value) {
-  GOOGLE_DCHECK(PkencAlgo_IsValid(value));
+inline void DeviceInfo::add_enc_algos(::google::protobuf::uint32 value) {
   enc_algos_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField<int>&
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
 DeviceInfo::enc_algos() const {
   return enc_algos_;
 }
-inline ::google::protobuf::RepeatedField<int>*
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
 DeviceInfo::mutable_enc_algos() {
   return &enc_algos_;
 }
@@ -1505,29 +1495,27 @@ inline void LinkInfo::set_time(::google::protobuf::int64 value) {
 
 // LinkProposal
 
-// repeated .SigAlgo left_sig_algos = 1;
+// repeated uint32 left_sig_algos = 1;
 inline int LinkProposal::left_sig_algos_size() const {
   return left_sig_algos_.size();
 }
 inline void LinkProposal::clear_left_sig_algos() {
   left_sig_algos_.Clear();
 }
-inline SigAlgo LinkProposal::left_sig_algos(int index) const {
-  return static_cast< SigAlgo >(left_sig_algos_.Get(index));
+inline ::google::protobuf::uint32 LinkProposal::left_sig_algos(int index) const {
+  return left_sig_algos_.Get(index);
 }
-inline void LinkProposal::set_left_sig_algos(int index, SigAlgo value) {
-  GOOGLE_DCHECK(SigAlgo_IsValid(value));
+inline void LinkProposal::set_left_sig_algos(int index, ::google::protobuf::uint32 value) {
   left_sig_algos_.Set(index, value);
 }
-inline void LinkProposal::add_left_sig_algos(SigAlgo value) {
-  GOOGLE_DCHECK(SigAlgo_IsValid(value));
+inline void LinkProposal::add_left_sig_algos(::google::protobuf::uint32 value) {
   left_sig_algos_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField<int>&
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
 LinkProposal::left_sig_algos() const {
   return left_sig_algos_;
 }
-inline ::google::protobuf::RepeatedField<int>*
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
 LinkProposal::mutable_left_sig_algos() {
   return &left_sig_algos_;
 }
@@ -1638,56 +1626,52 @@ LinkProposal::mutable_left_sigs() {
 
 // LinkPromise
 
-// repeated .SigAlgo left_sig_algos = 1;
+// repeated uint32 left_sig_algos = 1;
 inline int LinkPromise::left_sig_algos_size() const {
   return left_sig_algos_.size();
 }
 inline void LinkPromise::clear_left_sig_algos() {
   left_sig_algos_.Clear();
 }
-inline SigAlgo LinkPromise::left_sig_algos(int index) const {
-  return static_cast< SigAlgo >(left_sig_algos_.Get(index));
+inline ::google::protobuf::uint32 LinkPromise::left_sig_algos(int index) const {
+  return left_sig_algos_.Get(index);
 }
-inline void LinkPromise::set_left_sig_algos(int index, SigAlgo value) {
-  GOOGLE_DCHECK(SigAlgo_IsValid(value));
+inline void LinkPromise::set_left_sig_algos(int index, ::google::protobuf::uint32 value) {
   left_sig_algos_.Set(index, value);
 }
-inline void LinkPromise::add_left_sig_algos(SigAlgo value) {
-  GOOGLE_DCHECK(SigAlgo_IsValid(value));
+inline void LinkPromise::add_left_sig_algos(::google::protobuf::uint32 value) {
   left_sig_algos_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField<int>&
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
 LinkPromise::left_sig_algos() const {
   return left_sig_algos_;
 }
-inline ::google::protobuf::RepeatedField<int>*
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
 LinkPromise::mutable_left_sig_algos() {
   return &left_sig_algos_;
 }
 
-// repeated .SigAlgo right_sig_algos = 2;
+// repeated uint32 right_sig_algos = 2;
 inline int LinkPromise::right_sig_algos_size() const {
   return right_sig_algos_.size();
 }
 inline void LinkPromise::clear_right_sig_algos() {
   right_sig_algos_.Clear();
 }
-inline SigAlgo LinkPromise::right_sig_algos(int index) const {
-  return static_cast< SigAlgo >(right_sig_algos_.Get(index));
+inline ::google::protobuf::uint32 LinkPromise::right_sig_algos(int index) const {
+  return right_sig_algos_.Get(index);
 }
-inline void LinkPromise::set_right_sig_algos(int index, SigAlgo value) {
-  GOOGLE_DCHECK(SigAlgo_IsValid(value));
+inline void LinkPromise::set_right_sig_algos(int index, ::google::protobuf::uint32 value) {
   right_sig_algos_.Set(index, value);
 }
-inline void LinkPromise::add_right_sig_algos(SigAlgo value) {
-  GOOGLE_DCHECK(SigAlgo_IsValid(value));
+inline void LinkPromise::add_right_sig_algos(::google::protobuf::uint32 value) {
   right_sig_algos_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField<int>&
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
 LinkPromise::right_sig_algos() const {
   return right_sig_algos_;
 }
-inline ::google::protobuf::RepeatedField<int>*
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
 LinkPromise::mutable_right_sig_algos() {
   return &right_sig_algos_;
 }
@@ -1896,7 +1880,7 @@ Subgraph::mutable_links() {
 
 // RoutingRequest
 
-// required .PkencAlgo enc_algo = 1;
+// required uint32 enc_algo = 1;
 inline bool RoutingRequest::has_enc_algo() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -1907,14 +1891,13 @@ inline void RoutingRequest::clear_has_enc_algo() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void RoutingRequest::clear_enc_algo() {
-  enc_algo_ = 1;
+  enc_algo_ = 0u;
   clear_has_enc_algo();
 }
-inline PkencAlgo RoutingRequest::enc_algo() const {
-  return static_cast< PkencAlgo >(enc_algo_);
+inline ::google::protobuf::uint32 RoutingRequest::enc_algo() const {
+  return enc_algo_;
 }
-inline void RoutingRequest::set_enc_algo(PkencAlgo value) {
-  GOOGLE_DCHECK(PkencAlgo_IsValid(value));
+inline void RoutingRequest::set_enc_algo(::google::protobuf::uint32 value) {
   set_has_enc_algo();
   enc_algo_ = value;
 }
@@ -2120,7 +2103,7 @@ inline ::std::string* Hop::release_next() {
   }
 }
 
-// optional .PkencAlgo enc_algo = 3;
+// optional uint32 enc_algo = 3;
 inline bool Hop::has_enc_algo() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
@@ -2131,14 +2114,13 @@ inline void Hop::clear_has_enc_algo() {
   _has_bits_[0] &= ~0x00000004u;
 }
 inline void Hop::clear_enc_algo() {
-  enc_algo_ = 1;
+  enc_algo_ = 0u;
   clear_has_enc_algo();
 }
-inline PkencAlgo Hop::enc_algo() const {
-  return static_cast< PkencAlgo >(enc_algo_);
+inline ::google::protobuf::uint32 Hop::enc_algo() const {
+  return enc_algo_;
 }
-inline void Hop::set_enc_algo(PkencAlgo value) {
-  GOOGLE_DCHECK(PkencAlgo_IsValid(value));
+inline void Hop::set_enc_algo(::google::protobuf::uint32 value) {
   set_has_enc_algo();
   enc_algo_ = value;
 }

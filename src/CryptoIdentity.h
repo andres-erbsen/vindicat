@@ -1,6 +1,7 @@
 #ifndef CRYPTOIDENTITY_H_
 #define CRYPTOIDENTITY_H_
 
+#include "Constants.h"
 #include "vindicat.pb.h" // just for algorithm numbers, maybe move them...
 #include "TemporalCookies.h"
 

@@ -4,16 +4,19 @@
 #include "Transport.h"
 #include "NetworkMap.h"
 #include "CryptoIdentity.h"
+#include "ConnectionPool.h"
+#include "Interface.h"
 
 #include <memory>
 
 class PacketHandler {
 public:
-	PacketHandler(NetworkMap& nm, CryptoIdentity& ci);
+	PacketHandler(NetworkMap& nm, CryptoIdentity& ci, ConnectionPool& cp);
     void operator()(TransportSocket&& trs, std::string&& packet);
 private:
 	NetworkMap& _nm;
 	CryptoIdentity& _ci;
+	ConnectionPool& _cp;
 };
 
 #endif // PACKETHANDLER_H_

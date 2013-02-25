@@ -56,24 +56,6 @@ struct StaticDescriptorInitializer_vindicat_2eproto {
   }
 } static_descriptor_initializer_vindicat_2eproto_;
 
-bool SigAlgo_IsValid(int value) {
-  switch(value) {
-    case 1:
-      return true;
-    default:
-      return false;
-  }
-}
-
-bool PkencAlgo_IsValid(int value) {
-  switch(value) {
-    case 1:
-      return true;
-    default:
-      return false;
-  }
-}
-
 
 // ===================================================================
 
@@ -146,25 +128,20 @@ bool DeviceInfo::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated .SigAlgo sig_algos = 1;
+      // repeated uint32 sig_algos = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_sig_algos:
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          if (SigAlgo_IsValid(value)) {
-            add_sig_algos(static_cast< SigAlgo >(value));
-          }
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 8, input, this->mutable_sig_algos())));
         } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
                    == ::google::protobuf::internal::WireFormatLite::
                       WIRETYPE_LENGTH_DELIMITED) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedEnumNoInline(
-                 input,
-                 &SigAlgo_IsValid,
-                 this->mutable_sig_algos())));
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_sig_algos())));
         } else {
           goto handle_uninterpreted;
         }
@@ -173,25 +150,20 @@ bool DeviceInfo::MergePartialFromCodedStream(
         break;
       }
       
-      // repeated .PkencAlgo enc_algos = 2;
+      // repeated uint32 enc_algos = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_enc_algos:
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          if (PkencAlgo_IsValid(value)) {
-            add_enc_algos(static_cast< PkencAlgo >(value));
-          }
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 16, input, this->mutable_enc_algos())));
         } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
                    == ::google::protobuf::internal::WireFormatLite::
                       WIRETYPE_LENGTH_DELIMITED) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedEnumNoInline(
-                 input,
-                 &PkencAlgo_IsValid,
-                 this->mutable_enc_algos())));
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_enc_algos())));
         } else {
           goto handle_uninterpreted;
         }
@@ -263,15 +235,15 @@ bool DeviceInfo::MergePartialFromCodedStream(
 
 void DeviceInfo::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // repeated .SigAlgo sig_algos = 1;
+  // repeated uint32 sig_algos = 1;
   for (int i = 0; i < this->sig_algos_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
       1, this->sig_algos(i), output);
   }
   
-  // repeated .PkencAlgo enc_algos = 2;
+  // repeated uint32 enc_algos = 2;
   for (int i = 0; i < this->enc_algos_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
       2, this->enc_algos(i), output);
   }
   
@@ -306,22 +278,22 @@ int DeviceInfo::ByteSize() const {
     }
     
   }
-  // repeated .SigAlgo sig_algos = 1;
+  // repeated uint32 sig_algos = 1;
   {
     int data_size = 0;
     for (int i = 0; i < this->sig_algos_size(); i++) {
-      data_size += ::google::protobuf::internal::WireFormatLite::EnumSize(
-        this->sig_algos(i));
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->sig_algos(i));
     }
     total_size += 1 * this->sig_algos_size() + data_size;
   }
   
-  // repeated .PkencAlgo enc_algos = 2;
+  // repeated uint32 enc_algos = 2;
   {
     int data_size = 0;
     for (int i = 0; i < this->enc_algos_size(); i++) {
-      data_size += ::google::protobuf::internal::WireFormatLite::EnumSize(
-        this->enc_algos(i));
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->enc_algos(i));
     }
     total_size += 1 * this->enc_algos_size() + data_size;
   }
@@ -959,25 +931,20 @@ bool LinkProposal::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated .SigAlgo left_sig_algos = 1;
+      // repeated uint32 left_sig_algos = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_left_sig_algos:
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          if (SigAlgo_IsValid(value)) {
-            add_left_sig_algos(static_cast< SigAlgo >(value));
-          }
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 8, input, this->mutable_left_sig_algos())));
         } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
                    == ::google::protobuf::internal::WireFormatLite::
                       WIRETYPE_LENGTH_DELIMITED) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedEnumNoInline(
-                 input,
-                 &SigAlgo_IsValid,
-                 this->mutable_left_sig_algos())));
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_left_sig_algos())));
         } else {
           goto handle_uninterpreted;
         }
@@ -1032,9 +999,9 @@ bool LinkProposal::MergePartialFromCodedStream(
 
 void LinkProposal::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // repeated .SigAlgo left_sig_algos = 1;
+  // repeated uint32 left_sig_algos = 1;
   for (int i = 0; i < this->left_sig_algos_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
       1, this->left_sig_algos(i), output);
   }
   
@@ -1064,12 +1031,12 @@ int LinkProposal::ByteSize() const {
     }
     
   }
-  // repeated .SigAlgo left_sig_algos = 1;
+  // repeated uint32 left_sig_algos = 1;
   {
     int data_size = 0;
     for (int i = 0; i < this->left_sig_algos_size(); i++) {
-      data_size += ::google::protobuf::internal::WireFormatLite::EnumSize(
-        this->left_sig_algos(i));
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->left_sig_algos(i));
     }
     total_size += 1 * this->left_sig_algos_size() + data_size;
   }
@@ -1208,25 +1175,20 @@ bool LinkPromise::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated .SigAlgo left_sig_algos = 1;
+      // repeated uint32 left_sig_algos = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_left_sig_algos:
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          if (SigAlgo_IsValid(value)) {
-            add_left_sig_algos(static_cast< SigAlgo >(value));
-          }
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 8, input, this->mutable_left_sig_algos())));
         } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
                    == ::google::protobuf::internal::WireFormatLite::
                       WIRETYPE_LENGTH_DELIMITED) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedEnumNoInline(
-                 input,
-                 &SigAlgo_IsValid,
-                 this->mutable_left_sig_algos())));
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_left_sig_algos())));
         } else {
           goto handle_uninterpreted;
         }
@@ -1235,25 +1197,20 @@ bool LinkPromise::MergePartialFromCodedStream(
         break;
       }
       
-      // repeated .SigAlgo right_sig_algos = 2;
+      // repeated uint32 right_sig_algos = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_right_sig_algos:
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          if (SigAlgo_IsValid(value)) {
-            add_right_sig_algos(static_cast< SigAlgo >(value));
-          }
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 16, input, this->mutable_right_sig_algos())));
         } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
                    == ::google::protobuf::internal::WireFormatLite::
                       WIRETYPE_LENGTH_DELIMITED) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedEnumNoInline(
-                 input,
-                 &SigAlgo_IsValid,
-                 this->mutable_right_sig_algos())));
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_right_sig_algos())));
         } else {
           goto handle_uninterpreted;
         }
@@ -1323,15 +1280,15 @@ bool LinkPromise::MergePartialFromCodedStream(
 
 void LinkPromise::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // repeated .SigAlgo left_sig_algos = 1;
+  // repeated uint32 left_sig_algos = 1;
   for (int i = 0; i < this->left_sig_algos_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
       1, this->left_sig_algos(i), output);
   }
   
-  // repeated .SigAlgo right_sig_algos = 2;
+  // repeated uint32 right_sig_algos = 2;
   for (int i = 0; i < this->right_sig_algos_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
       2, this->right_sig_algos(i), output);
   }
   
@@ -1367,22 +1324,22 @@ int LinkPromise::ByteSize() const {
     }
     
   }
-  // repeated .SigAlgo left_sig_algos = 1;
+  // repeated uint32 left_sig_algos = 1;
   {
     int data_size = 0;
     for (int i = 0; i < this->left_sig_algos_size(); i++) {
-      data_size += ::google::protobuf::internal::WireFormatLite::EnumSize(
-        this->left_sig_algos(i));
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->left_sig_algos(i));
     }
     total_size += 1 * this->left_sig_algos_size() + data_size;
   }
   
-  // repeated .SigAlgo right_sig_algos = 2;
+  // repeated uint32 right_sig_algos = 2;
   {
     int data_size = 0;
     for (int i = 0; i < this->right_sig_algos_size(); i++) {
-      data_size += ::google::protobuf::internal::WireFormatLite::EnumSize(
-        this->right_sig_algos(i));
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->right_sig_algos(i));
     }
     total_size += 1 * this->right_sig_algos_size() + data_size;
   }
@@ -1668,7 +1625,7 @@ RoutingRequest::RoutingRequest(const RoutingRequest& from)
 
 void RoutingRequest::SharedCtor() {
   _cached_size_ = 0;
-  enc_algo_ = 1;
+  enc_algo_ = 0u;
   sender_pubkey_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   details_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -1706,7 +1663,7 @@ RoutingRequest* RoutingRequest::New() const {
 
 void RoutingRequest::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    enc_algo_ = 1;
+    enc_algo_ = 0u;
     if (has_sender_pubkey()) {
       if (sender_pubkey_ != &::google::protobuf::internal::kEmptyString) {
         sender_pubkey_->clear();
@@ -1727,17 +1684,14 @@ bool RoutingRequest::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required .PkencAlgo enc_algo = 1;
+      // required uint32 enc_algo = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-          int value;
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          if (PkencAlgo_IsValid(value)) {
-            set_enc_algo(static_cast< PkencAlgo >(value));
-          }
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &enc_algo_)));
+          set_has_enc_algo();
         } else {
           goto handle_uninterpreted;
         }
@@ -1790,10 +1744,9 @@ bool RoutingRequest::MergePartialFromCodedStream(
 
 void RoutingRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // required .PkencAlgo enc_algo = 1;
+  // required uint32 enc_algo = 1;
   if (has_enc_algo()) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      1, this->enc_algo(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->enc_algo(), output);
   }
   
   // optional bytes sender_pubkey = 2;
@@ -1814,10 +1767,11 @@ int RoutingRequest::ByteSize() const {
   int total_size = 0;
   
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required .PkencAlgo enc_algo = 1;
+    // required uint32 enc_algo = 1;
     if (has_enc_algo()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::EnumSize(this->enc_algo());
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->enc_algo());
     }
     
     // optional bytes sender_pubkey = 2;
@@ -1935,7 +1889,7 @@ void Hop::SharedCtor() {
   _cached_size_ = 0;
   type_ = 1;
   next_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  enc_algo_ = 1;
+  enc_algo_ = 0u;
   sender_pubkey_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   details_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -1982,7 +1936,7 @@ void Hop::Clear() {
         next_->clear();
       }
     }
-    enc_algo_ = 1;
+    enc_algo_ = 0u;
     if (has_sender_pubkey()) {
       if (sender_pubkey_ != &::google::protobuf::internal::kEmptyString) {
         sender_pubkey_->clear();
@@ -2035,18 +1989,15 @@ bool Hop::MergePartialFromCodedStream(
         break;
       }
       
-      // optional .PkencAlgo enc_algo = 3;
+      // optional uint32 enc_algo = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_enc_algo:
-          int value;
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          if (PkencAlgo_IsValid(value)) {
-            set_enc_algo(static_cast< PkencAlgo >(value));
-          }
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &enc_algo_)));
+          set_has_enc_algo();
         } else {
           goto handle_uninterpreted;
         }
@@ -2111,10 +2062,9 @@ void Hop::SerializeWithCachedSizes(
       2, this->next(), output);
   }
   
-  // optional .PkencAlgo enc_algo = 3;
+  // optional uint32 enc_algo = 3;
   if (has_enc_algo()) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      3, this->enc_algo(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->enc_algo(), output);
   }
   
   // optional bytes sender_pubkey = 4;
@@ -2148,10 +2098,11 @@ int Hop::ByteSize() const {
           this->next());
     }
     
-    // optional .PkencAlgo enc_algo = 3;
+    // optional uint32 enc_algo = 3;
     if (has_enc_algo()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::EnumSize(this->enc_algo());
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->enc_algo());
     }
     
     // optional bytes sender_pubkey = 4;

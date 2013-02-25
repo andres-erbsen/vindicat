@@ -37,7 +37,7 @@ int main (int argc, char** argv) {
 	NetworkMap nm( std::move(our_device) );
 	ConnectionPool cp;
 
-	PacketHandler phn(nm, ci);
+	PacketHandler phn(nm, ci, cp);
 	for (Transport* tr : transports) tr->onPacket(phn);
 	for (Transport* tr : transports) tr->enable();	
 
