@@ -30,16 +30,6 @@ EthernetTransport::EthernetTransport(const std::string& d)
   }
   if(errbuf[0] != 0)
     std::clog << "pcap_open_live: " << errbuf << std::endl;
-  if(pcap_compile(_pcap, &_filter, "ether proto 0xDCDC", false, PCAP_NETMASK_UNKNOWN) == -1)
-  {
-    pcap_perror(_pcap, "pcap_compile");
-    std::abort();
-  }
-  if(pcap_setfilter(_pcap, &_filter) == -1)
-  {
-    pcap_perror(_pcap, "pcap_setfilter");
-    std::abort();
-  }
 
   ifreq ifr;
   int sock = socket(PF_INET, SOCK_DGRAM, 0);
@@ -57,6 +47,22 @@ EthernetTransport::EthernetTransport(const std::string& d)
   }
   close(sock);
   std::memcpy(_mac, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
+
+  char buf[100];
+  std::sprintf(buf, "ether proto 0xDCDC and (ether host %02x:%02x:%02x:%02x:"
+      "%02x:%02x or ether host ff:ff:ff:ff:ff:ff)",
+      _mac[0], _mac[1], _mac[2], _mac[3], _mac[4], _mac[5]);
+
+  if(pcap_compile(_pcap, &_filter, buf, false, PCAP_NETMASK_UNKNOWN) == -1)
+  {
+    pcap_perror(_pcap, "pcap_compile");
+    std::abort();
+  }
+  if(pcap_setfilter(_pcap, &_filter) == -1)
+  {
+    pcap_perror(_pcap, "pcap_setfilter");
+    std::abort();
+  }
 }
 
 void EthernetTransport::enable()
