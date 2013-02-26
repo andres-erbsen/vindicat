@@ -21,7 +21,7 @@ Connection::Connection(CryptoIdentity& ci, Path path, ConnectionPool& cp, Interf
 
 	std::string nonce = _route_id + randomstring(8);
 	_request_packet->append(nonce);
-	nonce.resize(24,'\0');
+	nonce.resize(crypto_box_NONCEBYTES,'\0');
 
 	RoutingRequest rq;
 	rq.set_enc_algo(enumval(PkencAlgo::CURVE25519XSALSA20POLY1305));
@@ -96,7 +96,7 @@ void Connection::_auth(const std::string& cookie_packet) {
 	{
 		std::string message;
 		std::string nonce = route_id+packet_id;
-		nonce.resize(24,'\0');
+		nonce.resize(crypto_box_NONCEBYTES,'\0');
 		{
 			std::string vouch;
 			_ci->encrypt(_naclsession.our_pk(), nonce, PkencAlgo::CURVE25519XSALSA20POLY1305, _naclsession.pk(), vouch);
@@ -113,6 +113,7 @@ void Connection::handle_auth(const CryptoIdentity& ci, const std::string& packet
 	// pkttype, routeid, pktid, cookie, [[A'](A<>B'),bcard_A](A'<>B')
 	if (packet.size() < 1+8+8+COOKIE_SIZE) return;
 	std::string nonce = packet.substr(1,8+8);
+	nonce.resize(crypto_box_NONCEBYTES,'\0');
 	std::string their_connection_pk;
 	std::string connection_sk;
 	{ // open the cookie we gave them before
