@@ -39,7 +39,7 @@ public:
 	void removeForwarding(uint64_t);
 
 	// Deserialization
-	bool parseFrom(std::shared_ptr<DeviceBusinesscard>&& card_p);
+	bool parseFrom(std::shared_ptr<DeviceBusinesscard> card_p);
 	bool parseFrom(const std::string&);
 
 	static std::shared_ptr<Device> merge(Device&&, Device&&);

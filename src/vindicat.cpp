@@ -4,6 +4,7 @@
 #include "PacketHandler.h"
 #include "InterfaceHandler.h"
 #include "TUNInterface.h"
+#include "DummyInterface.h"
 #include "Beacon.h"
 #include "LinkLocalDiscovery.h"
 
@@ -28,31 +29,30 @@ int main (int argc, char** argv) {
 	}
 
 	CryptoIdentity ci;
-	auto our_bcard = ci.our_businesscard();
 	auto our_device = std::make_shared<Device>();
-	our_device->parseFrom( std::move(our_bcard) );
+	our_device->parseFrom( ci.our_businesscard() );
 
-	std::unique_ptr<TUNInterface> tun = TUNInterface::open(our_device->id());
+	std::unique_ptr<Interface> iface = TUNInterface::open(our_device->id());
 
 	NetworkMap nm( std::move(our_device) );
 	ConnectionPool cp;
 
-	PacketHandler phn(nm, ci, cp);
-	for (Transport* tr : transports) tr->onPacket(phn);
-	for (Transport* tr : transports) tr->enable();	
-
 	Beacon bcn(3,ci,transports);
 	bcn.enable();
 
-	LinkLocalDiscovery lld(transports, phn);
-	lld.enable();
-	
-	if (tun) {
-		InterfaceHandler ihn(ci, nm, cp, *tun);
-		tun->onPacket(ihn);
+	if (iface) {
+		InterfaceHandler ihn(ci, nm, cp, *iface);
+		iface->onPacket(ihn);
 	} else {
 		std::cerr << "TUN interface creation failed" << std::endl;
+		iface.reset(new DummyInterface);
 	}
+
+	PacketHandler phn(nm, ci, cp, iface.get());
+	for (Transport* tr : transports) tr->onPacket(phn);
+	for (Transport* tr : transports) tr->enable();	
+	LinkLocalDiscovery lld(transports, phn);
+	lld.enable();
 
 	ev_run (EV_DEFAULT_ 0);	
 }

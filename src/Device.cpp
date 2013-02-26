@@ -99,9 +99,8 @@ void Device::removeForwarding(uint64_t id) {
 
 // Deserialization
 
-bool Device::parseFrom(std::shared_ptr<DeviceBusinesscard>&& card_p) {
+bool Device::parseFrom(std::shared_ptr<DeviceBusinesscard> card_p) {
 	clear();
-	assert(card_p.unique());
 	// Is there any hope to use this bcard at all?
 	DeviceInfo dev_info;
 	if ( ! card_p->has_device_info_msg() 
@@ -146,7 +145,7 @@ bool Device::parseFrom(std::shared_ptr<DeviceBusinesscard>&& card_p) {
 bool Device::parseFrom(const std::string& card_string) {
 	auto card = std::make_shared<DeviceBusinesscard>();
 	if ( ! card->ParseFromString( card_string ) ) return 0;
-	return parseFrom( std::move(card) );
+	return parseFrom(card);
 }
 
 std::shared_ptr<Device> Device::merge(Device&& a, Device&& b) {

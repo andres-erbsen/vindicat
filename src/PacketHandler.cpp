@@ -15,10 +15,11 @@ const static unsigned int COOKIE_SIZE = 96;
 const static unsigned int crypto_box_AUTHBYTES = crypto_box_ZEROBYTES - crypto_box_BOXZEROBYTES;
 
 PacketHandler::
-PacketHandler(NetworkMap& nm, CryptoIdentity& ci, ConnectionPool& cp)
+PacketHandler(NetworkMap& nm, CryptoIdentity& ci, ConnectionPool& cp, Interface* iface)
 	: _nm(nm)
 	, _ci(ci)
 	, _cp(cp)
+	, _if(iface)
 	{}
 
 
@@ -108,10 +109,9 @@ void PacketHandler::operator()(TransportSocket&& ts, std::string&& packet) {
 		auto fwd = dev->getForwarding(route_id);
 		if (fwd) {
 			fwd->forward(packet);
-			return;
+		} else if (_if != nullptr) {
+			Connection::handle_auth(_ci, packet, ts, _cp, *_if);
 		}
-		// This may be the auth packet to start a connection
-		// FIXME: Connection::handle_auth(_ci, packet, ts, _cp, _if);
 
 	} else if (tag == 1) { // "please forward packets with this route id that way"
 		if (packet.size() < 1+8+8) return;
