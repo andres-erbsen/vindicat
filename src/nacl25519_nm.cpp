@@ -3,6 +3,7 @@
 
 #include <Util.h>
 #include <cassert>
+#include <cstring>
 
 nacl25519_nm::nacl25519_nm(const std::string& pubk, const std::string& seck) {
 	assert(seck.size() == crypto_box_SECRETKEYBYTES);
@@ -32,6 +33,9 @@ std::string nacl25519_nm::our_pk() {
 	return std::string((char *) _our_pk, crypto_box_PUBLICKEYBYTES);
 }
 
+bool nacl25519_nm::nonce_bit() {
+	return std::memcmp(_our_pk, _pk, crypto_box_PUBLICKEYBYTES) > 0;
+}
 
 std::string nacl25519_nm::
 encrypt(const std::string& m, const std::string& n) const {

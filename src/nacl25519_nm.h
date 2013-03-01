@@ -11,12 +11,13 @@ public:
 	nacl25519_nm(nacl25519_nm&&) = default;
 	const nacl25519_nm& operator= (const nacl25519_nm&) = delete;
 
-	nacl25519_nm(const std::string& pk); // generates secret key
+	nacl25519_nm(const std::string& their_pk); // generates secret key
 	nacl25519_nm(const std::string& pk, const std::string& sk);
 
 	void pk(const std::string& pk);
 	std::string pk();
 	std::string our_pk();
+	bool nonce_bit();
 
 	std::string encrypt(const std::string&, const std::string&) const;
 	bool decrypt(const std::string&, const std::string&, std::string&) const;

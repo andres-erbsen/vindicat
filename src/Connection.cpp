@@ -99,7 +99,9 @@ void Connection::_auth(const std::string& cookie_packet) {
 	auth_packet.append(route_id);
 
 	_noncegen.reset(new NonceGen64);
-	std::string packet_id = _noncegen->next();
+	std::string packet_id;
+	do packet_id = _noncegen->next();
+		while ( ((*packet_id.rbegin()&1) == 1) == _naclsession.nonce_bit() );
 	auth_packet.append(packet_id);
 
 	auth_packet.append(cookie); // a server should know how long its cookies are
@@ -202,7 +204,9 @@ void Connection::_outgoing(const std::string& packet) {
 	assert(packet.size() >= 1);
 	if (packet[0] == '\xDC') return; // would collide with embedded message
 	assert(_noncegen);
-	const std::string packet_id = _noncegen->next();
+	std::string packet_id;
+	do packet_id = _noncegen->next();
+		while ( ((*packet_id.rbegin()&1) == 1) == _naclsession.nonce_bit() );
 	assert(packet_id.size() == 8);
 	std::string nonce = _route_id + packet_id;
 	assert(nonce.size() == 16);
