@@ -39,8 +39,8 @@ void NetworkMap::add(std::shared_ptr<Device>&& dev_p) {
 			auto erased = _node_by_id.erase(id);
 			assert(erased == 1);
 		}
-		_g_device[node] = Device::merge( std::move(*_g_device[node])
-		                               , std::move(*dev_p          ) );
+		_g_device[node]->merge( std::move(*dev_p) );
+		dev_p.reset();
 	}
 	for ( const auto& id : _g_device[node]->ids() ) {
 		_node_by_id.insert( std::make_pair(id,node) );

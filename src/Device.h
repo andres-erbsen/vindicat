@@ -17,8 +17,9 @@ class Device : public std::enable_shared_from_this<Device> {
 public:
 	Device() = default;
 	Device(const Device&) = delete;
-	Device(Device&&) = default;
 	const Device& operator= (const Device&) = delete;
+	Device(Device&&) = default;
+	Device& operator= (Device&&) = default;
 
 	uint64_t mtime() const;
 	const std::string& id() const;
@@ -42,7 +43,7 @@ public:
 	bool parseFrom(std::shared_ptr<DeviceBusinesscard> card_p);
 	bool parseFrom(const std::string&);
 
-	static std::shared_ptr<Device> merge(Device&&, Device&&);
+	void merge(Device&&);
 
 private:
 	void clear();

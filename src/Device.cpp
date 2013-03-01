@@ -148,14 +148,19 @@ bool Device::parseFrom(const std::string& card_string) {
 	return parseFrom(card);
 }
 
-std::shared_ptr<Device> Device::merge(Device&& a, Device&& b) {
-	Device* old = &a;
-	Device* ret = &b;
-	if (a.mtime() > b.mtime()) std::swap(old, ret);
-	assert( ret->mtime() >= old->mtime() );
-
-	ret->_forwardings.insert(old->_forwardings.begin(), old->_forwardings.end());
-	return std::make_shared<Device>(std::move( *ret ));
+void Device::merge(Device&& other) {
+	for (const auto& kvp : other._forwardings) {
+		addForwarding( other.getForwarding(kvp.first) );
+		other.removeForwarding(kvp.first);
+	}
+	if (other.mtime() > mtime()) {
+		std::swap(_sig, other._sig);
+		std::swap(_ids, other._ids);
+		std::swap(_sig_keys, other._sig_keys);
+		std::swap(_enc, other._enc);
+		std::swap(_mtime, other._mtime);
+		std::swap(_card, other._card);
+	}
 }
 
 void Device::clear() {
