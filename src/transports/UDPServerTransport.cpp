@@ -138,7 +138,9 @@ void UDPServerTransport::incoming() {
 		std::perror("UDPServerTransport::incoming");
 		std::abort();
 	}
-	_who.insert(std::make_pair(addr, addrlen));
+	auto iter = _who.insert(std::make_pair(addr, addrlen));
+	if(iter.second == false)
+	  addr = iter.first->first;
 
 	std::string addr_UID;
 	if(addr->sa_family == AF_INET)
@@ -173,13 +175,22 @@ void UDPServerTransport::broadcast(const std::string& buf) {
 		sendto(_fd, nullptr, 0, 0, _group[1], _group_length[1]);
 }
 
-bool UDPServerTransport::compare::operator()(const std::pair<std::shared_ptr<sockaddr>, socklen_t>& a, const std::pair<std::shared_ptr<sockaddr>, socklen_t>& b)
-{
-	if(a.first->sa_family != b.first->sa_family)
-		return a.first->sa_family < b.first->sa_family;
-	if(a.first->sa_family == AF_INET) // IPv4
-		return reinterpret_cast<struct sockaddr_in*>(a.first.get())->sin_addr.s_addr < reinterpret_cast<struct sockaddr_in*>(b.first.get())->sin_addr.s_addr;
-	if(a.first->sa_family == AF_INET6) // IPv6
-		return std::memcmp(reinterpret_cast<struct sockaddr_in6*>(a.first.get())->sin6_addr.s6_addr, reinterpret_cast<struct sockaddr_in6*>(b.first.get())->sin6_addr.s6_addr, sizeof(in6_addr)) < 0;
-	return a < b;
+bool UDPServerTransport::compare::operator()(const std::pair<std::shared_ptr<sockaddr>, socklen_t>& a, const std::pair<std::shared_ptr<sockaddr>, socklen_t>& b) {
+  if(a.first->sa_family != b.first->sa_family)
+    return a.first->sa_family < b.first->sa_family;
+  if(a.first->sa_family == AF_INET) {  // IPv4
+    sockaddr_in *addr_a = reinterpret_cast<sockaddr_in*>(a.first.get());
+    sockaddr_in *addr_b = reinterpret_cast<sockaddr_in*>(b.first.get());
+    if(addr_a->sin_addr.s_addr == addr_b->sin_addr.s_addr)
+      return addr_a->sin_port < addr_b->sin_port;
+    return addr_a->sin_addr.s_addr < addr_b->sin_addr.s_addr;
+  } else if(a.first->sa_family == AF_INET6) {  // IPv6
+    sockaddr_in6 *addr_a = reinterpret_cast<sockaddr_in6*>(a.first.get());
+    sockaddr_in6 *addr_b = reinterpret_cast<sockaddr_in6*>(b.first.get());
+    auto res = std::memcmp(addr_a->sin6_addr.s6_addr, addr_b->sin6_addr.s6_addr, sizeof(in6_addr));
+    if(res == 0)
+      return addr_a->sin6_port < addr_b->sin6_port;
+    return res < 0;
+  }
+  return a < b;
 }
