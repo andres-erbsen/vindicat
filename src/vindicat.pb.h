@@ -1015,17 +1015,28 @@ class ConnectionAccept : public ::google::protobuf::MessageLite {
   
   // accessors -------------------------------------------------------
   
-  // required .ConnectionAccept.Auth auth = 1;
+  // optional bytes sender_pubkey = 1;
+  inline bool has_sender_pubkey() const;
+  inline void clear_sender_pubkey();
+  static const int kSenderPubkeyFieldNumber = 1;
+  inline const ::std::string& sender_pubkey() const;
+  inline void set_sender_pubkey(const ::std::string& value);
+  inline void set_sender_pubkey(const char* value);
+  inline void set_sender_pubkey(const void* value, size_t size);
+  inline ::std::string* mutable_sender_pubkey();
+  inline ::std::string* release_sender_pubkey();
+  
+  // required .ConnectionAccept.Auth auth = 2;
   inline bool has_auth() const;
   inline void clear_auth();
-  static const int kAuthFieldNumber = 1;
+  static const int kAuthFieldNumber = 2;
   inline ::ConnectionAccept_Auth auth() const;
   inline void set_auth(::ConnectionAccept_Auth value);
   
-  // required bytes cookie = 2;
+  // required bytes cookie = 3;
   inline bool has_cookie() const;
   inline void clear_cookie();
-  static const int kCookieFieldNumber = 2;
+  static const int kCookieFieldNumber = 3;
   inline const ::std::string& cookie() const;
   inline void set_cookie(const ::std::string& value);
   inline void set_cookie(const char* value);
@@ -1035,16 +1046,19 @@ class ConnectionAccept : public ::google::protobuf::MessageLite {
   
   // @@protoc_insertion_point(class_scope:ConnectionAccept)
  private:
+  inline void set_has_sender_pubkey();
+  inline void clear_has_sender_pubkey();
   inline void set_has_auth();
   inline void clear_has_auth();
   inline void set_has_cookie();
   inline void clear_has_cookie();
   
+  ::std::string* sender_pubkey_;
   ::std::string* cookie_;
   int auth_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
   
   friend void  protobuf_AddDesc_vindicat_2eproto();
   friend void protobuf_AssignDesc_vindicat_2eproto();
@@ -2245,15 +2259,73 @@ inline ::std::string* Hop::release_details() {
 
 // ConnectionAccept
 
-// required .ConnectionAccept.Auth auth = 1;
-inline bool ConnectionAccept::has_auth() const {
+// optional bytes sender_pubkey = 1;
+inline bool ConnectionAccept::has_sender_pubkey() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void ConnectionAccept::set_has_auth() {
+inline void ConnectionAccept::set_has_sender_pubkey() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void ConnectionAccept::clear_has_auth() {
+inline void ConnectionAccept::clear_has_sender_pubkey() {
   _has_bits_[0] &= ~0x00000001u;
+}
+inline void ConnectionAccept::clear_sender_pubkey() {
+  if (sender_pubkey_ != &::google::protobuf::internal::kEmptyString) {
+    sender_pubkey_->clear();
+  }
+  clear_has_sender_pubkey();
+}
+inline const ::std::string& ConnectionAccept::sender_pubkey() const {
+  return *sender_pubkey_;
+}
+inline void ConnectionAccept::set_sender_pubkey(const ::std::string& value) {
+  set_has_sender_pubkey();
+  if (sender_pubkey_ == &::google::protobuf::internal::kEmptyString) {
+    sender_pubkey_ = new ::std::string;
+  }
+  sender_pubkey_->assign(value);
+}
+inline void ConnectionAccept::set_sender_pubkey(const char* value) {
+  set_has_sender_pubkey();
+  if (sender_pubkey_ == &::google::protobuf::internal::kEmptyString) {
+    sender_pubkey_ = new ::std::string;
+  }
+  sender_pubkey_->assign(value);
+}
+inline void ConnectionAccept::set_sender_pubkey(const void* value, size_t size) {
+  set_has_sender_pubkey();
+  if (sender_pubkey_ == &::google::protobuf::internal::kEmptyString) {
+    sender_pubkey_ = new ::std::string;
+  }
+  sender_pubkey_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ConnectionAccept::mutable_sender_pubkey() {
+  set_has_sender_pubkey();
+  if (sender_pubkey_ == &::google::protobuf::internal::kEmptyString) {
+    sender_pubkey_ = new ::std::string;
+  }
+  return sender_pubkey_;
+}
+inline ::std::string* ConnectionAccept::release_sender_pubkey() {
+  clear_has_sender_pubkey();
+  if (sender_pubkey_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = sender_pubkey_;
+    sender_pubkey_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// required .ConnectionAccept.Auth auth = 2;
+inline bool ConnectionAccept::has_auth() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void ConnectionAccept::set_has_auth() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void ConnectionAccept::clear_has_auth() {
+  _has_bits_[0] &= ~0x00000002u;
 }
 inline void ConnectionAccept::clear_auth() {
   auth_ = 1;
@@ -2268,15 +2340,15 @@ inline void ConnectionAccept::set_auth(::ConnectionAccept_Auth value) {
   auth_ = value;
 }
 
-// required bytes cookie = 2;
+// required bytes cookie = 3;
 inline bool ConnectionAccept::has_cookie() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
 inline void ConnectionAccept::set_has_cookie() {
-  _has_bits_[0] |= 0x00000002u;
+  _has_bits_[0] |= 0x00000004u;
 }
 inline void ConnectionAccept::clear_has_cookie() {
-  _has_bits_[0] &= ~0x00000002u;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void ConnectionAccept::clear_cookie() {
   if (cookie_ != &::google::protobuf::internal::kEmptyString) {

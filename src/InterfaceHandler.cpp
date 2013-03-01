@@ -39,15 +39,16 @@ void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
 			if (!dst_dev) return;
 			path = _nm.path_to(*dst_dev);
 		}
+
 		auto conn = std::make_shared<Connection>(_ci, path, _cp, _if);
+		
 		auto rfwd = std::make_shared<SimpleForwarding>(_nm, conn->id());
-		Forwarding::pair(conn, rfwd);
-
-		_cp.insert( std::make_pair(to, conn) );
-
 		auto next_dev = std::get<1>(path.at(0)).lock();
 		next_dev->addForwarding(rfwd);
 
+		Forwarding::pair(conn, rfwd);
+
+		_cp.insert( std::make_pair(to, conn) );
 		conn->request();
 	}
 }

@@ -110,7 +110,7 @@ void PacketHandler::operator()(TransportSocket&& ts, std::string&& packet) {
 		if (fwd) {
 			fwd->forward(packet);
 		} else if (_if != nullptr) {
-			Connection::handle_auth(_ci, packet, ts, _cp, *_if);
+			Connection::handle_auth(_ci, *_if, packet, ts, _cp, _nm);
 		}
 
 	} else if (tag == 1) { // "please forward packets with this route id that way"

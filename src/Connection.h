@@ -8,16 +8,18 @@
 #include "CryptoIdentity.h"
 #include "nacl25519_nm.h"
 #include "Util.h"
+#include "NonceGen64.h"
 
 #include <memory>
-#include <deque>
+#include <vector>
 
 class Connection : public Forwarding {
 public:
 	static void handle_request(const CryptoIdentity&, const RoutingRequest&,
 			const Hop&, const std::string&, TransportSocket);
-	static void handle_auth(const CryptoIdentity& ci,
-			const std::string& packet, TransportSocket ts, ConnectionPool& cp, Interface& iface);
+	static void handle_auth(const CryptoIdentity& ci, Interface& iface,
+			const std::string& packet, TransportSocket ts, ConnectionPool& cp,
+			NetworkMap& nm);
 
 	// initiate a connection
 	Connection(CryptoIdentity&, Path, ConnectionPool&, Interface&);
@@ -30,8 +32,9 @@ public:
 
 	void request();
 private:
-	void _auth(const std::string& cookie_packet);
-	void _incoming(const std::string& cookie_packet);
+	void _auth(const std::string&);
+	void _outgoing(const std::string&);
+	void _incoming(const std::string&);
 
 	CryptoIdentity* _ci; // required while negotiating connection
 	ConnectionPool& _cp;
@@ -42,9 +45,11 @@ private:
 	std::string _route_id;
 
 	bool _authenticated;
-	// present until authenticatd:
+	// present until authenticated:
 	std::unique_ptr< std::string > _request_packet;
-	std::unique_ptr< std::deque<std::string> > _packet_queue;
+	std::unique_ptr< std::vector<std::string> > _packet_queue;
+	// present after authenticated:
+	std::unique_ptr< NonceGen64 > _noncegen;
 };
 
 #endif // CONNECTION_H_

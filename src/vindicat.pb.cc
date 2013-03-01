@@ -2199,6 +2199,7 @@ const ConnectionAccept_Auth ConnectionAccept::Auth_MAX;
 const int ConnectionAccept::Auth_ARRAYSIZE;
 #endif  // _MSC_VER
 #ifndef _MSC_VER
+const int ConnectionAccept::kSenderPubkeyFieldNumber;
 const int ConnectionAccept::kAuthFieldNumber;
 const int ConnectionAccept::kCookieFieldNumber;
 #endif  // !_MSC_VER
@@ -2219,6 +2220,7 @@ ConnectionAccept::ConnectionAccept(const ConnectionAccept& from)
 
 void ConnectionAccept::SharedCtor() {
   _cached_size_ = 0;
+  sender_pubkey_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   auth_ = 1;
   cookie_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -2229,6 +2231,9 @@ ConnectionAccept::~ConnectionAccept() {
 }
 
 void ConnectionAccept::SharedDtor() {
+  if (sender_pubkey_ != &::google::protobuf::internal::kEmptyString) {
+    delete sender_pubkey_;
+  }
   if (cookie_ != &::google::protobuf::internal::kEmptyString) {
     delete cookie_;
   }
@@ -2253,6 +2258,11 @@ ConnectionAccept* ConnectionAccept::New() const {
 
 void ConnectionAccept::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (has_sender_pubkey()) {
+      if (sender_pubkey_ != &::google::protobuf::internal::kEmptyString) {
+        sender_pubkey_->clear();
+      }
+    }
     auth_ = 1;
     if (has_cookie()) {
       if (cookie_ != &::google::protobuf::internal::kEmptyString) {
@@ -2269,10 +2279,24 @@ bool ConnectionAccept::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required .ConnectionAccept.Auth auth = 1;
+      // optional bytes sender_pubkey = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_sender_pubkey()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(16)) goto parse_auth;
+        break;
+      }
+      
+      // required .ConnectionAccept.Auth auth = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_auth:
           int value;
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
@@ -2283,12 +2307,12 @@ bool ConnectionAccept::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(18)) goto parse_cookie;
+        if (input->ExpectTag(26)) goto parse_cookie;
         break;
       }
       
-      // required bytes cookie = 2;
-      case 2: {
+      // required bytes cookie = 3;
+      case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_cookie:
@@ -2318,16 +2342,22 @@ bool ConnectionAccept::MergePartialFromCodedStream(
 
 void ConnectionAccept::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // required .ConnectionAccept.Auth auth = 1;
-  if (has_auth()) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      1, this->auth(), output);
+  // optional bytes sender_pubkey = 1;
+  if (has_sender_pubkey()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytes(
+      1, this->sender_pubkey(), output);
   }
   
-  // required bytes cookie = 2;
+  // required .ConnectionAccept.Auth auth = 2;
+  if (has_auth()) {
+    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+      2, this->auth(), output);
+  }
+  
+  // required bytes cookie = 3;
   if (has_cookie()) {
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
-      2, this->cookie(), output);
+      3, this->cookie(), output);
   }
   
 }
@@ -2336,13 +2366,20 @@ int ConnectionAccept::ByteSize() const {
   int total_size = 0;
   
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required .ConnectionAccept.Auth auth = 1;
+    // optional bytes sender_pubkey = 1;
+    if (has_sender_pubkey()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::BytesSize(
+          this->sender_pubkey());
+    }
+    
+    // required .ConnectionAccept.Auth auth = 2;
     if (has_auth()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::EnumSize(this->auth());
     }
     
-    // required bytes cookie = 2;
+    // required bytes cookie = 3;
     if (has_cookie()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
@@ -2364,6 +2401,9 @@ void ConnectionAccept::CheckTypeAndMergeFrom(
 void ConnectionAccept::MergeFrom(const ConnectionAccept& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_sender_pubkey()) {
+      set_sender_pubkey(from.sender_pubkey());
+    }
     if (from.has_auth()) {
       set_auth(from.auth());
     }
@@ -2380,13 +2420,14 @@ void ConnectionAccept::CopyFrom(const ConnectionAccept& from) {
 }
 
 bool ConnectionAccept::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
+  if ((_has_bits_[0] & 0x00000006) != 0x00000006) return false;
   
   return true;
 }
 
 void ConnectionAccept::Swap(ConnectionAccept* other) {
   if (other != this) {
+    std::swap(sender_pubkey_, other->sender_pubkey_);
     std::swap(auth_, other->auth_);
     std::swap(cookie_, other->cookie_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);

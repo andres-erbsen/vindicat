@@ -64,6 +64,7 @@ message Hop {
 
 message ConnectionAccept {
 	enum Auth { AUTHENC_BCARD = 1; }
-	required Auth auth = 1;
-	required bytes cookie = 2;
+	optional bytes sender_pubkey = 1;
+	required Auth auth = 2;
+	required bytes cookie = 3;
 }

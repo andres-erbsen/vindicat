@@ -15,7 +15,8 @@ Connection::Connection(CryptoIdentity& ci, Path path, ConnectionPool& cp, Interf
 	, _route_id( bytes( id() ) )
 	, _authenticated(false)
 	, _request_packet(new std::string)
-	, _packet_queue(new std::deque<std::string>)
+	, _packet_queue(new std::vector<std::string>)
+	, _noncegen(nullptr)
 	{
 	_request_packet->push_back('\1');
 
@@ -46,53 +47,63 @@ void Connection::request() {
 void Connection::handle_request(const CryptoIdentity& ci, const RoutingRequest& rq, const Hop& hop, const std::string& route_id, TransportSocket ts) {
 	assert( hop.type() == Hop::UP );
 	// response is a "cookie packet":
-	// pkt type, nonce (24 bytes), [B',ConnectionAccept](B<>A')
+	// tag, route id, nonce (24 bytes), [ConnectionAccept](B<>A')
 	std::string cookie_packet;
 	cookie_packet.push_back('\0');
-	std::string nonce = route_id + randomstring(16);
+	cookie_packet.append(route_id);
+	std::string nonce = randomstring(24);
 	cookie_packet.append(nonce);
 	ConnectionAccept ack;
 	ack.set_auth( ConnectionAccept::AUTHENC_BCARD );
 	// generate our keys for this connection
 	std::string connection_sk;
 	std::string connection_pk = crypto_box_keypair(&connection_sk);
+	ack.set_sender_pubkey(connection_pk);
 	// ...and let the other party store them for us, in encrypted form ofc
 	ack.set_cookie( ci.cookies.cookie( rq.sender_pubkey() + connection_sk ) );
 	assert(ack.cookie().size() == COOKIE_SIZE);
 	std::string encpart;
-	ci.encrypt( connection_pk+ack.SerializeAsString(), nonce
-			  , static_cast<PkencAlgo>(rq.enc_algo()), rq.sender_pubkey()
-			  , encpart);
+	ci.encrypt( ack.SerializeAsString()
+	          , nonce
+	          , static_cast<PkencAlgo>(rq.enc_algo())
+	          , rq.sender_pubkey()
+	          , encpart);
 	cookie_packet.append(encpart);
 	ts.send(cookie_packet);
 
 }
 
 void Connection::_auth(const std::string& cookie_packet) {
-	// cookie packet: ppttype, nonce (24 bytes), [B',ConnectionAccept](B<>A')
-	std::string m;
-	if ( ! _naclsession.decrypt( cookie_packet.substr(1+24)
-	                           , cookie_packet.substr(1,24)
-                               , m ) ) return;
+	// cookie packet: tag, route id, nonce (24 bytes), [ConnectionAccept](B<>A')
+	if (cookie_packet.size() < 1+8+24) return;
 	std::string route_id = cookie_packet.substr(1,8);
 	assert(route_id == _route_id);
 
-	_naclsession.pk(m.substr(0,32));
+	std::string m;
+	if ( ! _naclsession.decrypt( cookie_packet.substr(1+8+24)
+	                           , cookie_packet.substr(1+8,24)
+                               , m ) ) return;
+
 	std::string cookie;
 	{
 		ConnectionAccept ack;
 		if (ack.auth() != ConnectionAccept::AUTHENC_BCARD) return;
-		ack.ParseFromString(m.substr(32));
+		ack.ParseFromString(m);
 		cookie = ack.cookie();
+		_naclsession.pk(ack.sender_pubkey());
 	}
 
 	// client_auth packet: pkttype,rid,pktid,cookie,[[A'](A<>B'),bcard_A](A'<>B')
 	std::string auth_packet;
 	auth_packet.push_back('\0');
 	auth_packet.append(route_id);
-	std::string packet_id = randomstring(8); // FIXME: generate deterministically
+
+	_noncegen.reset(new NonceGen64);
+	std::string packet_id = _noncegen->next();
 	auth_packet.append(packet_id);
+
 	auth_packet.append(cookie); // a server should know how long its cookies are
+
 	{
 		std::string message;
 		std::string nonce = route_id+packet_id;
@@ -105,10 +116,17 @@ void Connection::_auth(const std::string& cookie_packet) {
 		_ci->our_businesscard()->AppendToString(&message);
 		auth_packet.append( _naclsession.encrypt(message, nonce) );
 	}
+
 	_pair_other.lock()->forward_out(auth_packet);
+	_authenticated = true;
+
+	// also send all the queued packets
+	for ( const std::string& packet : *_packet_queue ) _outgoing(packet);
+	_packet_queue.reset(nullptr);
+	_request_packet.reset(nullptr);
 }
 
-void Connection::handle_auth(const CryptoIdentity& ci, const std::string& packet, TransportSocket ts, ConnectionPool& cp, Interface& iface) {
+void Connection::handle_auth(const CryptoIdentity& ci, Interface& iface, const std::string& packet, TransportSocket ts, ConnectionPool& cp, NetworkMap& nm) {
 	// This may be the auth packet to start a connection, with contents:
 	// pkttype, routeid, pktid, cookie, [[A'](A<>B'),bcard_A](A'<>B')
 	if (packet.size() < 1+8+8+COOKIE_SIZE) return;
@@ -150,7 +168,13 @@ void Connection::handle_auth(const CryptoIdentity& ci, const std::string& packet
 	// all ok, save the connection
 	std::string their_id = dev.id();
 	std::string route_id = packet.substr(1,8);
+
 	auto conn = std::make_shared<Connection>(std::move(naclsession), their_id, route_id, cp, iface);
+	auto rfwd = std::make_shared<SimpleForwarding>(nm, conn->id());	
+	Forwarding::pair(conn, rfwd);	
+
+	cp.insert( std::make_pair(their_id, conn) );
+	nm.device(ts)->addForwarding(rfwd);
 }	
 
 Connection::Connection(nacl25519_nm&& ns, const std::string& their_id
@@ -165,11 +189,27 @@ Connection::Connection(nacl25519_nm&& ns, const std::string& their_id
 	, _authenticated(true)
 	, _request_packet(nullptr)
 	, _packet_queue(nullptr)
+	, _noncegen(new NonceGen64)
 	{}
 
 bool Connection::forward(const std::string& packet) {
-	_packet_queue->push_back(packet);
+	if ( ! _authenticated ) _packet_queue->push_back(packet);
+	else _outgoing(packet);
 	return 1;
+}
+
+void Connection::_outgoing(const std::string& packet) {
+	assert(packet.size() >= 1);
+	if (packet[0] == '\xDC') return; // would collide with embedded message
+	assert(_noncegen);
+	const std::string packet_id = _noncegen->next();
+	assert(packet_id.size() == 8);
+	std::string nonce = _route_id + packet_id;
+	assert(nonce.size() == 16);
+	nonce.resize(crypto_box_NONCEBYTES,'\0');
+	_pair_other.lock()->forward_out( 
+			_route_id + packet_id + _naclsession.encrypt(packet, nonce)
+	);
 }
 
 void Connection::_incoming(const std::string& packet) {
@@ -178,11 +218,11 @@ void Connection::_incoming(const std::string& packet) {
 	if ( ! _naclsession.decrypt( packet.substr(1+16)
 	                           , packet.substr(1,16)
                                , m ) ) return;
-	_if.send(_their_id,m[0],m.substr(0));
+	_if.send(_their_id,m[0],m.substr(1));
 }
 
 bool Connection::forward_out(const std::string& packet) {
-	if (!_authenticated) _auth(packet);
+	if ( ! _authenticated) _auth(packet);
 	else _incoming(packet);
 	return 1;
 }

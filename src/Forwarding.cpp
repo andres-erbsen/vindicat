@@ -42,6 +42,7 @@ bool Forwarding::forward(const std::string& packet) {
 void ForeignForwarding::owner(std::weak_ptr<Device>&& owner) {
 	assert(!_owner.lock());
 	_owner = owner;
+	assert(_owner.lock());
 }
 
 
