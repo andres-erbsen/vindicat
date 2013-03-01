@@ -207,16 +207,20 @@ void Connection::_outgoing(const std::string& packet) {
 	std::string nonce = _route_id + packet_id;
 	assert(nonce.size() == 16);
 	nonce.resize(crypto_box_NONCEBYTES,'\0');
+	std::string nul(1,'\0');
 	_pair_other.lock()->forward_out( 
-			_route_id + packet_id + _naclsession.encrypt(packet, nonce)
+			nul + _route_id + packet_id + _naclsession.encrypt(packet, nonce)
 	);
 }
 
 void Connection::_incoming(const std::string& packet) {
 	// data packet: '\0',rid,pktid, [data type, data](A'<>B')
+	std::string nonce(packet.substr(1,8+8));
+	nonce.resize(crypto_box_NONCEBYTES,'\0');
+
 	std::string m;
-	if ( ! _naclsession.decrypt( packet.substr(1+16)
-	                           , packet.substr(1,16)
+	if ( ! _naclsession.decrypt( packet.substr(1+8+8)
+	                           , nonce
                                , m ) ) return;
 	_if.send(_their_id,m[0],m.substr(1));
 }
