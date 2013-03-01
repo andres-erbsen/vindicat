@@ -123,35 +123,33 @@ UDPServerTransport::~UDPServerTransport() {
 	close(_fd);
 }
 
-bool UDPServerTransport::send(const std::string& buf, const sockaddr *addr, socklen_t addrlen)
+bool UDPServerTransport::send(const std::string& buf, const std::shared_ptr<sockaddr>& addr, socklen_t addrlen)
 {
-	return sendto(_fd, buf.c_str(), buf.size(), 0, addr, addrlen) != -1;
+	return sendto(_fd, buf.c_str(), buf.size(), 0, addr.get(), addrlen) != -1;
 }
 
 void UDPServerTransport::incoming() {
 	char *buf = new char[1500]; // ethernet MTU size
-	struct sockaddr *addr = reinterpret_cast<struct sockaddr*>(new sockaddr_storage);
+	std::shared_ptr<sockaddr> addr(reinterpret_cast<struct sockaddr*>(new sockaddr_storage));
 	socklen_t addrlen = sizeof(struct sockaddr_storage);
-	ssize_t read = recvfrom(_fd, buf, 1500, 0, addr, &addrlen);
+	ssize_t read = recvfrom(_fd, buf, 1500, 0, addr.get(), &addrlen);
 	if(read < 0)
 	{
 		std::perror("UDPServerTransport::incoming");
 		std::abort();
 	}
-	auto iter = _who.insert(std::make_pair(addr, addrlen));
+	_who.insert(std::make_pair(addr, addrlen));
 
 	std::string addr_UID;
 	if(addr->sa_family == AF_INET)
-		addr_UID = "IPv4"+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(addr)->sin_addr.s_addr), 4)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(addr)->sin_port), 2);
+		addr_UID = "IPv4"+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(addr.get())->sin_addr.s_addr), 4)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(addr.get())->sin_port), 2);
 	else if(addr->sa_family == AF_INET6)
-		addr_UID = "IPv6"+std::string(reinterpret_cast<char*>(reinterpret_cast<sockaddr_in6*>(addr)->sin6_addr.s6_addr), 16)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in6*>(addr)->sin6_port), 2);
+		addr_UID = "IPv6"+std::string(reinterpret_cast<char*>(reinterpret_cast<sockaddr_in6*>(addr.get())->sin6_addr.s6_addr), 16)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in6*>(addr.get())->sin6_port), 2);
 	else
-		addr_UID = std::string(reinterpret_cast<char*>(addr), addrlen);
+		addr_UID = "DGRAM"+std::string(reinterpret_cast<char*>(addr.get()), addrlen);
 
 	_receive_cb(TransportSocket(std::bind(std::mem_fn(&UDPServerTransport::send), this, std::placeholders::_1, addr, addrlen), addr_UID), std::string(buf, read));
 
-	if(!iter.second)
-		delete addr;
 	delete[] buf;
 }
 
@@ -175,13 +173,13 @@ void UDPServerTransport::broadcast(const std::string& buf) {
 		sendto(_fd, nullptr, 0, 0, _group[1], _group_length[1]);
 }
 
-bool UDPServerTransport::compare::operator()(const std::pair<struct sockaddr*, socklen_t>& a, const std::pair<struct sockaddr*, socklen_t>& b)
+bool UDPServerTransport::compare::operator()(const std::pair<std::shared_ptr<sockaddr>, socklen_t>& a, const std::pair<std::shared_ptr<sockaddr>, socklen_t>& b)
 {
 	if(a.first->sa_family != b.first->sa_family)
 		return a.first->sa_family < b.first->sa_family;
 	if(a.first->sa_family == AF_INET) // IPv4
-		return reinterpret_cast<struct sockaddr_in*>(a.first)->sin_addr.s_addr < reinterpret_cast<struct sockaddr_in*>(b.first)->sin_addr.s_addr;
+		return reinterpret_cast<struct sockaddr_in*>(a.first.get())->sin_addr.s_addr < reinterpret_cast<struct sockaddr_in*>(b.first.get())->sin_addr.s_addr;
 	if(a.first->sa_family == AF_INET6) // IPv6
-		return std::memcmp(reinterpret_cast<struct sockaddr_in6*>(a.first)->sin6_addr.s6_addr, reinterpret_cast<struct sockaddr_in6*>(b.first)->sin6_addr.s6_addr, sizeof(in6_addr)) < 0;
+		return std::memcmp(reinterpret_cast<struct sockaddr_in6*>(a.first.get())->sin6_addr.s6_addr, reinterpret_cast<struct sockaddr_in6*>(b.first.get())->sin6_addr.s6_addr, sizeof(in6_addr)) < 0;
 	return a < b;
 }
