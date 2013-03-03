@@ -190,24 +190,11 @@ IPv6::Packet IPv6::Packet::reassemble(const IPv6::Address &src,
 
 IPv6::Packet IPv6::Packet::read(int fd)
 {
-  IPv6::Packet header(IPv6::Packet::header_length);
-  ssize_t bytes = ::read(fd, header.data(), IPv6::Packet::header_length); 
+  IPv6::Packet packet(1500);
+  ssize_t bytes = ::read(fd, packet.data(), 1500);
   if(bytes == -1)
     throw std::system_error(errno, std::system_category());
-  assert(bytes == IPv6::Packet::header_length);
   assert(header.version() == 6);
-  IPv6::Packet packet(IPv6::Packet::header_length+header.payload_length());
-  std::memcpy(packet.data(), header.data(), IPv6::Packet::header_length);
-  bytes = 0;
-  do
-  {
-    ssize_t chunk = ::read(fd, packet.payload()+bytes, header.payload_length()-bytes);
-    if(chunk == -1)
-      throw std::system_error(errno, std::system_category());
-    bytes += chunk;
-  }
-  while(bytes < header.payload_length());
-  assert(bytes == header.payload_length());
   return packet;
 }
 
