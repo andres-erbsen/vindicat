@@ -198,9 +198,15 @@ IPv6::Packet IPv6::Packet::read(int fd)
   assert(header.version() == 6);
   IPv6::Packet packet(IPv6::Packet::header_length+header.payload_length());
   std::memcpy(packet.data(), header.data(), IPv6::Packet::header_length);
-  bytes = ::read(fd, packet.payload(), header.payload_length());
-  if(bytes == -1)
-    throw std::system_error(errno, std::system_category());
+  bytes = 0;
+  do
+  {
+    ssize_t chunk = ::read(fd, packet.payload()+bytes, header.payload_length()-bytes);
+    if(chunk == -1)
+      throw std::system_error(errno, std::system_category());
+    bytes += chunk;
+  }
+  while(bytes < header.payload_length());
   assert(bytes == header.payload_length());
   return packet;
 }
