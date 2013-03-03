@@ -194,7 +194,7 @@ IPv6::Packet IPv6::Packet::read(int fd)
   ssize_t bytes = ::read(fd, packet.data(), 1500);
   if(bytes == -1)
     throw std::system_error(errno, std::system_category());
-  assert(header.version() == 6);
+  assert(packet.version() == 6);
   return packet;
 }
 
