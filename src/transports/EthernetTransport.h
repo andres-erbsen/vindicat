@@ -8,23 +8,27 @@
 #include <cstdint>
 #include <string>
 #include <pcap/pcap.h>
+#include <thread>
 
 class EthernetTransport: public Transport
 {
  public:
   EthernetTransport(const std::string& device = std::string());
-  virtual ~EthernetTransport() = default;
+  virtual ~EthernetTransport();
   void enable();
   void broadcast(const std::string&);
   bool send(const std::string&, const std::string&);
  private:
   pcap_t *_pcap;
+  // If _fd[1] is -1, then _fd[0] is managed by pcap
+  int _fd[2];
   friend ev::io;
   void read_cb(ev::io&, int);
   ev::io _read_watcher;
   std::uint8_t _mac[ETH_ALEN];
   bpf_program _filter;
-  static void pcap_callback(void* data, const pcap_pkthdr* pcap_header, const std::uint8_t* packet);
+  std::thread _pcap_loop_thread;
+  static void pcap_callback(std::uint8_t*, const pcap_pkthdr*, const std::uint8_t*);
 };
 
 #endif // TRANSPORTS_ETHERNETTRANSPORT_H_
