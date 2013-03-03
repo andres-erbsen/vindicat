@@ -91,13 +91,9 @@ void EthernetTransport::enable()
   _read_watcher.set<EthernetTransport, &EthernetTransport::read_cb>(this);
   _read_watcher.start(_fd[0], ev::READ);
   if(_fd[1] != -1)
-    _pcap_loop_thread = std::thread(std::mem_fn(&EthernetTransport::pcap_loop_thread), this);
-}
-
-void EthernetTransport::pcap_loop_thread()
-{
-  pcap_loop(_pcap, -1, &EthernetTransport::pcap_callback,
-            reinterpret_cast<std::uint8_t*>(_fd));
+    _pcap_loop_thread = std::thread(&pcap_loop, _pcap, -1,
+                                    &EthernetTransport::pcap_callback,
+                                    reinterpret_cast<std::uint8_t*>(_fd));
 }
 
 void EthernetTransport::pcap_callback(std::uint8_t *data,

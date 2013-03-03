@@ -27,7 +27,6 @@ class EthernetTransport: public Transport
   ev::io _read_watcher;
   std::uint8_t _mac[ETH_ALEN];
   bpf_program _filter;
-  void pcap_loop_thread();
   std::thread _pcap_loop_thread;
   static void pcap_callback(std::uint8_t*, const pcap_pkthdr*, const std::uint8_t*);
 };
