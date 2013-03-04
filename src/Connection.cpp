@@ -128,7 +128,7 @@ void Connection::_auth(const std::string& cookie_packet) {
 	_request_packet.reset(nullptr);
 }
 
-void Connection::handle_auth(const CryptoIdentity& ci, Interface& iface, const std::string& packet, TransportSocket ts, ConnectionPool& cp, NetworkMap& nm) {
+void Connection::handle_auth(CryptoIdentity& ci, Interface& iface, const std::string& packet, TransportSocket ts, ConnectionPool& cp, NetworkMap& nm) {
 	// This may be the auth packet to start a connection, with contents:
 	// pkttype, routeid, pktid, cookie, [[A'](A<>B'),bcard_A](A'<>B')
 	if (packet.size() < 1+8+8+COOKIE_SIZE) return;
@@ -141,6 +141,8 @@ void Connection::handle_auth(const CryptoIdentity& ci, Interface& iface, const s
 		std::string cookie = packet.substr(1+8+8, COOKIE_SIZE);
 		if ( ! ci.cookies.open(cookie, c) ) return;
 		their_connection_pk = c.substr(0,crypto_box_PUBLICKEYBYTES);
+		if ( ! ci.cookies.allowed(their_connection_pk)) return;
+		ci.cookies.blacklist(their_connection_pk);
 		// FIXME: don't accept connections from connection enc keys that may
 		// have been used with the current cookies to avoid session replays
 		connection_sk = c.substr(crypto_box_PUBLICKEYBYTES);

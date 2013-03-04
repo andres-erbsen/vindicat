@@ -17,7 +17,7 @@ class Connection : public Forwarding {
 public:
 	static void handle_request(const CryptoIdentity&, const RoutingRequest&,
 			const Hop&, const std::string&, TransportSocket);
-	static void handle_auth(const CryptoIdentity& ci, Interface& iface,
+	static void handle_auth(CryptoIdentity& ci, Interface& iface,
 			const std::string& packet, TransportSocket ts, ConnectionPool& cp,
 			NetworkMap& nm);
 

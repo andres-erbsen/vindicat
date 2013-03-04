@@ -1,6 +1,7 @@
 #include "TemporalCookies.h"
 #include "Util.h"
 #include <cassert>
+#include <algorithm>
 
 TemporalCookies::TemporalCookies(float refresh_interval) {
 	randombytes(_minutekey, sizeof(_minutekey));
@@ -55,9 +56,19 @@ open(const std::string& cookie, std::string& ret) const {
 	return 1;
 }
 
+void TemporalCookies::blacklist(const std::string& k) {
+	_minuteblacklist.insert(k);
+}
+
+bool TemporalCookies::allowed(const std::string& k) const {
+	return _minuteblacklist.count(k) == 0 && _lastminuteblacklist.count(k) == 0;
+}
+
 
 void TemporalCookies::operator() (ev::timer& /*w*/, int /*revents*/) {
 	unsigned int i;
 	for (i=0; i<sizeof(_minutekey); ++i) _lastminutekey[i] = _minutekey[i];
 	randombytes(_minutekey, sizeof(_minutekey));
+	std::swap(_lastminuteblacklist, _minuteblacklist);
+	_minuteblacklist.clear();
 }
