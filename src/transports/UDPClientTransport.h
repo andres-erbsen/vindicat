@@ -12,7 +12,7 @@ public:
 	UDPClientTransport(struct sockaddr *addr, socklen_t addrlen);
 	~UDPClientTransport();
 	void enable();
-	void broadcast(const std::string&);
+	void to_unknown(const std::string&);
 	bool send(const std::string&);
 	const struct sockaddr* address() const
 	{

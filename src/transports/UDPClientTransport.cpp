@@ -94,7 +94,7 @@ void UDPClientTransport::enable() {
 	_read_watcher.start(_fd, ev::READ);
 }
 
-void UDPClientTransport::broadcast(const std::string& buf) {
+void UDPClientTransport::to_unknown(const std::string& buf) {
 	send(buf);
 }
 

@@ -16,5 +16,5 @@ void Beacon::enable() {
 }
 
 void Beacon::operator() (ev::timer& /*w*/, int /*revents*/) {
-	for (auto tr : _transports) tr->broadcast(_msg);
+	for (auto tr : _transports) tr->to_unknown(_msg);
 }
