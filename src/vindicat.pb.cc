@@ -1863,12 +1863,28 @@ const Hop_Type Hop::Type_MIN;
 const Hop_Type Hop::Type_MAX;
 const int Hop::Type_ARRAYSIZE;
 #endif  // _MSC_VER
+bool Hop_NonceAlgo_IsValid(int value) {
+  switch(value) {
+    case 2:
+      return true;
+    default:
+      return false;
+  }
+}
+
+#ifndef _MSC_VER
+const Hop_NonceAlgo Hop::XTEA32;
+const Hop_NonceAlgo Hop::NonceAlgo_MIN;
+const Hop_NonceAlgo Hop::NonceAlgo_MAX;
+const int Hop::NonceAlgo_ARRAYSIZE;
+#endif  // _MSC_VER
 #ifndef _MSC_VER
 const int Hop::kTypeFieldNumber;
 const int Hop::kNextFieldNumber;
 const int Hop::kEncAlgoFieldNumber;
 const int Hop::kSenderPubkeyFieldNumber;
 const int Hop::kDetailsFieldNumber;
+const int Hop::kNonceAlgoFieldNumber;
 #endif  // !_MSC_VER
 
 Hop::Hop()
@@ -1892,6 +1908,7 @@ void Hop::SharedCtor() {
   enc_algo_ = 0u;
   sender_pubkey_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   details_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  nonce_algo_ = 2;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -1947,6 +1964,7 @@ void Hop::Clear() {
         details_->clear();
       }
     }
+    nonce_algo_ = 2;
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -2029,6 +2047,25 @@ bool Hop::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(48)) goto parse_nonce_algo;
+        break;
+      }
+      
+      // optional .Hop.NonceAlgo nonce_algo = 6;
+      case 6: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_nonce_algo:
+          int value;
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
+                 input, &value)));
+          if (::Hop_NonceAlgo_IsValid(value)) {
+            set_nonce_algo(static_cast< ::Hop_NonceAlgo >(value));
+          }
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -2079,6 +2116,12 @@ void Hop::SerializeWithCachedSizes(
       5, this->details(), output);
   }
   
+  // optional .Hop.NonceAlgo nonce_algo = 6;
+  if (has_nonce_algo()) {
+    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+      6, this->nonce_algo(), output);
+  }
+  
 }
 
 int Hop::ByteSize() const {
@@ -2119,6 +2162,12 @@ int Hop::ByteSize() const {
           this->details());
     }
     
+    // optional .Hop.NonceAlgo nonce_algo = 6;
+    if (has_nonce_algo()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::EnumSize(this->nonce_algo());
+    }
+    
   }
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = total_size;
@@ -2149,6 +2198,9 @@ void Hop::MergeFrom(const Hop& from) {
     if (from.has_details()) {
       set_details(from.details());
     }
+    if (from.has_nonce_algo()) {
+      set_nonce_algo(from.nonce_algo());
+    }
   }
 }
 
@@ -2171,6 +2223,7 @@ void Hop::Swap(Hop* other) {
     std::swap(enc_algo_, other->enc_algo_);
     std::swap(sender_pubkey_, other->sender_pubkey_);
     std::swap(details_, other->details_);
+    std::swap(nonce_algo_, other->nonce_algo_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     std::swap(_cached_size_, other->_cached_size_);
   }

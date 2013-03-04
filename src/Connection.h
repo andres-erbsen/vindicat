@@ -8,7 +8,7 @@
 #include "CryptoIdentity.h"
 #include "nacl25519_nm.h"
 #include "Util.h"
-#include "NonceGen64.h"
+#include "NonceSession.h"
 
 #include <memory>
 #include <vector>
@@ -49,7 +49,7 @@ private:
 	std::unique_ptr< std::string > _request_packet;
 	std::unique_ptr< std::vector<std::string> > _packet_queue;
 	// present after authenticated:
-	std::unique_ptr< NonceGen64 > _noncegen;
+	std::unique_ptr< NonceSession > _nonces;
 };
 
 #endif // CONNECTION_H_

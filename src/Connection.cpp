@@ -16,7 +16,7 @@ Connection::Connection(CryptoIdentity& ci, Path path, ConnectionPool& cp, Interf
 	, _authenticated(false)
 	, _request_packet(new std::string)
 	, _packet_queue(new std::vector<std::string>)
-	, _noncegen(nullptr)
+	, _nonces(nullptr)
 	{
 	_request_packet->push_back('\1');
 
@@ -30,11 +30,12 @@ Connection::Connection(CryptoIdentity& ci, Path path, ConnectionPool& cp, Interf
 	{
 		Hop hop;
 		hop.set_type(Hop::UP);
+		hop.set_nonce_algo(Hop::XTEA32);
 		rq.set_details(_naclsession.encrypt(hop.SerializeAsString(), nonce));
 	}
 
 	for (signed int i=path.size()-2; i>=0; --i) {
-		assert(0); // forwarding requests not supported yet
+		assert(0); // TODO: forwarding requests not supported yet
 	}
 
 	rq.AppendToString(_request_packet.get());
@@ -45,7 +46,8 @@ void Connection::request() {
 }
 
 void Connection::handle_request(const CryptoIdentity& ci, const RoutingRequest& rq, const Hop& hop, const std::string& route_id, TransportSocket ts) {
-	assert( hop.type() == Hop::UP );
+	if ( hop.type() != Hop::UP ) return;
+	if ( hop.nonce_algo() != Hop::XTEA32 ) return;
 	// response is a "cookie packet":
 	// tag, route id, nonce (24 bytes), [ConnectionAccept](B<>A')
 	std::string cookie_packet;
@@ -98,12 +100,10 @@ void Connection::_auth(const std::string& cookie_packet) {
 	auth_packet.push_back('\0');
 	auth_packet.append(route_id);
 
-	_noncegen.reset(new NonceGen64);
-	std::string packet_id;
-	do packet_id = _noncegen->next();
-		while ( ((*packet_id.rbegin()&1) == 1) == _naclsession.nonce_bit() );
+	_nonces.reset(new NonceSession( _naclsession.encrypt("", std::string(24,'\0'))
+	                              , _naclsession.nonce_bit() ));
+	std::string packet_id = _nonces->next();
 	auth_packet.append(packet_id);
-
 	auth_packet.append(cookie); // a server should know how long its cookies are
 
 	{
@@ -191,7 +191,8 @@ Connection::Connection(nacl25519_nm&& ns, const std::string& their_id
 	, _authenticated(true)
 	, _request_packet(nullptr)
 	, _packet_queue(nullptr)
-	, _noncegen(new NonceGen64)
+	, _nonces( new NonceSession( _naclsession.encrypt("", std::string(24, '\0'))
+	                           , _naclsession.nonce_bit()) )
 	{}
 
 bool Connection::forward(const std::string& packet) {
@@ -203,10 +204,8 @@ bool Connection::forward(const std::string& packet) {
 void Connection::_outgoing(const std::string& packet) {
 	assert(packet.size() >= 1);
 	if (packet[0] == '\xDC') return; // would collide with embedded message
-	assert(_noncegen);
-	std::string packet_id;
-	do packet_id = _noncegen->next();
-		while ( ((*packet_id.rbegin()&1) == 1) == _naclsession.nonce_bit() );
+	assert(_nonces);
+	std::string packet_id = _nonces->next();
 	assert(packet_id.size() == 8);
 	std::string nonce = _route_id + packet_id;
 	assert(nonce.size() == 16);
@@ -220,6 +219,8 @@ void Connection::_outgoing(const std::string& packet) {
 void Connection::_incoming(const std::string& packet) {
 	// data packet: '\0',rid,pktid, [data type, data](A'<>B')
 	std::string nonce(packet.substr(1,8+8));
+	assert(_nonces);
+	if ( ! _nonces->open(nonce) ) return; // out of order / replay / our nonce
 	nonce.resize(crypto_box_NONCEBYTES,'\0');
 
 	std::string m;

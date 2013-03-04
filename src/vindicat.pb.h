@@ -58,6 +58,14 @@ const Hop_Type Hop_Type_Type_MIN = Hop_Type_UP;
 const Hop_Type Hop_Type_Type_MAX = Hop_Type_SIMPLE_TWOWAY;
 const int Hop_Type_Type_ARRAYSIZE = Hop_Type_Type_MAX + 1;
 
+enum Hop_NonceAlgo {
+  Hop_NonceAlgo_XTEA32 = 2
+};
+bool Hop_NonceAlgo_IsValid(int value);
+const Hop_NonceAlgo Hop_NonceAlgo_NonceAlgo_MIN = Hop_NonceAlgo_XTEA32;
+const Hop_NonceAlgo Hop_NonceAlgo_NonceAlgo_MAX = Hop_NonceAlgo_XTEA32;
+const int Hop_NonceAlgo_NonceAlgo_ARRAYSIZE = Hop_NonceAlgo_NonceAlgo_MAX + 1;
+
 enum ConnectionAccept_Auth {
   ConnectionAccept_Auth_AUTHENC_BCARD = 1
 };
@@ -880,6 +888,18 @@ class Hop : public ::google::protobuf::MessageLite {
   static const int Type_ARRAYSIZE =
     Hop_Type_Type_ARRAYSIZE;
   
+  typedef Hop_NonceAlgo NonceAlgo;
+  static const NonceAlgo XTEA32 = Hop_NonceAlgo_XTEA32;
+  static inline bool NonceAlgo_IsValid(int value) {
+    return Hop_NonceAlgo_IsValid(value);
+  }
+  static const NonceAlgo NonceAlgo_MIN =
+    Hop_NonceAlgo_NonceAlgo_MIN;
+  static const NonceAlgo NonceAlgo_MAX =
+    Hop_NonceAlgo_NonceAlgo_MAX;
+  static const int NonceAlgo_ARRAYSIZE =
+    Hop_NonceAlgo_NonceAlgo_ARRAYSIZE;
+  
   // accessors -------------------------------------------------------
   
   // required .Hop.Type type = 1;
@@ -929,6 +949,13 @@ class Hop : public ::google::protobuf::MessageLite {
   inline ::std::string* mutable_details();
   inline ::std::string* release_details();
   
+  // optional .Hop.NonceAlgo nonce_algo = 6;
+  inline bool has_nonce_algo() const;
+  inline void clear_nonce_algo();
+  static const int kNonceAlgoFieldNumber = 6;
+  inline ::Hop_NonceAlgo nonce_algo() const;
+  inline void set_nonce_algo(::Hop_NonceAlgo value);
+  
   // @@protoc_insertion_point(class_scope:Hop)
  private:
   inline void set_has_type();
@@ -941,15 +968,18 @@ class Hop : public ::google::protobuf::MessageLite {
   inline void clear_has_sender_pubkey();
   inline void set_has_details();
   inline void clear_has_details();
+  inline void set_has_nonce_algo();
+  inline void clear_has_nonce_algo();
   
   ::std::string* next_;
   int type_;
   ::google::protobuf::uint32 enc_algo_;
   ::std::string* sender_pubkey_;
   ::std::string* details_;
+  int nonce_algo_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
   
   friend void  protobuf_AddDesc_vindicat_2eproto();
   friend void protobuf_AssignDesc_vindicat_2eproto();
@@ -2253,6 +2283,29 @@ inline ::std::string* Hop::release_details() {
     details_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
+}
+
+// optional .Hop.NonceAlgo nonce_algo = 6;
+inline bool Hop::has_nonce_algo() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void Hop::set_has_nonce_algo() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void Hop::clear_has_nonce_algo() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void Hop::clear_nonce_algo() {
+  nonce_algo_ = 2;
+  clear_has_nonce_algo();
+}
+inline ::Hop_NonceAlgo Hop::nonce_algo() const {
+  return static_cast< ::Hop_NonceAlgo >(nonce_algo_);
+}
+inline void Hop::set_nonce_algo(::Hop_NonceAlgo value) {
+  GOOGLE_DCHECK(::Hop_NonceAlgo_IsValid(value));
+  set_has_nonce_algo();
+  nonce_algo_ = value;
 }
 
 // -------------------------------------------------------------------
