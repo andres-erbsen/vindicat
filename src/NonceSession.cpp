@@ -17,7 +17,7 @@ NonceSession::NonceSession(const std::string& key, bool parity)
 
 std::string NonceSession::next() {
 	std::string ret;
-	do ret = _gen.next(); while ( (*ret.rbegin()&1) == _parity );
+	do ret = _gen.next(); while ( (*ret.rbegin()&1) != _parity );
 	assert(ret.size() == 8);
 	return ret;
 }

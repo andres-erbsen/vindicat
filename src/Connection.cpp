@@ -221,8 +221,9 @@ void Connection::_outgoing(const std::string& packet) {
 void Connection::_incoming(const std::string& packet) {
 	// data packet: '\0',rid,pktid, [data type, data](A'<>B')
 	std::string nonce(packet.substr(1,8+8));
+	std::string packet_id(packet.substr(1+8,8));
 	assert(_nonces);
-	if ( ! _nonces->open(nonce) ) return; // out of order / replay / our nonce
+	if ( ! _nonces->open(packet_id) ) return; // out of order / replay / ours
 	nonce.resize(crypto_box_NONCEBYTES,'\0');
 
 	std::string m;
