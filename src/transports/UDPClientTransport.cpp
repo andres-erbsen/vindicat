@@ -120,7 +120,7 @@ void UDPClientTransport::read_cb(ev::io& w, int /*revents*/) {
   char *buf = new char[1500]; // ethernet MTU size
   sockaddr *addr = reinterpret_cast<sockaddr*>(new sockaddr_storage);
   socklen_t len = sizeof(sockaddr_storage);
-  ssize_t read = recvfrom(_fd, buf, 1500, 0, addr, &len);
+  ssize_t read = recvfrom(w.fd, buf, 1500, 0, addr, &len);
   if(read == -1 && errno != ECONNREFUSED) {
     std::perror("UDPClientTransport::read_cb: recvfrom:");
     std::abort();

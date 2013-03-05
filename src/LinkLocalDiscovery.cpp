@@ -14,8 +14,8 @@
 #include <algorithm>
 #include <iostream>
 
-LinkLocalDiscovery::LinkLocalDiscovery(UDPClientTransport* clients, const PacketHandler &phn):
-    _clients(clients), _phn(phn), _fd(socket(AF_INET6, SOCK_DGRAM, 0))
+LinkLocalDiscovery::LinkLocalDiscovery(UDPClientTransport* clients):
+    _clients(clients), _fd(socket(AF_INET6, SOCK_DGRAM, 0))
 {
   if(_fd == -1)
   {

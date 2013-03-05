@@ -18,7 +18,7 @@ int main (int argc, char** argv) {
 	UDPClientTransport *clients = new UDPClientTransport;
 	for ( int i=1; i<argc; ++i ) { std::string arg(argv[i]);
 		if (arg == "-s") {
-			transports.push_back( new UDPServerTransport(argv[i+1], argv[i+2]) );
+			transports.push_back( new UDPServerTransport(clients, argv[i+1], argv[i+2]) );
 			i += 2;
 		} else if (arg == "-c") {
 			clients->connect(argv[i+1], argv[i+2]);
@@ -53,7 +53,7 @@ int main (int argc, char** argv) {
 	PacketHandler phn(nm, ci, cp, iface.get());
 	for (Transport* tr : transports) tr->onPacket(phn);
 	for (Transport* tr : transports) tr->enable();	
-	LinkLocalDiscovery lld(clients, phn);
+	LinkLocalDiscovery lld(clients);
 	lld.enable();
 
 	ev_run (EV_DEFAULT_ 0);	
