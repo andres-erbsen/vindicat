@@ -35,7 +35,7 @@ Connection::Connection(CryptoIdentity& ci, Path path, ConnectionPool& cp, Interf
 	}
 
 	for (signed int i=path.size()-2; i>=0; --i) {
-		assert(0); // TODO: forwarding requests not supported yet
+		assert(0); /// \TODO forwarding requests not supported yet
 	}
 
 	rq.AppendToString(_request_packet.get());
@@ -143,8 +143,8 @@ void Connection::handle_auth(CryptoIdentity& ci, Interface& iface, const std::st
 		their_connection_pk = c.substr(0,crypto_box_PUBLICKEYBYTES);
 		if ( ! ci.cookies.allowed(their_connection_pk)) return;
 		ci.cookies.blacklist(their_connection_pk);
-		// FIXME: don't accept connections from connection enc keys that may
-		// have been used with the current cookies to avoid session replays
+		/// \FIXME don't accept connections from connection enc keys that may
+		/// have been used with the current cookies to avoid session replays
 		connection_sk = c.substr(crypto_box_PUBLICKEYBYTES);
 		assert(connection_sk.size() == crypto_box_SECRETKEYBYTES);
 	}
@@ -164,7 +164,7 @@ void Connection::handle_auth(CryptoIdentity& ci, Interface& iface, const std::st
 
 	// verify the vouching
 	std::string vouch = message.substr(0, vouchlen);
-	std::string vkey; // FIXME: get from device
+	std::string vkey; /// \FIXME get from device
 	if ( ! dev.open( vouch, nonce, connection_sk
 	               , PkencAlgo::CURVE25519XSALSA20POLY1305, vkey )
 	  || vkey != their_connection_pk) return;

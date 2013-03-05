@@ -39,7 +39,7 @@ bool CryptoIdentity::open( const std::string& ct
                          ) const {
 	if ( algo == PkencAlgo::CURVE25519XSALSA20POLY1305 ) {
 		nonce.resize(crypto_box_NONCEBYTES);
-		try { // TODO: remove exceptions
+		try { /// \TODO remove exceptions
 			ret = crypto_box_open( ct, nonce, pk, _secretkey_naclbox );
 			return 1;
 		} catch(...) {

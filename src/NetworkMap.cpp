@@ -33,7 +33,7 @@ void NetworkMap::add(std::shared_ptr<Device>&& dev_p) {
 		_g_device[node] = dev_p;
 	} else {
 		assert(matching_nodes.size() == 1);
-		// TODO: handle the case of mutiple matches; when nodes have merged.
+		/// \TODO handle the case of mutiple matches; when nodes have merged.
 		node = *matching_nodes.begin();
 		for ( const auto& id : _g_device[node]->ids() ) {
 			auto erased = _node_by_id.erase(id);
