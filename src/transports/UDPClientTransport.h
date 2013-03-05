@@ -27,15 +27,20 @@ namespace std {
       return client.hash();
     }
   };
+  template<> struct hash<std::pair<UDPClient, bool>> {
+    hash<string>::result_type operator()(const std::pair<UDPClient, bool>& client) const {
+      return client.first.hash();
+    }
+  };
 }
 
 class UDPClientTransport : public Transport {
  public:
   UDPClientTransport();
-  void connect(const std::string& host, const std::string& port);
-  void connect(const std::string& host, const std::string& port, int fd);
-  void connect(const std::shared_ptr<sockaddr>& addr, socklen_t len);
-  void connect(const std::shared_ptr<sockaddr>& addr, socklen_t len, int fd);
+  void connect(bool, const std::string& host, const std::string& port);
+  void connect(bool, const std::string& host, const std::string& port, int fd);
+  void connect(bool, const std::shared_ptr<sockaddr>& addr, socklen_t len);
+  void connect(bool, const std::shared_ptr<sockaddr>& addr, socklen_t len, int fd);
   virtual ~UDPClientTransport();
   void enable();
   void enable(ev::io&, int);
@@ -46,7 +51,7 @@ class UDPClientTransport : public Transport {
   int _fd;
   ev::io _read_watcher;
   /// Clients that are known to exist but we haven't seen yet.
-  std::unordered_set<UDPClient> _unknown;
+  std::unordered_set<std::pair<UDPClient, bool>> _unknown;
 };
 
 

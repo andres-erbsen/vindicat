@@ -107,7 +107,7 @@ void LinkLocalDiscovery::read_cb(ev::io& /*w*/, int /*revents*/)
   std::memset(src, 0, sizeof(sockaddr_in6));
   ssize_t read = recvfrom(_fd, buf, 1500, 0, reinterpret_cast<sockaddr*>(src), &srclen);
   if(read != -1)
-    _clients->connect(std::shared_ptr<sockaddr>(reinterpret_cast<sockaddr*>(src)),
+    _clients->connect(false, std::shared_ptr<sockaddr>(reinterpret_cast<sockaddr*>(src)),
                       srclen);
   else
     std::perror("LinkLocalDiscovery::read_cb");

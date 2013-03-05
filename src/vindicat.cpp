@@ -21,7 +21,7 @@ int main (int argc, char** argv) {
 			transports.push_back( new UDPServerTransport(clients, argv[i+1], argv[i+2]) );
 			i += 2;
 		} else if (arg == "-c") {
-			clients->connect(argv[i+1], argv[i+2]);
+			clients->connect(true, argv[i+1], argv[i+2]);
 			i += 2;
 		} else if (arg == "-e") {
 			transports.push_back( new EthernetTransport(argv[i+1]) );

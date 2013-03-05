@@ -78,22 +78,27 @@ UDPClientTransport::UDPClientTransport():
   }
 }
 
-void UDPClientTransport::connect(const std::string& host, const std::string& port) {
-  return connect(host, port, _fd);
+void UDPClientTransport::connect(bool persistent, const std::string& host,
+                                 const std::string& port) {
+  return connect(persistent, host, port, _fd);
 }
 
-void UDPClientTransport::connect(const std::string& host, const std::string& port,
+void UDPClientTransport::connect(bool persistent, const std::string& host,
+                                 const std::string& port, int fd) {
+  _unknown.insert(std::make_pair(UDPClient(fd, host, port), persistent));
+}
+
+void UDPClientTransport::connect(bool persistent,
+                                 const std::shared_ptr<sockaddr>& addr,
+                                 socklen_t len) {
+  return connect(persistent, std::move(addr), len, _fd);
+}
+
+void UDPClientTransport::connect(bool persistent,
+                                 const std::shared_ptr<sockaddr>& addr,
+				 socklen_t len,
                                  int fd) {
-  _unknown.emplace(fd, host, port);
-}
-
-void UDPClientTransport::connect(const std::shared_ptr<sockaddr>& addr, socklen_t len) {
-  return connect(std::move(addr), len, _fd);
-}
-
-void UDPClientTransport::connect(const std::shared_ptr<sockaddr>& addr, socklen_t len,
-                                 int fd) {
-  _unknown.insert(UDPClient(fd, std::move(addr), len));
+  _unknown.insert(std::make_pair(UDPClient(fd, std::move(addr), len), persistent));
 }
 
 UDPClientTransport::~UDPClientTransport() {
@@ -111,7 +116,7 @@ void UDPClientTransport::enable(ev::io& watcher, int fd) {
 
 void UDPClientTransport::broadcast(const std::string& payload) {
   for(auto &c : _unknown)
-    c.send(payload);
+    c.first.send(payload);
 }
 
 void UDPClientTransport::read_cb(ev::io& w, int /*revents*/) {
@@ -127,7 +132,7 @@ void UDPClientTransport::read_cb(ev::io& w, int /*revents*/) {
   }
 
   UDPClient client(w.fd, std::shared_ptr<sockaddr>(addr), len);
-  _unknown.erase(client);
+  _unknown.erase(std::make_pair(client, false));
 
   _receive_cb(TransportSocket(std::bind(std::mem_fn(&UDPClient::send),
                                         client, std::placeholders::_1),
