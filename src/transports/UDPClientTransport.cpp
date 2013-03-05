@@ -11,93 +11,129 @@
 #include <netdb.h>
 #include <unistd.h>
 
-void UDPClientTransport::read_cb(ev::io &w, int revents) {
-	// Callback for libev loop
-	// Reads data and gives it to handler
-	char *buf = new char[1500]; // ethernet MTU size
-	ssize_t read = recv(_fd, buf, 1500, 0);
-	if(read == -1 && errno != ECONNREFUSED)
-	{
-		std::perror("UDPClientTransport::read_cb");
-		std::abort();
-	}
-	_receive_cb(TransportSocket(std::bind(std::mem_fn(&UDPClientTransport::send), this, std::placeholders::_1), _addr_UID), std::string(buf, read));
-	delete[] buf;
+static inline std::string uid_format(sockaddr *addr, socklen_t len) {
+  std::string ret;
+  if(addr->sa_family == AF_INET) {
+    sockaddr_in *addr_in = reinterpret_cast<sockaddr_in*>(addr);
+    ret.reserve(4+4+2);
+    ret  = "IPv4";
+    ret += std::string(reinterpret_cast<char*>(&addr_in->sin_addr.s_addr), 4);
+    ret += std::string(reinterpret_cast<char*>(&addr_in->sin_port), 2);
+  } else if(addr->sa_family == AF_INET6) {
+    sockaddr_in6 *addr_in6 = reinterpret_cast<sockaddr_in6*>(addr);
+    ret.reserve(4+16+2);
+    ret  = "IPv6";
+    ret += std::string(reinterpret_cast<char*>(addr_in6->sin6_addr.s6_addr), 16);
+    ret += std::string(reinterpret_cast<char*>(&addr_in6->sin6_port), 2);
+  } else {
+    ret = "DGRAM"+std::string(reinterpret_cast<char*>(addr), len);
+  }
+  return ret;
 }
 
-UDPClientTransport::
-UDPClientTransport(const std::string& host, const std::string& port):
-	_fd(-1)
-{
-	struct addrinfo hints, *res;
-	std::memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_DGRAM;
-	int err;
-	if((err=getaddrinfo(host.c_str(), port.c_str(), &hints, &res)) != 0)
-	{
-		if(err == EAI_SYSTEM)
-			std::perror("UDPClientTransport::UDPClientTransport");
-		else
-			std::cerr << "UDPClientTransport::UDPClientTransport: " << gai_strerror(err) << std::endl;
-		std::abort();
-	}
+UDPClient::UDPClient(int fd, const std::string& host, const std::string& port):
+    _fd(fd) {
+  struct addrinfo hints, *res;
+  std::memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_DGRAM;
+  int err;
+  if((err=getaddrinfo(host.c_str(), port.c_str(), &hints, &res)) != 0) {
+    if(err == EAI_SYSTEM)
+      std::perror("UDPClientTransport::UDPClientTransport");
+    else
+      std::cerr << "UDPClientTransport::UDPClientTransport: " << gai_strerror(err) << std::endl;
+    std::abort();
+  }
 
-	_fd = socket(res->ai_addr->sa_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
-	if(_fd == -1)
-	{
-		std::perror("UDPClientTransport::UDPClientTransport");
-		std::abort();
-	}
-	
-	_addr = reinterpret_cast<struct sockaddr*>(new struct sockaddr_storage);
-	std::memcpy(_addr, res->ai_addr, res->ai_addrlen);
-	_addrlen = res->ai_addrlen;
+  _addr = std::shared_ptr<sockaddr>(
+      reinterpret_cast<sockaddr*>(new struct sockaddr_storage));
+  std::memcpy(_addr.get(), res->ai_addr, res->ai_addrlen);
+  _len = res->ai_addrlen;
 
-	if(_addr->sa_family == AF_INET)
-		_addr_UID = "IPv4"+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(_addr)->sin_addr.s_addr), 4)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(_addr)->sin_port), 2);
-	else if(_addr->sa_family == AF_INET6)
-		_addr_UID = "IPv6"+std::string(reinterpret_cast<char*>(reinterpret_cast<sockaddr_in6*>(_addr)->sin6_addr.s6_addr), 16)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in6*>(_addr)->sin6_port), 2);
-	else
-		_addr_UID = std::string(reinterpret_cast<char*>(_addr), _addrlen);
-
-	freeaddrinfo(res);
+  freeaddrinfo(res);
 }
 
-UDPClientTransport::UDPClientTransport(struct sockaddr *addr, socklen_t addrlen):
-	_fd(socket(addr->sa_family, SOCK_DGRAM | SOCK_NONBLOCK, 0))
-{
-	if(_fd == -1)
-	{
-		std::perror("UDPClientTransport::UDPClientTransport");
-		std::abort();
-	}
-	_addr = reinterpret_cast<struct sockaddr*>(new struct sockaddr_storage);
-	std::memcpy(_addr, addr, addrlen);
-	_addrlen = addrlen;
-
-	if(_addr->sa_family == AF_INET)
-		_addr_UID = "IPv4"+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(_addr)->sin_addr.s_addr), 4)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(_addr)->sin_port), 2);
-	else if(_addr->sa_family == AF_INET6)
-		_addr_UID = "IPv6"+std::string(reinterpret_cast<char*>(reinterpret_cast<sockaddr_in6*>(_addr)->sin6_addr.s6_addr), 16)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in6*>(_addr)->sin6_port), 2);
-	else    
-		_addr_UID = std::string(reinterpret_cast<char*>(_addr), _addrlen);
+UDPClient::UDPClient(int fd, const std::shared_ptr<sockaddr>& addr, socklen_t len):
+    _addr(std::move(addr)), _len(len), _fd(fd) {
 }
 
-UDPClientTransport::~UDPClientTransport()
-{
-	close(_fd);
+bool UDPClient::send(const std::string &payload) const {
+  return sendto(_fd, payload.c_str(), payload.size(), 0, _addr.get(), _len) != -1;
+}
+
+std::hash<std::string>::result_type UDPClient::hash() const {
+  return std::hash<std::string>()(uid_format(_addr.get(), _len));
+}
+
+bool UDPClient::operator==(const UDPClient &client) const {
+  return uid_format(_addr.get(), _len) == uid_format(client._addr.get(), client._len);
+}
+
+UDPClientTransport::UDPClientTransport():
+    _fd(socket(AF_INET6, SOCK_DGRAM | SOCK_NONBLOCK, 0)) {
+  if(_fd == -1) {
+    std::perror("socket");
+    std::abort();
+  }
+}
+
+void UDPClientTransport::connect(const std::string& host, const std::string& port) {
+  return connect(host, port, _fd);
+}
+
+void UDPClientTransport::connect(const std::string& host, const std::string& port,
+                                 int fd) {
+  _unknown.emplace(fd, host, port);
+}
+
+void UDPClientTransport::connect(const std::shared_ptr<sockaddr>& addr, socklen_t len) {
+  return connect(std::move(addr), len, _fd);
+}
+
+void UDPClientTransport::connect(const std::shared_ptr<sockaddr>& addr, socklen_t len,
+                                 int fd) {
+  _unknown.insert(UDPClient(fd, std::move(addr), len));
+}
+
+UDPClientTransport::~UDPClientTransport() {
+  close(_fd);
 }
 
 void UDPClientTransport::enable() {
-	_read_watcher.set<UDPClientTransport, &UDPClientTransport::read_cb>(this);
-	_read_watcher.start(_fd, ev::READ);
+  enable(_read_watcher);
 }
 
-void UDPClientTransport::broadcast(const std::string& buf) {
-	send(buf);
+void UDPClientTransport::enable(ev::io& watcher) {
+  watcher.set<UDPClientTransport, &UDPClientTransport::read_cb>(this);
+  watcher.start(_fd, ev::READ);
 }
 
-bool UDPClientTransport::send(const std::string& buf) {
-	return sendto(_fd, buf.c_str(), buf.size(), 0, _addr, _addrlen) != -1;
+void UDPClientTransport::broadcast(const std::string& payload) {
+  for(auto &c : _unknown)
+    c.send(payload);
 }
+
+void UDPClientTransport::read_cb(ev::io& w, int /*revents*/) {
+  // Callback for libev loop
+  // Reads data and gives it to handler
+  char *buf = new char[1500]; // ethernet MTU size
+  sockaddr *addr = reinterpret_cast<sockaddr*>(new sockaddr_storage);
+  socklen_t len = sizeof(sockaddr_storage);
+  ssize_t read = recvfrom(_fd, buf, 1500, 0, addr, &len);
+  if(read == -1 && errno != ECONNREFUSED) {
+    std::perror("UDPClientTransport::read_cb: recvfrom:");
+    std::abort();
+  }
+
+  UDPClient client(w.fd, std::shared_ptr<sockaddr>(addr), len);
+  _unknown.erase(client);
+
+  _receive_cb(TransportSocket(std::bind(std::mem_fn(&UDPClient::send),
+                                        client, std::placeholders::_1),
+                              uid_format(addr, len)),
+              std::string(buf, read));
+
+  delete[] buf;
+}
+
