@@ -14,27 +14,35 @@
 #include <algorithm>
 #include <iostream>
 
-LinkLocalDiscovery::LinkLocalDiscovery(std::vector<Transport*> &transports, const PacketHandler &phn):
-    _transports(transports), _phn(phn), _fd(-1)
+LinkLocalDiscovery::LinkLocalDiscovery(UDPClientTransport* clients, const PacketHandler &phn):
+    _clients(clients), _phn(phn), _fd(socket(AF_INET6, SOCK_DGRAM, 0))
 {
+  if(_fd == -1)
+  {
+    std::perror("LinkLocalDiscovery::LinkLocalDiscovery: socket");
+    return;
+  }
+
   struct ifaddrs *ifap;
   if(getifaddrs(&ifap) == -1)
   {
-    std::perror("LinkLocalDiscovery::LinkLocalDiscovery");
-    std::abort();
+    std::perror("LinkLocalDiscovery::LinkLocalDiscovery: getifaddrs");
+    close(_fd);
+    _fd = -1;
+    return;
   }
-
-  _fd = socket(AF_INET6, SOCK_DGRAM | SOCK_NONBLOCK, 0);
 
   {
     int reuse = 1;
     if(setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) != 0)
     {
       std::perror("LinkLocalDiscovery::LinkLocalDiscovery");
-      std::abort();
+      close(_fd);
+      _fd = -1;
+      return;
     }
   }
-  
+
   struct sockaddr_in6 local_ipv6;
   std::memset(&local_ipv6, 0, sizeof(struct sockaddr_in6));
   local_ipv6.sin6_family = AF_INET6;
@@ -43,7 +51,7 @@ LinkLocalDiscovery::LinkLocalDiscovery(std::vector<Transport*> &transports, cons
   if(bind(_fd, reinterpret_cast<struct sockaddr*>(&local_ipv6),
           sizeof(struct sockaddr_in6)) == -1)
   {
-    std::perror("LinkLocalDiscovery::LinkLocalDiscovery");
+    std::perror("LinkLocalDiscovery::LinkLocalDiscovery: bind");
     close(_fd);
     _fd = -1;
   }
@@ -65,12 +73,12 @@ LinkLocalDiscovery::LinkLocalDiscovery(std::vector<Transport*> &transports, cons
 	  ipv4_request.imr_ifindex = if_nametoindex(i->ifa_name);
 	  ipv4_request.imr_address = reinterpret_cast<struct sockaddr_in*>(i->ifa_addr)->sin_addr;
 	  if(setsockopt(_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ipv4_request, sizeof(struct ip_mreqn)) != 0)
-	    perror("setsockopt IPv4");
+	    perror("setsockopt for IPv4");
 	  break;
 	case AF_INET6:
 	  ipv6_request.ipv6mr_interface = if_nametoindex(i->ifa_name);
 	  if(setsockopt(_fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &ipv6_request, sizeof(struct ipv6_mreq)) != 0)
-	    std::perror("setsockopt IPv6");
+	    std::perror("setsockopt for IPv6");
 	  break;
       }
     }
@@ -95,30 +103,12 @@ void LinkLocalDiscovery::read_cb(ev::io& /*w*/, int /*revents*/)
 {
   char buf[1500];
   socklen_t srclen = sizeof(struct sockaddr_in6);
-  struct sockaddr_in6 src;
-  std::memset(&src, 0, sizeof(sockaddr_in6));
-  ssize_t read = recvfrom(_fd, buf, 1500, 0, reinterpret_cast<struct sockaddr*>(&src), &srclen);
+  struct sockaddr_in6 *src = new sockaddr_in6;
+  std::memset(src, 0, sizeof(sockaddr_in6));
+  ssize_t read = recvfrom(_fd, buf, 1500, 0, reinterpret_cast<sockaddr*>(src), &srclen);
   if(read != -1)
-  {
-    bool exists =
-    std::any_of(_transports.begin(), _transports.end(),
-        [&src](const Transport *tr)
-	{
-	  const UDPClientTransport *client = dynamic_cast<const UDPClientTransport*>(tr);
-          return client && client->address()->sa_family == AF_INET6 && std::memcmp(reinterpret_cast<const struct sockaddr_in6*>(client->address())->sin6_addr.s6_addr, src.sin6_addr.s6_addr, 16) == 0 && reinterpret_cast<const struct sockaddr_in6*>(client->address())->sin6_port == src.sin6_port;
-        }
-    );
-
-    if(!exists)
-    {
-      char ip[40];
-      std::cout << "Connecting to [" << inet_ntop(AF_INET6, src.sin6_addr.s6_addr, ip, 40) << "]:" << ntohs(src.sin6_port) << std::endl;
-      UDPClientTransport *client = new UDPClientTransport(reinterpret_cast<struct sockaddr*>(&src), sizeof(struct sockaddr_in6));
-      client->onPacket(_phn);
-      client->enable();
-      _transports.push_back(client);
-    }
-  }
+    _clients->connect(std::shared_ptr<sockaddr>(reinterpret_cast<sockaddr*>(src)),
+                      srclen);
   else
     std::perror("LinkLocalDiscovery::read_cb");
 }

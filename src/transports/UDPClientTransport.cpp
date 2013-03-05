@@ -101,12 +101,12 @@ UDPClientTransport::~UDPClientTransport() {
 }
 
 void UDPClientTransport::enable() {
-  enable(_read_watcher);
+  enable(_read_watcher, _fd);
 }
 
-void UDPClientTransport::enable(ev::io& watcher) {
+void UDPClientTransport::enable(ev::io& watcher, int fd) {
   watcher.set<UDPClientTransport, &UDPClientTransport::read_cb>(this);
-  watcher.start(_fd, ev::READ);
+  watcher.start(fd, ev::READ);
 }
 
 void UDPClientTransport::broadcast(const std::string& payload) {

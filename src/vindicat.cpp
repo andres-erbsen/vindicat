@@ -15,18 +15,20 @@
 
 int main (int argc, char** argv) {
 	std::vector<Transport*> transports;
+	UDPClientTransport *clients = new UDPClientTransport;
 	for ( int i=1; i<argc; ++i ) { std::string arg(argv[i]);
 		if (arg == "-s") {
 			transports.push_back( new UDPServerTransport(argv[i+1], argv[i+2]) );
 			i += 2;
 		} else if (arg == "-c") {
-			transports.push_back( new UDPClientTransport(argv[i+1], argv[i+2]) );
+			clients->connect(argv[i+1], argv[i+2]);
 			i += 2;
 		} else if (arg == "-e") {
 			transports.push_back( new EthernetTransport(argv[i+1]) );
 			i += 1;
 		} else assert(0);
 	}
+	transports.push_back(clients);
 
 	CryptoIdentity ci;
 	auto our_device = std::make_shared<Device>();
@@ -51,7 +53,7 @@ int main (int argc, char** argv) {
 	PacketHandler phn(nm, ci, cp, iface.get());
 	for (Transport* tr : transports) tr->onPacket(phn);
 	for (Transport* tr : transports) tr->enable();	
-	LinkLocalDiscovery lld(transports, phn);
+	LinkLocalDiscovery lld(clients, phn);
 	lld.enable();
 
 	ev_run (EV_DEFAULT_ 0);	

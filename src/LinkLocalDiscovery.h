@@ -2,22 +2,20 @@
 #define LINKLOCALDISCOVERY_H_
 
 #include "PacketHandler.h"
-
 #include <ev++.h>
-#include <vector>
 
-class Transport;
+class UDPClientTransport;
 
 class LinkLocalDiscovery
 {
  public:
-  LinkLocalDiscovery(std::vector<Transport*>&, const PacketHandler&);
+  LinkLocalDiscovery(UDPClientTransport*, const PacketHandler&);
   virtual ~LinkLocalDiscovery();
   void enable();
   void read_cb(ev::io&, int);
  private:
-  std::vector<Transport*> &_transports;
-  PacketHandler _phn;
+  UDPClientTransport *_clients;
+  const PacketHandler &_phn;
   int _fd;
   ev::io _read_watcher;
 };

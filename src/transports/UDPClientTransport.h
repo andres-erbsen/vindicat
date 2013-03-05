@@ -38,7 +38,7 @@ class UDPClientTransport : public Transport {
   void connect(const std::shared_ptr<sockaddr>& addr, socklen_t len, int fd);
   virtual ~UDPClientTransport();
   void enable();
-  void enable(ev::io&);
+  void enable(ev::io&, int);
   void broadcast(const std::string&);
  private:
   void read_cb(ev::io&, int);
