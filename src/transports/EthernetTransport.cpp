@@ -105,7 +105,7 @@ void EthernetTransport::pcap_callback(std::uint8_t *data,
   write(fd[1], packet, pcap_header->caplen);
 }
 
-void EthernetTransport::broadcast(const std::string& msg)
+void EthernetTransport::to_unknown(const std::string& msg)
 {
   send(msg, std::string(ETH_ALEN, 0xff));
 }
@@ -123,7 +123,7 @@ bool EthernetTransport::send(const std::string& msg, const std::string& mac)
   return res == 0;
 }
 
-void EthernetTransport::read_cb(ev::io &watcher, int revents)
+void EthernetTransport::read_cb(ev::io& /*watcher*/, int /*revents*/)
 {
   const std::uint8_t *packet;
   pcap_pkthdr *header;

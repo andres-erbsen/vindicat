@@ -109,7 +109,7 @@ void UDPClientTransport::enable(ev::io& watcher, int fd) {
   watcher.start(fd, ev::READ);
 }
 
-void UDPClientTransport::broadcast(const std::string& payload) {
+void UDPClientTransport::to_unknown(const std::string& payload) {
   for(auto &c : _unknown)
     c.send(payload);
 }
