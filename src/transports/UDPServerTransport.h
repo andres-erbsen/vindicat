@@ -25,6 +25,6 @@ class UDPServerTransport : public Transport {
   socklen_t _group_length[2];
   int _fd;
   ev::io _read_watcher;
-}
+};
 
 #endif // UDPSERVERTRANSPORT_H_
