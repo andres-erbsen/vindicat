@@ -129,8 +129,8 @@ void UDPServerTransport::enable() {
   _clients->enable(_read_watcher, _fd);
 }
 
-void UDPServerTransport::broadcast(const std::string&) {
-	sendto(_fd, nullptr, 0, 0, _group[0], _group_length[0]);
-	if(_group[1])
-		sendto(_fd, nullptr, 0, 0, _group[1], _group_length[1]);
+void UDPServerTransport::to_unknown(const std::string&) {
+  sendto(_fd, nullptr, 0, 0, _group[0], _group_length[0]);
+  if(_group[1])
+    sendto(_fd, nullptr, 0, 0, _group[1], _group_length[1]);
 }

@@ -16,7 +16,7 @@ class EthernetTransport: public Transport
   EthernetTransport(const std::string& device = std::string());
   virtual ~EthernetTransport();
   void enable();
-  void broadcast(const std::string&);
+  void to_unknown(const std::string&);
   bool send(const std::string&, const std::string&);
  private:
   pcap_t *_pcap;

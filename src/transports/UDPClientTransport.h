@@ -44,7 +44,7 @@ class UDPClientTransport : public Transport {
   virtual ~UDPClientTransport();
   void enable();
   void enable(ev::io&, int);
-  void broadcast(const std::string&);
+  void to_unknown(const std::string&);
  private:
   void read_cb(ev::io&, int);
   friend ev::io;

@@ -17,7 +17,7 @@ class UDPServerTransport : public Transport {
   virtual ~UDPServerTransport();
 
   void enable();
-  void broadcast(const std::string&);
+  void to_unknown(const std::string&);
  private:
   UDPClientTransport *_clients;
   // UDPv6 shares port space with UDPv4

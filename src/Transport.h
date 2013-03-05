@@ -44,7 +44,7 @@ public:
 	void onPacket(packet_callback);	
 	// Transports start in a dormant state. activate this.
 	virtual void enable() = 0;
-	virtual void broadcast(const std::string&) = 0; // send to all
+	virtual void to_unknown(const std::string&) = 0; // send to all
 
 protected:
 	Transport() = default;
