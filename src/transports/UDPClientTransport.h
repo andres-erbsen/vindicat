@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 
 #include <unordered_set>
+#include <unordered_map>
 
 class UDPClient {
  public:
@@ -53,6 +54,7 @@ class UDPClientTransport : public Transport {
   ev::io _read_watcher;
   /// Clients that are known to exist but we haven't seen yet.
   std::unordered_set<std::pair<UDPClient, bool>> _unknown;
+  std::unordered_map<UDPClient, int> _timeouts;
 };
 
 std::string uid_format(sockaddr*, socklen_t);

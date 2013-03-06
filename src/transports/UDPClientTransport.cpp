@@ -11,6 +11,8 @@
 #include <netdb.h>
 #include <unistd.h>
 
+#define MAX_MISSED_BEACONS 5
+
 std::string uid_format(sockaddr *addr, socklen_t len) {
   std::string ret;
   if(addr->sa_family == AF_INET) {
@@ -85,7 +87,9 @@ void UDPClientTransport::connect(bool persistent, const std::string& host,
 
 void UDPClientTransport::connect(bool persistent, const std::string& host,
                                  const std::string& port, int fd) {
-  _unknown.insert(std::make_pair(UDPClient(fd, host, port), persistent));
+  UDPClient client(fd, host, port);
+  _timeouts[client] = 0;
+  _unknown.insert(std::make_pair(std::move(client), persistent));
 }
 
 void UDPClientTransport::connect(bool persistent,
@@ -98,7 +102,9 @@ void UDPClientTransport::connect(bool persistent,
                                  const std::shared_ptr<sockaddr>& addr,
 				 socklen_t len,
                                  int fd) {
-  _unknown.insert(std::make_pair(UDPClient(fd, std::move(addr), len), persistent));
+  UDPClient client(fd, std::move(addr), len);
+  _timeouts[client] = 0;
+  _unknown.insert(std::make_pair(std::move(client), persistent));
 }
 
 UDPClientTransport::~UDPClientTransport() {
@@ -115,8 +121,16 @@ void UDPClientTransport::enable(ev::io& watcher, int fd) {
 }
 
 void UDPClientTransport::to_unknown(const std::string& payload) {
-  for(auto &c : _unknown)
-    c.first.send(payload);
+  for(auto c = _unknown.begin(); c != _unknown.end();) {
+    _timeouts[c->first]++;
+    c->first.send(payload);
+    if(++_timeouts[c->first] > MAX_MISSED_BEACONS && !c->second) {
+      _timeouts.erase(c->first);
+      c = _unknown.erase(c);
+      continue;
+    }
+    ++c;
+  }
 }
 
 void UDPClientTransport::read_cb(ev::io& w, int /*revents*/) {
