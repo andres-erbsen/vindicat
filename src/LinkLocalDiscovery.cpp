@@ -113,10 +113,15 @@ void LinkLocalDiscovery::read_cb(ev::io& /*w*/, int /*revents*/)
     auto device = _nm.device(TransportSocket([](const std::string&){return false;},
                                              uid_format(reinterpret_cast<sockaddr*>(src),
                                               srclen)));
-    if(!device)
+    if(!device) {
+      char ip[40];
+      std::cout << "Connecting to [";
+      std::cout << inet_ntop(AF_INET6, src->sin6_addr.s6_addr, ip, 40) << "]:";
+      std::cout << ntohs(src->sin6_port) << std::endl;
       _clients->connect(false,
                         std::shared_ptr<sockaddr>(reinterpret_cast<sockaddr*>(src)),
                         srclen);
+    }
   } else {
     std::perror("LinkLocalDiscovery::read_cb");
   }
