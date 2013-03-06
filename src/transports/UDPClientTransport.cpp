@@ -155,7 +155,7 @@ std::size_t UDPClientTransport::nonpersistent() const
 {
   std::size_t ret = 0;
   for(auto client : _unknown)
-    if(!client.second)
+    if(client.second >= 0)
       ret++;
   return ret;
 }
