@@ -87,9 +87,7 @@ void UDPClientTransport::connect(bool persistent, const std::string& host,
 
 void UDPClientTransport::connect(bool persistent, const std::string& host,
                                  const std::string& port, int fd) {
-  UDPClient client(fd, host, port);
-  _timeouts[client] = 0;
-  _unknown.insert(std::make_pair(std::move(client), persistent));
+  _unknown[UDPClient(fd, host, port)] = persistent? -1: 0;
 }
 
 void UDPClientTransport::connect(bool persistent,
@@ -102,9 +100,7 @@ void UDPClientTransport::connect(bool persistent,
                                  const std::shared_ptr<sockaddr>& addr,
 				 socklen_t len,
                                  int fd) {
-  UDPClient client(fd, std::move(addr), len);
-  _timeouts[client] = 0;
-  _unknown.insert(std::make_pair(std::move(client), persistent));
+  _unknown[UDPClient(fd, std::move(addr), len)] = persistent? -1: 0;
 }
 
 UDPClientTransport::~UDPClientTransport() {
@@ -122,10 +118,8 @@ void UDPClientTransport::enable(ev::io& watcher, int fd) {
 
 void UDPClientTransport::to_unknown(const std::string& payload) {
   for(auto c = _unknown.begin(); c != _unknown.end();) {
-    _timeouts[c->first]++;
     c->first.send(payload);
-    if(++_timeouts[c->first] > MAX_MISSED_BEACONS && !c->second) {
-      _timeouts.erase(c->first);
+    if(c->second != -1 && ++(c->second) > MAX_MISSED_BEACONS) {
       c = _unknown.erase(c);
       continue;
     }
@@ -146,7 +140,8 @@ void UDPClientTransport::read_cb(ev::io& w, int /*revents*/) {
   }
 
   UDPClient client(w.fd, std::shared_ptr<sockaddr>(addr), len);
-  _unknown.erase(std::make_pair(client, false));
+  if(_unknown[client] != -1)
+    _unknown.erase(client);
 
   _receive_cb(TransportSocket(std::bind(std::mem_fn(&UDPClient::send),
                                         client, std::placeholders::_1),
