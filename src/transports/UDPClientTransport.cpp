@@ -11,7 +11,7 @@
 #include <netdb.h>
 #include <unistd.h>
 
-static inline std::string uid_format(sockaddr *addr, socklen_t len) {
+std::string uid_format(sockaddr *addr, socklen_t len) {
   std::string ret;
   if(addr->sa_family == AF_INET) {
     sockaddr_in *addr_in = reinterpret_cast<sockaddr_in*>(addr);

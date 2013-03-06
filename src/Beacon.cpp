@@ -3,7 +3,7 @@
 Beacon::Beacon( int interval
               , const CryptoIdentity& ci
               , const std::vector<Transport*>& v_tr)
-              : _msg("\4")
+              : _msg("\4\1")
               , _transports(v_tr)
 {
 	ci.our_businesscard()->AppendToString(&_msg);

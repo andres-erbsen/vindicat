@@ -1,5 +1,5 @@
 #include "LinkLocalDiscovery.h"
-#include "Transport.h"
+#include "NetworkMap.h"
 #include "transports/UDPClientTransport.h"
 
 #include <sys/types.h>
@@ -14,8 +14,9 @@
 #include <algorithm>
 #include <iostream>
 
-LinkLocalDiscovery::LinkLocalDiscovery(UDPClientTransport* clients):
-    _clients(clients), _fd(socket(AF_INET6, SOCK_DGRAM, 0))
+LinkLocalDiscovery::LinkLocalDiscovery(UDPClientTransport* clients,
+                                       const NetworkMap &nm):
+    _clients(clients), _nm(nm), _fd(socket(AF_INET6, SOCK_DGRAM, 0))
 {
   if(_fd == -1)
   {
@@ -107,8 +108,19 @@ void LinkLocalDiscovery::read_cb(ev::io& /*w*/, int /*revents*/)
   std::memset(src, 0, sizeof(sockaddr_in6));
   ssize_t read = recvfrom(_fd, buf, 1500, 0, reinterpret_cast<sockaddr*>(src), &srclen);
   if(read != -1)
-    _clients->connect(false, std::shared_ptr<sockaddr>(reinterpret_cast<sockaddr*>(src)),
-                      srclen);
-  else
+  {
+    auto device = _nm.device(TransportSocket([](const std::string&){return false;},
+                                             uid_format(reinterpret_cast<sockaddr*>(src),
+                                              srclen)));
+    if(!device) {
+      _clients->connect(false,
+                        std::shared_ptr<sockaddr>(reinterpret_cast<sockaddr*>(src)),
+                        srclen);
+      std::cout << device.get() << std::endl;
+    } else {
+      std::cout << "LLD: found" << std::endl;
+    }
+  } else {
     std::perror("LinkLocalDiscovery::read_cb");
+  }
 }

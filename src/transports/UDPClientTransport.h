@@ -54,5 +54,6 @@ class UDPClientTransport : public Transport {
   std::unordered_set<std::pair<UDPClient, bool>> _unknown;
 };
 
+std::string uid_format(sockaddr*, socklen_t);
 
 #endif // UDPCLIENTTRANSPORT_H_

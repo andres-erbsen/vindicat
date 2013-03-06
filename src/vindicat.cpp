@@ -53,7 +53,7 @@ int main (int argc, char** argv) {
 	PacketHandler phn(nm, ci, cp, iface.get());
 	for (Transport* tr : transports) tr->onPacket(phn);
 	for (Transport* tr : transports) tr->enable();	
-	LinkLocalDiscovery lld(clients);
+	LinkLocalDiscovery lld(clients, nm);
 	lld.enable();
 
 	ev_run (EV_DEFAULT_ 0);	
