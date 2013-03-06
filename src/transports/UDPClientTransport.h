@@ -45,6 +45,7 @@ class UDPClientTransport : public Transport {
   void enable();
   void enable(ev::io&, int);
   void to_unknown(const std::string&);
+  std::size_t nonpersistent() const;
  private:
   void read_cb(ev::io&, int);
   friend ev::io;

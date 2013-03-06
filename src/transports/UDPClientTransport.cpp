@@ -142,3 +142,11 @@ void UDPClientTransport::read_cb(ev::io& w, int /*revents*/) {
   delete[] buf;
 }
 
+std::size_t UDPClientTransport::nonpersistent() const
+{
+  std::size_t ret = 0;
+  for(auto client : _unknown)
+    if(!client.second)
+      ret++;
+  return ret;
+}

@@ -107,19 +107,16 @@ void LinkLocalDiscovery::read_cb(ev::io& /*w*/, int /*revents*/)
   struct sockaddr_in6 *src = new sockaddr_in6;
   std::memset(src, 0, sizeof(sockaddr_in6));
   ssize_t read = recvfrom(_fd, buf, 1500, 0, reinterpret_cast<sockaddr*>(src), &srclen);
-  if(read != -1)
+  // Set an arbitrary limit on nonexistent servers
+  if(read != -1 && _clients->nonpersistent() < (1<<20))
   {
     auto device = _nm.device(TransportSocket([](const std::string&){return false;},
                                              uid_format(reinterpret_cast<sockaddr*>(src),
                                               srclen)));
-    if(!device) {
+    if(!device)
       _clients->connect(false,
                         std::shared_ptr<sockaddr>(reinterpret_cast<sockaddr*>(src)),
                         srclen);
-      std::cout << device.get() << std::endl;
-    } else {
-      std::cout << "LLD: found" << std::endl;
-    }
   } else {
     std::perror("LinkLocalDiscovery::read_cb");
   }
