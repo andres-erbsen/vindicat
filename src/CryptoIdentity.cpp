@@ -2,6 +2,7 @@
 
 #include <Util.h>
 #include <sodium/crypto_box.h>
+#include "crypto_box-wrapper.h"
 
 #include <ctime>
 #include <cassert>
