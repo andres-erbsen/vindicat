@@ -1,5 +1,5 @@
 #include "nacl25519_nm.h"
-#include <crypto_scalarmult_curve25519.h>
+#include <sodium/crypto_scalarmult_curve25519.h>
 
 #include <Util.h>
 #include <cassert>

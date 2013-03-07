@@ -1,4 +1,4 @@
-#include <crypto_box.h>
+#include <sodium/crypto_box.h>
 #include "Connection.h"
 #include "Util.h"
 

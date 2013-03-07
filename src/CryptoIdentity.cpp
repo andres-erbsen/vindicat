@@ -1,7 +1,7 @@
 #include "CryptoIdentity.h"
 
 #include <Util.h>
-#include <crypto_box.h>
+#include <sodium/crypto_box.h>
 
 #include <ctime>
 #include <cassert>

@@ -2,7 +2,7 @@
 #define OPENSSL_SHA_H_
 
 #undef inline
-#include <crypto_hash.h>
+#include <sodium/crypto_hash.h>
 #include <stdlib.h>
 
 typedef struct

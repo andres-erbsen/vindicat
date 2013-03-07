@@ -1,7 +1,7 @@
 #ifndef NACL25519_NM_H_
 #define NACL25519_NM_H_
 
-#include <crypto_box.h>
+#include <sodium/crypto_box.h>
 #include <string>
 
 class nacl25519_nm {
