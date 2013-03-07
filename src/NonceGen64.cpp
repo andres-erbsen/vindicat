@@ -2,7 +2,7 @@
 #include <xtea.h>
 #include <randombytes.h>
 #include <cassert>
-// FIXME: where do the endianness dunctions come from?
+/// \FIXME where do the endianness functions come from?
 
 NonceGen64::NonceGen64(std::uint32_t const key[4])
 	: _next(0)
