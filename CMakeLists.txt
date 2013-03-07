@@ -33,7 +33,7 @@ include_directories(${CMAKE_BINARY_DIR})
 
 FILE(GLOB_RECURSE srcs src/*.c src/*.cc src/*.cpp)
 FILE(GLOB_RECURSE libs lib/ed25519-donna/*.c lib/keccak/*.c lib/libev/ev.c lib/libev/event.c)
-FILE(GLOB_RECURSE clibs lib/xtea/*.c lib/*.cc lib/*.cpp lib/randombytes.c)
+FILE(GLOB_RECURSE clibs lib/xtea/*.c lib/*.cc lib/*.cpp)
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS src/vindicat.proto)
 
 ADD_EXECUTABLE(vindicat ${clibs} ${libs} ${srcs} ${PROTO_SRCS})
