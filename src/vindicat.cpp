@@ -1,5 +1,5 @@
 #include "transports/UDPServerTransport.h"
-#include "transports/UDPClientTransport.h"
+#include "transports/UDPTransport.h"
 #include "transports/EthernetTransport.h"
 #include "PacketHandler.h"
 #include "InterfaceHandler.h"
@@ -35,7 +35,7 @@ private:
 
 int main (int argc, char** argv) {
 	std::vector<Transport*> transports;
-	UDPClientTransport *clients = new UDPClientTransport;
+	UDPTransport *clients = new UDPTransport;
 	for ( int i=1; i<argc; ++i ) { std::string arg(argv[i]);
 		if (arg == "-s") {
 			transports.push_back( new UDPServerTransport(clients, argv[i+1], argv[i+2]) );

@@ -34,14 +34,14 @@ namespace std {
   };
 }
 
-class UDPClientTransport : public Transport {
+class UDPTransport : public Transport {
  public:
-  UDPClientTransport();
+  UDPTransport();
   void connect(bool, const std::string& host, const std::string& port);
   void connect(bool, const std::string& host, const std::string& port, int fd);
   void connect(bool, const std::shared_ptr<sockaddr>& addr, socklen_t len);
   void connect(bool, const std::shared_ptr<sockaddr>& addr, socklen_t len, int fd);
-  virtual ~UDPClientTransport();
+  virtual ~UDPTransport();
   void enable();
   void enable(ev::io&, int);
   void to_unknown(const std::string&);

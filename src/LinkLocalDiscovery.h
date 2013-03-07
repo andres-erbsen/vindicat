@@ -3,18 +3,18 @@
 
 #include <ev++.h>
 
-class UDPClientTransport;
+class UDPTransport;
 class NetworkMap;
 
 class LinkLocalDiscovery
 {
  public:
-  LinkLocalDiscovery(UDPClientTransport*, const NetworkMap&);
+  LinkLocalDiscovery(UDPTransport*, const NetworkMap&);
   virtual ~LinkLocalDiscovery();
   void enable();
   void read_cb(ev::io&, int);
  private:
-  UDPClientTransport *_clients;
+  UDPTransport *_clients;
   const NetworkMap &_nm;
   int _fd;
   ev::io _read_watcher;

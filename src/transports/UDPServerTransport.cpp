@@ -1,6 +1,6 @@
 // vim: set ts=4 sw=4 :
 #include "UDPServerTransport.h"
-#include "UDPClientTransport.h"
+#include "UDPTransport.h"
 #include <cassert>
 
 #include <sys/types.h>
@@ -15,7 +15,7 @@
 #include <iostream>
 
 UDPServerTransport::
-UDPServerTransport(UDPClientTransport *clients, const std::string& host
+UDPServerTransport(UDPTransport *clients, const std::string& host
                   , const std::string& port)
 	: _clients(clients)
 {

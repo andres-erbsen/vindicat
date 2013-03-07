@@ -1,6 +1,6 @@
 #include "LinkLocalDiscovery.h"
 #include "NetworkMap.h"
-#include "transports/UDPClientTransport.h"
+#include "transports/UDPTransport.h"
 
 #include <sys/types.h>
 #include <ifaddrs.h>
@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <iostream>
 
-LinkLocalDiscovery::LinkLocalDiscovery(UDPClientTransport* clients,
+LinkLocalDiscovery::LinkLocalDiscovery(UDPTransport* clients,
                                        const NetworkMap &nm):
     _clients(clients), _nm(nm), _fd(socket(AF_INET6, SOCK_DGRAM, 0))
 {

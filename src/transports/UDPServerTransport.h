@@ -8,18 +8,18 @@
 
 #include <sys/socket.h>
 
-class UDPClientTransport;
+class UDPTransport;
 
 class UDPServerTransport : public Transport {
  public:
-  UDPServerTransport(UDPClientTransport*, const std::string&,
+  UDPServerTransport(UDPTransport*, const std::string&,
                      const std::string&);
   virtual ~UDPServerTransport();
 
   void enable();
   void to_unknown(const std::string&);
  private:
-  UDPClientTransport *_clients;
+  UDPTransport *_clients;
   // UDPv6 shares port space with UDPv4
   struct sockaddr* _group[2];
   socklen_t _group_length[2];

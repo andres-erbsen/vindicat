@@ -1,4 +1,4 @@
-#include "UDPClientTransport.h"
+#include "UDPTransport.h"
 
 #include <cassert>
 #include <cerrno>
@@ -42,9 +42,9 @@ UDPClient::UDPClient(int fd, const std::string& host, const std::string& port):
   int err;
   if((err=getaddrinfo(host.c_str(), port.c_str(), &hints, &res)) != 0) {
     if(err == EAI_SYSTEM)
-      std::perror("UDPClientTransport::UDPClientTransport");
+      std::perror("UDPClient::UDPClient");
     else
-      std::cerr << "UDPClientTransport::UDPClientTransport: " << gai_strerror(err) << std::endl;
+      std::cerr << "UDPClient::UDPClient: " << gai_strerror(err) << std::endl;
     std::abort();
   }
 
@@ -72,7 +72,7 @@ bool UDPClient::operator==(const UDPClient &client) const {
   return uid_format(_addr.get(), _len) == uid_format(client._addr.get(), client._len);
 }
 
-UDPClientTransport::UDPClientTransport():
+UDPTransport::UDPTransport():
     _fd(socket(AF_INET6, SOCK_DGRAM | SOCK_NONBLOCK, 0)) {
   if(_fd == -1) {
     std::perror("socket");
@@ -80,43 +80,43 @@ UDPClientTransport::UDPClientTransport():
   }
 }
 
-void UDPClientTransport::connect(bool persistent, const std::string& host,
+void UDPTransport::connect(bool persistent, const std::string& host,
                                  const std::string& port) {
   return connect(persistent, host, port, _fd);
 }
 
-void UDPClientTransport::connect(bool persistent, const std::string& host,
+void UDPTransport::connect(bool persistent, const std::string& host,
                                  const std::string& port, int fd) {
   _unknown[UDPClient(fd, host, port)] = persistent? -1: 0;
 }
 
-void UDPClientTransport::connect(bool persistent,
+void UDPTransport::connect(bool persistent,
                                  const std::shared_ptr<sockaddr>& addr,
                                  socklen_t len) {
   return connect(persistent, std::move(addr), len, _fd);
 }
 
-void UDPClientTransport::connect(bool persistent,
+void UDPTransport::connect(bool persistent,
                                  const std::shared_ptr<sockaddr>& addr,
 				 socklen_t len,
                                  int fd) {
   _unknown[UDPClient(fd, std::move(addr), len)] = persistent? -1: 0;
 }
 
-UDPClientTransport::~UDPClientTransport() {
+UDPTransport::~UDPTransport() {
   close(_fd);
 }
 
-void UDPClientTransport::enable() {
+void UDPTransport::enable() {
   enable(_read_watcher, _fd);
 }
 
-void UDPClientTransport::enable(ev::io& watcher, int fd) {
-  watcher.set<UDPClientTransport, &UDPClientTransport::read_cb>(this);
+void UDPTransport::enable(ev::io& watcher, int fd) {
+  watcher.set<UDPTransport, &UDPTransport::read_cb>(this);
   watcher.start(fd, ev::READ);
 }
 
-void UDPClientTransport::to_unknown(const std::string& payload) {
+void UDPTransport::to_unknown(const std::string& payload) {
   for(auto c = _unknown.begin(); c != _unknown.end();) {
     bool delivered = c->first.send(payload);
     if(c->second != -1 && (++(c->second) > MAX_MISSED_BEACONS || !delivered)) {
@@ -127,7 +127,7 @@ void UDPClientTransport::to_unknown(const std::string& payload) {
   }
 }
 
-void UDPClientTransport::read_cb(ev::io& w, int /*revents*/) {
+void UDPTransport::read_cb(ev::io& w, int /*revents*/) {
   // Callback for libev loop
   // Reads data and gives it to handler
   char *buf = new char[1500]; // ethernet MTU size
@@ -135,7 +135,7 @@ void UDPClientTransport::read_cb(ev::io& w, int /*revents*/) {
   socklen_t len = sizeof(sockaddr_storage);
   ssize_t read = recvfrom(w.fd, buf, 1500, 0, addr, &len);
   if(read == -1 && errno != ECONNREFUSED) {
-    std::perror("UDPClientTransport::read_cb: recvfrom:");
+    std::perror("UDPTransport::read_cb: recvfrom:");
     std::abort();
   }
 
@@ -151,7 +151,7 @@ void UDPClientTransport::read_cb(ev::io& w, int /*revents*/) {
   delete[] buf;
 }
 
-std::size_t UDPClientTransport::nonpersistent() const
+std::size_t UDPTransport::nonpersistent() const
 {
   std::size_t ret = 0;
   for(auto client : _unknown)
