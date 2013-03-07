@@ -118,8 +118,8 @@ void UDPClientTransport::enable(ev::io& watcher, int fd) {
 
 void UDPClientTransport::to_unknown(const std::string& payload) {
   for(auto c = _unknown.begin(); c != _unknown.end();) {
-    c->first.send(payload);
-    if(c->second != -1 && ++(c->second) > MAX_MISSED_BEACONS) {
+    bool delivered = c->first.send(payload);
+    if(c->second != -1 && (++(c->second) > MAX_MISSED_BEACONS || !delivered)) {
       c = _unknown.erase(c);
       continue;
     }

@@ -55,6 +55,7 @@ LinkLocalDiscovery::LinkLocalDiscovery(UDPClientTransport* clients,
     std::perror("LinkLocalDiscovery::LinkLocalDiscovery: bind");
     close(_fd);
     _fd = -1;
+    return;
   }
 
   struct ipv6_mreq ipv6_request;
@@ -120,9 +121,11 @@ void LinkLocalDiscovery::read_cb(ev::io& /*w*/, int /*revents*/)
         std::cout << ntohs(src->sin6_port) << std::endl;
         _clients->connect(false,
             std::shared_ptr<sockaddr>(reinterpret_cast<sockaddr*>(src)), srclen);
+	return;
       }
     }
   } else {
     std::perror("LinkLocalDiscovery::read_cb");
   }
+  delete src;
 }

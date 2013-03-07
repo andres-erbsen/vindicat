@@ -13,6 +13,26 @@
 #include <vector>
 #include <cassert>
 
+class ExitOnSIGINT {
+public:
+	ExitOnSIGINT() {
+		_handler.set<ExitOnSIGINT, &ExitOnSIGINT::break_loop>(this);
+		_handler.set(SIGINT);
+	}
+
+	void enable() {
+		_handler.start();
+	}
+
+private:
+	friend ev::sig;
+	void break_loop() {
+		ev::get_default_loop().break_loop();
+	}
+
+	ev::sig _handler;
+};
+
 int main (int argc, char** argv) {
 	std::vector<Transport*> transports;
 	UDPClientTransport *clients = new UDPClientTransport;
@@ -56,5 +76,13 @@ int main (int argc, char** argv) {
 	LinkLocalDiscovery lld(clients, nm);
 	lld.enable();
 
-	ev_run (EV_DEFAULT_ 0);	
+	ExitOnSIGINT sigint_handler;
+	sigint_handler.enable();
+
+	ev::get_default_loop().run();
+
+	for (Transport* tr : transports)
+		delete tr;
+
+	return 0;
 }

@@ -122,6 +122,8 @@ else
 }
 
 UDPServerTransport::~UDPServerTransport() {
+	delete _group[0];
+	delete _group[1];
 	close(_fd);
 }
 
