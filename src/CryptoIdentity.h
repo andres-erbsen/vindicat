@@ -5,7 +5,7 @@
 #include "vindicat.pb.h" // just for algorithm numbers, maybe move them...
 #include "TemporalCookies.h"
 
-#include <ed25519.h>
+#include <sodium/crypto_sign_ed25519.h>
 #include <string>
 #include <memory>
 
@@ -25,8 +25,8 @@ public:
 
 	TemporalCookies cookies;
 private:
-	ed25519_secret_key _secretkey_edsig;
-	ed25519_public_key _verkey_edsig;
+	unsigned char _secretkey_edsig[crypto_sign_ed25519_SECRETKEYBYTES];
+	unsigned char _verkey_edsig[crypto_sign_ed25519_PUBLICKEYBYTES];
 
 	std::string _secretkey_naclbox;
 	std::string _enckey_naclbox;

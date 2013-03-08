@@ -5,7 +5,7 @@
 #include "Util.h"
 #include "nacl25519_nm.h"
 
-#include <ed25519.h>
+#include <sodium/crypto_sign_ed25519.h>
 #include <algorithm>
 
 
@@ -48,14 +48,17 @@ static bool verifySig( const std::string& message
                      , SigAlgo algo
                      , const std::string& key ) {
 	if ( algo == SigAlgo::ED25519 ) {
-		if ( sig.size() != sizeof(ed25519_signature) ) return 0;
-		if ( key.size() != sizeof(ed25519_public_key) ) return 0;
-		return 0 == ed25519_sign_open(
+		if ( sig.size() != crypto_sign_ed25519_BYTES ) return 0;
+		if ( key.size() != crypto_sign_ed25519_PUBLICKEYBYTES ) return 0;
+		unsigned char *m = new unsigned char[message.size()];
+		unsigned long long mlen = 0;
+		auto res = crypto_sign_ed25519_open(m, &mlen,
 				reinterpret_cast<const unsigned char*>( message.data()   )
 		      ,                                         message.size()
 		      , reinterpret_cast<const unsigned char*>( key.data() )
-		      , reinterpret_cast<const unsigned char*>( sig.data() )
 			  );
+		delete[] m;
+		return res == 0;
 	}
 	return 0;
 }
