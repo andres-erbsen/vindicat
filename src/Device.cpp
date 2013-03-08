@@ -48,13 +48,12 @@ static bool verifySig( const std::string& message
                      , SigAlgo algo
                      , const std::string& key ) {
 	if ( algo == SigAlgo::ED25519 ) {
-		if ( sig.size() != crypto_sign_ed25519_BYTES ) return 0;
 		if ( key.size() != crypto_sign_ed25519_PUBLICKEYBYTES ) return 0;
-		unsigned char *m = new unsigned char[message.size()];
+		unsigned char *m = new unsigned char[sig.size()];
 		unsigned long long mlen = 0;
 		auto res = crypto_sign_ed25519_open(m, &mlen,
-				reinterpret_cast<const unsigned char*>( message.data()   )
-		      ,                                         message.size()
+				reinterpret_cast<const unsigned char*>( sig.data()   )
+		      ,                                         sig.size()
 		      , reinterpret_cast<const unsigned char*>( key.data() )
 			  );
 		delete[] m;
