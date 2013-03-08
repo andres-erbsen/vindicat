@@ -1,5 +1,6 @@
 // vim: set ts=4 sw=4 :
 #include "UDPServerTransport.h"
+#include "UDPTransport.h"
 #include <cassert>
 
 #include <sys/types.h>
@@ -14,8 +15,9 @@
 #include <iostream>
 
 UDPServerTransport::
-UDPServerTransport( const std::string& host
+UDPServerTransport(UDPTransport *clients, const std::string& host
                   , const std::string& port)
+	: _clients(clients)
 {
 	struct addrinfo hints, *res;
         std::memset(&hints, 0, sizeof(struct addrinfo));
@@ -120,77 +122,17 @@ else
 }
 
 UDPServerTransport::~UDPServerTransport() {
+	delete _group[0];
+	delete _group[1];
 	close(_fd);
 }
 
-bool UDPServerTransport::send(const std::string& buf, const std::shared_ptr<sockaddr>& addr, socklen_t addrlen)
-{
-	return sendto(_fd, buf.c_str(), buf.size(), 0, addr.get(), addrlen) != -1;
-}
-
-void UDPServerTransport::incoming() {
-	char *buf = new char[1500]; // ethernet MTU size
-	std::shared_ptr<sockaddr> addr(reinterpret_cast<struct sockaddr*>(new sockaddr_storage));
-	socklen_t addrlen = sizeof(struct sockaddr_storage);
-	ssize_t read = recvfrom(_fd, buf, 1500, 0, addr.get(), &addrlen);
-	if(read < 0)
-	{
-		std::perror("UDPServerTransport::incoming");
-		std::abort();
-	}
-	auto iter = _who.insert(std::make_pair(addr, addrlen));
-	if(iter.second == false)
-	  addr = iter.first->first;
-
-	std::string addr_UID;
-	if(addr->sa_family == AF_INET)
-		addr_UID = "IPv4"+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(addr.get())->sin_addr.s_addr), 4)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in*>(addr.get())->sin_port), 2);
-	else if(addr->sa_family == AF_INET6)
-		addr_UID = "IPv6"+std::string(reinterpret_cast<char*>(reinterpret_cast<sockaddr_in6*>(addr.get())->sin6_addr.s6_addr), 16)+std::string(reinterpret_cast<char*>(&reinterpret_cast<sockaddr_in6*>(addr.get())->sin6_port), 2);
-	else
-		addr_UID = "DGRAM"+std::string(reinterpret_cast<char*>(addr.get()), addrlen);
-
-	_receive_cb(TransportSocket(std::bind(std::mem_fn(&UDPServerTransport::send), this, std::placeholders::_1, addr, addrlen), addr_UID), std::string(buf, read));
-
-	delete[] buf;
-}
-
 void UDPServerTransport::enable() {
-	// setup libev for this transport here with the incoming() from above
-    _read_watcher.set <UDPServerTransport, &UDPServerTransport::read_cb> (this);
-	_read_watcher.start (_fd, ev::READ);
+  _clients->enable(_read_watcher, _fd);
 }
 
-void UDPServerTransport::read_cb(ev::io &w, int revents) {
-	// Callback for libev loop
-	// Calls incoming()
-	UDPServerTransport::incoming();
-}
-
-void UDPServerTransport::broadcast(const std::string& buf) {
-	for (auto& kv : _who)
-		send(buf, kv.first, kv.second);
-	sendto(_fd, nullptr, 0, 0, _group[0], _group_length[0]);
-	if(_group[1])
-		sendto(_fd, nullptr, 0, 0, _group[1], _group_length[1]);
-}
-
-bool UDPServerTransport::compare::operator()(const std::pair<std::shared_ptr<sockaddr>, socklen_t>& a, const std::pair<std::shared_ptr<sockaddr>, socklen_t>& b) {
-  if(a.first->sa_family != b.first->sa_family)
-    return a.first->sa_family < b.first->sa_family;
-  if(a.first->sa_family == AF_INET) {  // IPv4
-    sockaddr_in *addr_a = reinterpret_cast<sockaddr_in*>(a.first.get());
-    sockaddr_in *addr_b = reinterpret_cast<sockaddr_in*>(b.first.get());
-    if(addr_a->sin_addr.s_addr == addr_b->sin_addr.s_addr)
-      return addr_a->sin_port < addr_b->sin_port;
-    return addr_a->sin_addr.s_addr < addr_b->sin_addr.s_addr;
-  } else if(a.first->sa_family == AF_INET6) {  // IPv6
-    sockaddr_in6 *addr_a = reinterpret_cast<sockaddr_in6*>(a.first.get());
-    sockaddr_in6 *addr_b = reinterpret_cast<sockaddr_in6*>(b.first.get());
-    auto res = std::memcmp(addr_a->sin6_addr.s6_addr, addr_b->sin6_addr.s6_addr, sizeof(in6_addr));
-    if(res == 0)
-      return addr_a->sin6_port < addr_b->sin6_port;
-    return res < 0;
-  }
-  return a < b;
+void UDPServerTransport::to_unknown(const std::string&) {
+  sendto(_fd, nullptr, 0, 0, _group[0], _group_length[0]);
+  if(_group[1])
+    sendto(_fd, nullptr, 0, 0, _group[1], _group_length[1]);
 }

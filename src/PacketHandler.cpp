@@ -140,8 +140,14 @@ void PacketHandler::operator()(TransportSocket&& ts, std::string&& packet) {
 
 	} else if (tag == 4) { // "Hey, it's /me/ here"
 		auto dev = std::make_shared<Device>();
-		if ( ! dev->parseFrom( packet.substr(1) ) ) return;
+		if ( ! dev->parseFrom( packet.substr(2) ) ) return;
 		std::cout << "Beacon from " << ipv6ify(dev->id()) << std::endl;
+
+		if(packet[1] == '\x01') {
+			std::string response("\x04\x00", 2);
+			_ci.our_businesscard()->AppendToString(&response);
+			ts.send(response);
+		}
 
 		bool relevant = 0;
 		{
