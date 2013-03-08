@@ -55,8 +55,7 @@ bool CryptoIdentity::sign(const std::string& message, SigAlgo algo, std::string&
 	unsigned char *rawsig = new unsigned char[crypto_sign_ed25519_BYTES+message.size()];
 	unsigned long long smlen = 0;
 	crypto_sign_ed25519(rawsig, &smlen, reinterpret_cast<const unsigned char*>(message.data()), message.size(), _secretkey_edsig);
-	ret = std::string( reinterpret_cast<char*>(rawsig)
-	                 , smlen );
+	ret = std::string(reinterpret_cast<char*>(rawsig), crypto_sign_ed25519_BYTES);
 	delete[] rawsig;
 	return 1;
 }
