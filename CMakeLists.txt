@@ -29,12 +29,14 @@ include_directories(${PROTOBUF_INCLUDE_DIRS})
 include_directories(${LEMON_INCLUDE_DIRS})
 include_directories(${NACL_INCLUDE_DIRS})
 include_directories(${PCAP_INCLUDE_DIRS})
+include_directories(${CMAKE_BINARY_DIR})
 
 FILE(GLOB_RECURSE srcs src/*.c src/*.cc src/*.cpp)
 FILE(GLOB_RECURSE libs lib/ed25519-donna/*.c lib/keccak/*.c lib/libev/ev.c lib/libev/event.c)
 FILE(GLOB_RECURSE clibs lib/xtea/*.c lib/*.cc lib/*.cpp lib/randombytes.c)
+PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS src/vindicat.proto)
 
-ADD_EXECUTABLE(vindicat ${clibs} ${libs} ${srcs})
+ADD_EXECUTABLE(vindicat ${clibs} ${libs} ${srcs} ${PROTO_SRCS})
 set_source_files_properties(${libs} PROPERTIES LANGUAGE CXX)
 
 target_link_libraries(vindicat ${PROTOBUF_LITE_LIBRARIES} ${NACL_LIBRARIES} ${LEMON_LIBRARIES} ${PCAP_LIBRARIES})
