@@ -2,8 +2,8 @@
 #define CONNECTION_H_
 
 #include "Forwarding.h"
-#include "Interface.h"
 #include "ConnectionPool.h"
+#include "ConnectionHandler.h"
 #include "NetworkMap.h"
 #include "CryptoIdentity.h"
 #include "nacl25519_nm.h"
@@ -17,14 +17,14 @@ class Connection : public Forwarding {
 public:
 	static void handle_request(const CryptoIdentity&, const RoutingRequest&,
 			const Hop&, const std::string&, TransportSocket);
-	static void handle_auth(CryptoIdentity& ci, Interface& iface,
+	static void handle_auth(CryptoIdentity& ci, ConnectionHandler& ch,
 			const std::string& packet, TransportSocket ts, ConnectionPool& cp,
 			NetworkMap& nm);
 
 	// initiate a connection
-	Connection(CryptoIdentity&, Path, ConnectionPool&, Interface&);
+	Connection(CryptoIdentity&, Path, ConnectionPool&, ConnectionHandler&);
 	// incoming connection
-	Connection(nacl25519_nm&&, const std::string&, const std::string&, ConnectionPool&, Interface&);
+	Connection(nacl25519_nm&&, const std::string&, const std::string&, ConnectionPool&, ConnectionHandler&);
 
     void detatch() override;
     bool forward_out(const std::string&) override;
@@ -38,7 +38,7 @@ private:
 
 	CryptoIdentity* _ci; // required while negotiating connection
 	ConnectionPool& _cp;
-	Interface& _if;
+	ConnectionHandler& _ch;
 
 	nacl25519_nm _naclsession; // reused
 	std::string _their_id;

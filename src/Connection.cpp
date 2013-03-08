@@ -5,11 +5,11 @@
 const static unsigned int COOKIE_SIZE = 96;
 const static unsigned int crypto_box_AUTHBYTES = crypto_box_ZEROBYTES - crypto_box_BOXZEROBYTES;
 
-Connection::Connection(CryptoIdentity& ci, Path path, ConnectionPool& cp, Interface& iface)
+Connection::Connection(CryptoIdentity& ci, Path path, ConnectionPool& cp, ConnectionHandler& ch)
 	: Forwarding(randint64())
 	, _ci(&ci)
 	, _cp(cp)
-	, _if(iface)
+	, _ch(ch)
 	, _naclsession( std::get<1>(path.at(path.size()-1)) .lock()->enc_key() )
 	, _their_id(      std::get<1>(path.at(path.size()-1)) .lock()->id() )
 	, _route_id( bytes( id() ) )
@@ -128,7 +128,7 @@ void Connection::_auth(const std::string& cookie_packet) {
 	_request_packet.reset(nullptr);
 }
 
-void Connection::handle_auth(CryptoIdentity& ci, Interface& iface, const std::string& packet, TransportSocket ts, ConnectionPool& cp, NetworkMap& nm) {
+void Connection::handle_auth(CryptoIdentity& ci, ConnectionHandler& ch, const std::string& packet, TransportSocket ts, ConnectionPool& cp, NetworkMap& nm) {
 	// This may be the auth packet to start a connection, with contents:
 	// pkttype, routeid, pktid, cookie, [[A'](A<>B'),bcard_A](A'<>B')
 	if (packet.size() < 1+8+8+COOKIE_SIZE) return;
@@ -173,8 +173,10 @@ void Connection::handle_auth(CryptoIdentity& ci, Interface& iface, const std::st
 	std::string their_id = dev.id();
 	std::string route_id = packet.substr(1,8);
 
-	auto conn = std::make_shared<Connection>(std::move(naclsession), their_id, route_id, cp, iface);
-	auto rfwd = std::make_shared<SimpleForwarding>(nm, conn->id());	
+	auto conn = std::make_shared
+		<Connection>(std::move(naclsession), their_id, route_id, cp, ch);
+	auto rfwd = std::make_shared
+		<SimpleForwarding>(nm, conn->id());	
 	Forwarding::pair(conn, rfwd);	
 
 	cp.insert( std::make_pair(their_id, conn) );
@@ -182,11 +184,11 @@ void Connection::handle_auth(CryptoIdentity& ci, Interface& iface, const std::st
 }	
 
 Connection::Connection(nacl25519_nm&& ns, const std::string& their_id
-		, const std::string& route_id, ConnectionPool& cp, Interface& iface)
+		, const std::string& route_id, ConnectionPool& cp, ConnectionHandler& ch)
 	: Forwarding( *reinterpret_cast<const uint64_t*>(route_id.data()) )
 	, _ci(nullptr)
 	, _cp(cp)
-	, _if(iface)
+	, _ch(ch)
 	, _naclsession(std::move(ns))
 	, _their_id(their_id)
 	, _route_id(route_id)
@@ -230,7 +232,7 @@ void Connection::_incoming(const std::string& packet) {
 	if ( ! _naclsession.decrypt( packet.substr(1+8+8)
 	                           , nonce
                                , m ) ) return;
-	_if.send(_their_id,m[0],m.substr(1));
+	_ch(_their_id, m[0], m.substr(1));
 }
 
 bool Connection::forward_out(const std::string& packet) {
