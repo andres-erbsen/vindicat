@@ -15,6 +15,8 @@ public:
 	virtual ~Interface() = default;
 
 	void onPacket(interface_callback);
+
+	virtual bool match(const std::string&, uint8_t, const std::string&) {return 1;};
 	virtual void send(const std::string&, uint8_t, const std::string&) = 0;
 
 protected:

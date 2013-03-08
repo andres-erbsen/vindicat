@@ -4,17 +4,17 @@
 #include "CryptoIdentity.h"
 #include "NetworkMap.h"
 #include "ConnectionPool.h"
-#include "Interface.h"
+#include "ConnectionHandler.h"
 
 class InterfaceHandler {
 public:
-	InterfaceHandler(CryptoIdentity&, NetworkMap&, ConnectionPool&, Interface&);
+	InterfaceHandler(CryptoIdentity&, NetworkMap&, ConnectionPool&, ConnectionHandler&);
     void operator()(std::string&& from, std::string&& packet);
 private:
 	CryptoIdentity& _ci;
 	NetworkMap& _nm;
 	ConnectionPool& _cp;
-	Interface& _if;
+	ConnectionHandler& _ch;
 };
 
 #endif // INTERFACEHANDLER_H_

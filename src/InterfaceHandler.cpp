@@ -4,11 +4,11 @@
 #include <iostream>
 
 InterfaceHandler::InterfaceHandler
-	(CryptoIdentity& ci, NetworkMap& nm, ConnectionPool& cp, Interface& iface)
+	(CryptoIdentity& ci, NetworkMap& nm, ConnectionPool& cp, ConnectionHandler& ch)
 	: _ci(ci)
 	, _nm(nm)
 	, _cp(cp)
-	, _if(iface)
+	, _ch(ch)
 	{}
 
 static std::string hex(const std::string& input) {
@@ -40,7 +40,7 @@ void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
 			path = _nm.path_to(*dst_dev);
 		}
 
-		auto conn = std::make_shared<Connection>(_ci, path, _cp, _if);
+		auto conn = std::make_shared<Connection>(_ci, path, _cp, _ch);
 		
 		auto rfwd = std::make_shared<SimpleForwarding>(_nm, conn->id());
 		auto next_dev = std::get<1>(path.at(0)).lock();
