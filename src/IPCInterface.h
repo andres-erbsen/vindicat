@@ -2,6 +2,10 @@
 #define IPCINTERFACE_H_
 
 #include "Interface.h"
+#include <string>
+#include <unordered_map>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 /// Use Inter-process communication to give local applications access to
 /// the network.
@@ -11,7 +15,7 @@ class IPCInterface: public Interface {
   IPCInterface(const std::string&);
   IPCInterface(IPCInterface&) = delete;
   IPCInterface& operator=(IPCInterface&) = delete;
-  ~IPCInterace();
+  ~IPCInterface();
   virtual bool match(const std::string&, std::uint8_t, const std::string&);
   virtual void send(const std::string&, std::uint8_t, const std::string&);
  private:
@@ -26,4 +30,8 @@ class IPCInterface: public Interface {
                                                                      _udp;
   std::unordered_multimap<std::string, std::string> _clients;
   void clear(const sockaddr_un&);
+  void send(const sockaddr_un&, const std::string&, std::uint8_t,
+            const std::string&);
 };
+
+#endif
