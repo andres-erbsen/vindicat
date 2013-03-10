@@ -37,10 +37,11 @@ static inline std::string crypto_box_keypair(std::string *sk_string) {
 }
 
 // Copied from nacl-20110221/crypto_box/wrapper-open.cpp
-static inline std::string crypto_box_open(const std::string &c,
-                                          const std::string &n,
-                                          const std::string &pk,
-                                          const std::string &sk) {
+static inline bool crypto_box_open_to(const std::string &c,
+                                      const std::string &n,
+                                      const std::string &pk,
+                                      const std::string &sk,
+                                            std::string *m) {
   if (pk.size() != crypto_box_PUBLICKEYBYTES)
     throw "incorrect public-key length";
   if (sk.size() != crypto_box_SECRETKEYBYTES)
@@ -58,10 +59,10 @@ static inline std::string crypto_box_open(const std::string &c,
                       reinterpret_cast<const unsigned char*>(n.c_str()),
                       reinterpret_cast<const unsigned char*>(pk.c_str()),
 		      reinterpret_cast<const unsigned char*>(sk.c_str())) != 0)
-    throw "ciphertext fails verification";
+	  return 0;
   if (clen < crypto_box_ZEROBYTES)
     throw "ciphertext too short"; // should have been caught by _open
-  return std::string(reinterpret_cast<char*>(mpad + crypto_box_ZEROBYTES),
+  *m = std::string(reinterpret_cast<char*>(mpad + crypto_box_ZEROBYTES),
                      clen - crypto_box_ZEROBYTES);
 }
 
