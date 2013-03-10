@@ -4,7 +4,7 @@
 #include <string>
 #include <algorithm>
 #include <cstdint>
-#include <randombytes.h>
+#include <sodium/randombytes.h>
 
 std::string randomstring(unsigned int);
 uint64_t randint64();

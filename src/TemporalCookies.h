@@ -1,7 +1,7 @@
 #ifndef TEMPORALCOOKIES_H_
 #define TEMPORALCOOKIES_H_
 
-#include <crypto_secretbox.h>
+#include <sodium/crypto_secretbox.h>
 #include <ev++.h>
 #include <string>
 #include <unordered_set>

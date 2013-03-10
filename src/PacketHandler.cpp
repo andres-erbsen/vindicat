@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <cstdint>
-#include <crypto_box.h>
+#include <sodium/crypto_box.h>
 
 const static unsigned int COOKIE_SIZE = 96;
 const static unsigned int crypto_box_AUTHBYTES = crypto_box_ZEROBYTES - crypto_box_BOXZEROBYTES;

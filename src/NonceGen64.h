@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <string>
 
+///
+/// \brief Generate nonces by encrypting a counter with XTEA.
+///
 class NonceGen64 {
 public:
 	NonceGen64();
@@ -14,8 +17,5 @@ private:
 	std::uint32_t _key[4];
 	std::uint64_t _next;
 };
-
-void xtea_enc(uint32_t v[2], uint32_t const key[4]);
-void xtea_dec(uint32_t v[2], uint32_t const key[4]);
 
 #endif // NONCEGEN64_H_

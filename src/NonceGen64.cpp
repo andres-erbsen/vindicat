@@ -1,6 +1,6 @@
 #include "NonceGen64.h"
 #include <xtea.h>
-#include <randombytes.h>
+#include <sodium/randombytes.h>
 #include <cassert>
 /// \FIXME where do the endianness functions come from?
 

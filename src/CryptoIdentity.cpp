@@ -1,14 +1,14 @@
 #include "CryptoIdentity.h"
 
 #include <Util.h>
-#include <crypto_box.h>
+#include <sodium/crypto_box.h>
+#include "crypto_box-wrapper.h"
 
 #include <ctime>
 #include <cassert>
 
 CryptoIdentity::CryptoIdentity(): _our_businesscard(new DeviceBusinesscard) {
-	randombytes(_secretkey_edsig, sizeof(ed25519_secret_key));	
-	ed25519_publickey(_secretkey_edsig, &(_verkey_edsig[0]));
+	crypto_sign_ed25519_keypair(_verkey_edsig, _secretkey_edsig);
 
 	_enckey_naclbox = crypto_box_keypair(&_secretkey_naclbox);;
 	update_businesscard();
@@ -52,14 +52,11 @@ bool CryptoIdentity::open( const std::string& ct
 
 bool CryptoIdentity::sign(const std::string& message, SigAlgo algo, std::string& ret) const {
 	assert( algo == SigAlgo::ED25519 );
-	ed25519_signature rawsig;
-	ed25519_sign( reinterpret_cast<const unsigned char*>( message.data() )
-	            , message.size()
-	            , _secretkey_edsig
-	            , _verkey_edsig
-	            , rawsig);
-	ret = std::string( reinterpret_cast<char*>(rawsig)
-	                 , sizeof(ed25519_signature) );
+	unsigned char *rawsig = new unsigned char[crypto_sign_ed25519_BYTES+message.size()];
+	unsigned long long smlen = 0;
+	crypto_sign_ed25519(rawsig, &smlen, reinterpret_cast<const unsigned char*>(message.data()), message.size(), _secretkey_edsig);
+	ret = std::string(reinterpret_cast<char*>(rawsig), crypto_sign_ed25519_BYTES);
+	delete[] rawsig;
 	return 1;
 }
 
