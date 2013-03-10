@@ -86,8 +86,8 @@ void TUNInterface::read_cb(ev::io& /*w*/, int /*revents*/)
   
   _receive_cb(std::string(reinterpret_cast<char*>(packet.destination().address)+1,
                           15),
-	      std::string(1, packet.next_header())+
-	          std::string(reinterpret_cast<char*>(packet.payload()),
+        std::string(1, packet.next_header())+
+            std::string(reinterpret_cast<char*>(packet.payload()),
                               packet.payload_length()));
 }
 

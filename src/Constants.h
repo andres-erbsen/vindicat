@@ -11,15 +11,15 @@ enum class PkencAlgo : std::uint8_t { CURVE25519XSALSA20POLY1305 = 1 };
 
 namespace std {
 template <> struct hash<SigAlgo> {
-	size_t operator()(const SigAlgo& x) const {
-		return hash<uint8_t>()( static_cast<uint8_t>(x) );
-	}
+  size_t operator()(const SigAlgo& x) const {
+    return hash<uint8_t>()( static_cast<uint8_t>(x) );
+  }
 };
 
 template <> struct hash<PkencAlgo> {
-	size_t operator()(const PkencAlgo& x) const {
-		return hash<uint8_t>()( static_cast<uint8_t>(x) );
-	}
+  size_t operator()(const PkencAlgo& x) const {
+    return hash<uint8_t>()( static_cast<uint8_t>(x) );
+  }
 };
 }
 

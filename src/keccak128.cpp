@@ -11,9 +11,9 @@ void keccak128(const unsigned char* in, const unsigned long long inlen, unsigned
 
 
 std::string keccak128(const std::string& in) {
-	char out[16];
-	keccak128( reinterpret_cast<const unsigned char*>( in.data() )
-	         , in.size()
-	         , reinterpret_cast<unsigned char*>(out) );
-	return std::string(out, 16);
+  char out[16];
+  keccak128( reinterpret_cast<const unsigned char*>( in.data() )
+           , in.size()
+           , reinterpret_cast<unsigned char*>(out) );
+  return std::string(out, 16);
 }
