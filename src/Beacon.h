@@ -11,13 +11,13 @@
 
 class Beacon {
 public:
-	Beacon(int, const CryptoIdentity&, const std::vector<Transport*>&);
-	void enable();
-	void operator()(ev::timer&, int);
+  Beacon(int, const CryptoIdentity&, const std::vector<Transport*>&);
+  void enable();
+  void operator()(ev::timer&, int);
 private:
-	std::string _msg;
-	const std::vector<Transport*> &_transports;
-	ev::timer _w;
+  std::string _msg;
+  const std::vector<Transport*> &_transports;
+  ev::timer _w;
 };
 
 

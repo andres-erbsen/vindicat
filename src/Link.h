@@ -11,46 +11,46 @@
 
 class Link {
 public:
-	Link() = default;
-	Link( const std::string&, const std::string&
-	    , uint64_t, std::shared_ptr<LinkPromise>&&);
-	Link(const Link&) = delete;
-	const Link& operator= (const Link&) = delete;
-	virtual ~Link() = default;
+  Link() = default;
+  Link( const std::string&, const std::string&
+      , uint64_t, std::shared_ptr<LinkPromise>&&);
+  Link(const Link&) = delete;
+  const Link& operator= (const Link&) = delete;
+  virtual ~Link() = default;
 
-	const std::string& left_id() const;
-	const std::string& right_id() const;
-	std::vector< std::weak_ptr<LinkPromise> > promises() const;	
+  const std::string& left_id() const;
+  const std::string& right_id() const;
+  std::vector< std::weak_ptr<LinkPromise> > promises() const;  
 
-	uint64_t mtime() const;	
-	virtual double measure() const;
-	virtual TransportSocket tsocket() const;
+  uint64_t mtime() const;  
+  virtual double measure() const;
+  virtual TransportSocket tsocket() const;
 
 protected:
-	std::string _left_id, _right_id;
-	std::vector< std::shared_ptr<LinkPromise> > _promises;	
-	uint64_t _mtime;	
+  std::string _left_id, _right_id;
+  std::vector< std::shared_ptr<LinkPromise> > _promises;  
+  uint64_t _mtime;  
 };
 
 class DirectLink : public Link {
 public:
-	DirectLink(const std::string&, TransportSocket&&, const std::string& );
-	virtual ~DirectLink() noexcept {}
-	TransportSocket tsocket() const;
+  DirectLink(const std::string&, TransportSocket&&, const std::string& );
+  virtual ~DirectLink() noexcept {}
+  TransportSocket tsocket() const;
 private:
-	TransportSocket _tsocket;
+  TransportSocket _tsocket;
 };
 
 class PublicLink : public Link {
 public:
-	PublicLink( const std::string&, const std::string&
-			  , uint64_t, std::shared_ptr<LinkPromise>&&);
+  PublicLink( const std::string&, const std::string&
+        , uint64_t, std::shared_ptr<LinkPromise>&&);
 };
 
 class DeadLink : public Link {
 public:
-	DeadLink( const std::string&, const std::string&
-			, uint64_t, std::shared_ptr<LinkPromise>&&);
+  DeadLink( const std::string&, const std::string&
+      , uint64_t, std::shared_ptr<LinkPromise>&&);
 };
 
 #endif // LINK_H_

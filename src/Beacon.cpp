@@ -6,15 +6,15 @@ Beacon::Beacon( int interval
               : _msg("\4\1")
               , _transports(v_tr)
 {
-	ci.our_businesscard()->AppendToString(&_msg);
-	_w.set(0.00001,interval);
-	_w.set(this);
+  ci.our_businesscard()->AppendToString(&_msg);
+  _w.set(0.00001,interval);
+  _w.set(this);
 }
 
 void Beacon::enable() {
-	_w.start();
+  _w.start();
 }
 
 void Beacon::operator() (ev::timer& /*w*/, int /*revents*/) {
-	for (auto tr : _transports) tr->to_unknown(_msg);
+  for (auto tr : _transports) tr->to_unknown(_msg);
 }

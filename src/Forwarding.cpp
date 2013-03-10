@@ -2,34 +2,34 @@
 
 void Forwarding::pair( std::shared_ptr<Forwarding> l
                      , std::shared_ptr<Forwarding> r ) {
-	l->_pair_other = r;
-	r->_pair_other = l;
+  l->_pair_other = r;
+  r->_pair_other = l;
 }
 
 Forwarding::Forwarding(uint64_t id) : _id(id) {}
 
 Forwarding::~Forwarding() {
-	// There is no need to detatch this Forwarding, because it is destructed
-	// exactly when there are no shared pointers to it anymore.
-	// Let's remove the other one in this pair, if neccessary.
-	if (auto other = _pair_other.lock() ) {
-		other->detatch();
-		other->_pair_other.reset();
-		// shared_ptr other leaves scope
-	}
-	// The other Forwarding in this pair should be destructed by now
-	// It did not call this Forwarding's destructor again because we
-	// reset the pointer and the if(.lock()) failed
+  // There is no need to detatch this Forwarding, because it is destructed
+  // exactly when there are no shared pointers to it anymore.
+  // Let's remove the other one in this pair, if neccessary.
+  if (auto other = _pair_other.lock() ) {
+    other->detatch();
+    other->_pair_other.reset();
+    // shared_ptr other leaves scope
+  }
+  // The other Forwarding in this pair should be destructed by now
+  // It did not call this Forwarding's destructor again because we
+  // reset the pointer and the if(.lock()) failed
 }
 
 uint64_t Forwarding::id() {
-	return _id;
+  return _id;
 }
 
 ForeignForwarding::
 ForeignForwarding( NetworkMap& nm
                  , uint64_t id)
-	: Forwarding(id)
+  : Forwarding(id)
     , _nm(nm)
     {}
 
@@ -40,16 +40,16 @@ bool Forwarding::forward(const std::string& packet) {
 }
 
 void ForeignForwarding::owner(std::weak_ptr<Device>&& owner) {
-	assert(!_owner.lock());
-	_owner = owner;
-	assert(_owner.lock());
+  assert(!_owner.lock());
+  _owner = owner;
+  assert(_owner.lock());
 }
 
 
 void ForeignForwarding::detatch() {
-	auto owner = _owner.lock();
-	assert(owner);
-	owner->removeForwarding(id());
+  auto owner = _owner.lock();
+  assert(owner);
+  owner->removeForwarding(id());
 }
 
 

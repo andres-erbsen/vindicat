@@ -22,7 +22,7 @@ static inline std::string crypto_box(const std::string &m,
   crypto_box(cpad, mpad, mlen,
              reinterpret_cast<const unsigned char*>(n.c_str()),
              reinterpret_cast<const unsigned char*>(pk.c_str()),
-	     reinterpret_cast<const unsigned char*>(sk.c_str()));
+       reinterpret_cast<const unsigned char*>(sk.c_str()));
   return std::string(reinterpret_cast<char*>(cpad + crypto_box_BOXZEROBYTES),
                      mlen - crypto_box_BOXZEROBYTES);
 }
@@ -58,8 +58,8 @@ static inline bool crypto_box_open_to(const std::string &c,
   if (crypto_box_open(mpad, cpad, clen,
                       reinterpret_cast<const unsigned char*>(n.c_str()),
                       reinterpret_cast<const unsigned char*>(pk.c_str()),
-		      reinterpret_cast<const unsigned char*>(sk.c_str())) != 0)
-	  return 0;
+          reinterpret_cast<const unsigned char*>(sk.c_str())) != 0)
+    return 0;
   if (clen < crypto_box_ZEROBYTES)
     throw "ciphertext too short"; // should have been caught by _open
   *m = std::string(reinterpret_cast<char*>(mpad + crypto_box_ZEROBYTES),

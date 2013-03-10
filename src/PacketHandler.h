@@ -11,13 +11,13 @@
 
 class PacketHandler {
 public:
-	PacketHandler(NetworkMap& nm, CryptoIdentity& ci, ConnectionPool& cp, ConnectionHandler&);
+  PacketHandler(NetworkMap& nm, CryptoIdentity& ci, ConnectionPool& cp, ConnectionHandler&);
     void operator()(TransportSocket&& trs, std::string&& packet);
 private:
-	NetworkMap& _nm;
-	CryptoIdentity& _ci;
-	ConnectionPool& _cp;
-	ConnectionHandler& _ch;
+  NetworkMap& _nm;
+  CryptoIdentity& _ci;
+  ConnectionPool& _cp;
+  ConnectionHandler& _ch;
 };
 
 #endif // PACKETHANDLER_H_
