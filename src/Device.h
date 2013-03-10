@@ -31,6 +31,8 @@ public:
   SigAlgo sig_algo() const;
   PkencAlgo enc_algo() const;
 
+  bool link_not_exaggerated(const LinkInfo&);
+
   bool verifySignature(const std::string& message, const std::string& sig, SigAlgo algo) const;
   bool open(const std::string&, std::string, const std::string&, PkencAlgo, std::string&) const;
 
