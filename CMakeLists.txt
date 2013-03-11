@@ -18,6 +18,18 @@ find_package(Protobuf REQUIRED)
 find_package(LEMON REQUIRED)
 find_package(PCAP REQUIRED)
 
+# Doxygen documentation
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
+		${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+	add_custom_target(doc
+		${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		COMMENT "Generating API documentation with Doxygen" VERBATIM
+		)
+endif(DOXYGEN_FOUND)
+
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/lib/libev)
 add_definitions(-DEV_STANDALONE)
