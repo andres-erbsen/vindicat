@@ -46,9 +46,15 @@ include_directories(${CMAKE_BINARY_DIR})
 FILE(GLOB_RECURSE srcs src/*.c src/*.cc src/*.cpp)
 FILE(GLOB_RECURSE libs lib/keccak/*.c lib/libev/ev.c lib/libev/event.c)
 FILE(GLOB_RECURSE clibs lib/xtea/*.c lib/*.cc lib/*.cpp)
-PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS src/vindicat.proto libvindicat/libvindicat.proto)
+PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS src/vindicat.proto)
 
-ADD_EXECUTABLE(vindicat ${clibs} ${libs} ${srcs} ${PROTO_SRCS})
+file(GLOB_RECURSE lib_srcs libvindicat/*.cpp)
+PROTOBUF_GENERATE_CPP(lib_proto_srcs lib_proto_hdrs libvindicat/libvindicat.proto)
+
+ADD_EXECUTABLE(vindicat-server ${clibs} ${libs} ${srcs} ${PROTO_SRCS} ${lib_proto_srcs})
+set_target_properties(vindicat-server PROPERTIES OUTPUT_NAME vindicat)
+ADD_LIBRARY(vindicat ${lib_srcs} ${lib_proto_srcs})
 set_source_files_properties(${libs} PROPERTIES LANGUAGE CXX)
 
-target_link_libraries(vindicat ${PROTOBUF_LITE_LIBRARIES} ${SODIUM_LIBRARIES} ${LEMON_LIBRARIES} ${PCAP_LIBRARIES})
+target_link_libraries(vindicat-server ${PROTOBUF_LITE_LIBRARIES} ${SODIUM_LIBRARIES} ${LEMON_LIBRARIES} ${PCAP_LIBRARIES})
+target_link_libraries(vindicat ${PROTOBUF_LITE_LIBRARIES})
