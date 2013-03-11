@@ -2,7 +2,7 @@ option optimize_for = LITE_RUNTIME;
 package libvindicat;
 
 message Packet {
-  required bytes identificator = 1;
+  required bytes identifier = 1;
   required int32 next_header = 2;
   required bytes payload = 3;
 }
@@ -14,8 +14,7 @@ message ConfigurationResponse {
 }
 
 message ForwardRequest {
-  required bytes identifier = 1;
-  required int32 next_header = 2;
+  required int32 next_header = 1;
 
   // if `next_header' is IPPROTO_TCP (6) this is required
   message TCP {

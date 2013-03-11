@@ -55,7 +55,7 @@ void IPCInterface::send(const std::string& from, std::uint8_t next_header,
   client.sun_family = AF_UNIX;
   std::uint16_t port = reinterpret_cast<const std::uint16_t*>(data.data())[1];
   libvindicat::Packet packet;
-  packet.set_identificator(from);
+  packet.set_identifier(from);
   packet.set_next_header(next_header);
   packet.set_payload(data);
   std::string message("\x02", 1);
@@ -134,7 +134,7 @@ void IPCInterface::read_cb(ev::io&, int) {
         send(from, message);
 	break;
       }
-      case 0x01: {  // Forward request
+      case 0x01: {  // Forwarding request
         std::string client_path(from.sun_path, UNIX_PATH_MAX); 
         libvindicat::ForwardRequest request;
 	if(!request.ParseFromArray(buf, buf_len) ||
@@ -164,7 +164,7 @@ void IPCInterface::read_cb(ev::io&, int) {
       case 0x02: {  // Packet
         libvindicat::Packet packet;
 	if(packet.ParseFromArray(buf, buf_len)) {
-	  _receive_cb(std::string(packet.identificator()),
+	  _receive_cb(std::string(packet.identifier()),
               static_cast<char>(packet.next_header())+packet.payload());
 	}
 	break;
@@ -182,7 +182,7 @@ void IPCInterface::read_cb(ev::io&, int) {
             (request.next_header() == IPPROTO_UDP &&
                !(request.has_udp() && request.udp().port() > 0 &&
                     request.udp().port() <= 0xFFFF ))) {
-	  send(from, "\x01");
+	  send(from, "\x04");
           break;
 	}
 	switch(request.next_header()) {
