@@ -170,6 +170,27 @@ void IPCInterface::read_cb(ev::io&, int) {
       }
       case 0x03:  // Ping
         break;
+      case 0x04: {  // Remove forwarding
+        std::string client_path(from.sun_path, UNIX_PATH_MAX);
+	libvindicat::ForwardRequest request;
+	if(!request.ParseFromArray(buf, buf_len) ||
+            request.next_header() > 256 ||
+            (request.next_header() == IPPROTO_TCP &&
+               !(request.has_tcp() && request.tcp().port() > 0 &&
+                    request.tcp().port() <= 0xFFFF)) ||
+            (request.next_header() == IPPROTO_UDP &&
+               !(request.has_udp() && request.udp().port() > 0 &&
+                    request.udp().port() <= 0xFFFF ))) {
+	  send(from, "\x01");
+          break;
+	}
+	switch(request.next_header()) {
+	  case IPPROTO_TCP:
+	  case IPPROTO_UDP:
+	  default:
+	}
+	break;
+      }
     }
   }
 
