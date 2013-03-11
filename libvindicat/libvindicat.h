@@ -21,6 +21,8 @@ namespace libvindicat {
     RawSocket* forward(std::uint8_t proto);
     UDPSocket* forwardUDP(std::uint16_t local_port);
    private:
+    void send(const std::string& payload) const;
+    std::string recv() const;
     sockaddr_un *_server, *_client;
     std::string _identificator, _ipv6;
     int _fd;

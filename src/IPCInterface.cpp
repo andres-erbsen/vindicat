@@ -154,6 +154,7 @@ void IPCInterface::read_cb(ev::io&, int) {
 	    break;
 	  case IPPROTO_UDP:
 	    _udp.insert(std::make_pair(request.udp().port(), client_path));
+	    break;
 	  default:
 	    _clients.insert(std::make_pair(request.next_header(),
                                            client_path));
@@ -185,9 +186,32 @@ void IPCInterface::read_cb(ev::io&, int) {
           break;
 	}
 	switch(request.next_header()) {
-	  case IPPROTO_TCP:
-	  case IPPROTO_UDP:
-	  default:
+	  case IPPROTO_TCP: {
+	    for(auto i = _tcp.find(request.tcp().port());
+                i->first == request.tcp().port() && i != _tcp.end(); i++)
+	      if(i->second == client_path) {
+	        _tcp.erase(i);
+		break;
+	      }
+	    break;
+          }
+	  case IPPROTO_UDP: {
+            for(auto i = _udp.find(request.udp().port());
+                i->first == request.udp().port() && i != _udp.end(); i++)
+              if(i->second == client_path) {
+                _udp.erase(i);
+		break;
+	      }
+            break;
+          }
+	  default: {
+            for(auto i = _clients.find(request.next_header());
+                i->first == request.next_header() && i != _clients.end(); i++)
+              if(i->second == client_path) {
+	        _clients.erase(i);
+		break;
+              }
+	  }
 	}
 	break;
       }
