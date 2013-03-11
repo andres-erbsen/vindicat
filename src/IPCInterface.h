@@ -28,6 +28,7 @@ class IPCInterface: public Interface {
   int _fd;
   friend ev::io;
   ev::io _read_watcher;
+  ev::timer _ping_timer;
 
   std::unordered_multimap<std::uint16_t, std::string> _tcp, _udp;
   std::unordered_multimap<std::uint8_t, std::string> _clients;
@@ -35,6 +36,7 @@ class IPCInterface: public Interface {
   void clear(const sockaddr_un&);
   void send(const sockaddr_un&, const std::string&);
   void read_cb(ev::io&, int);
+  void ping(ev::timer&, int);
 };
 
 #endif
