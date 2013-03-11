@@ -168,6 +168,8 @@ void IPCInterface::read_cb(ev::io&, int) {
 	}
 	break;
       }
+      case 0x03:  // Ping
+        break;
     }
   }
 
