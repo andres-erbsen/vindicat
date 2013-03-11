@@ -27,7 +27,7 @@ IPCInterface::IPCInterface(const std::string& id)
   _read_watcher.set<IPCInterface, &IPCInterface::read_cb>(this);
   _read_watcher.start(_fd, ev::READ);
   _ping_timer.set<IPCInterface, &IPCInterface::ping>(this);
-  _ping_watcher.start(1, 10);
+  _ping_timer.start(1, 10);
 }
 
 IPCInterface::~IPCInterface() {
@@ -184,12 +184,12 @@ void IPCInterface::ping(ev::timer&, int) {
   for(auto proto : {&_tcp, &_udp})
     for(auto conn : *proto) {
       std::memset(client.sun_path, 0, UNIX_PATH_MAX);
-      std::memcpy(client.sun_path, conn->second.c_str(), conn->second.size());
+      std::memcpy(client.sun_path, conn.second.c_str(), conn.second.size());
       send(client, "\x03");
     }
   for(auto conn : _clients) {
     std::memset(client.sun_path, 0, UNIX_PATH_MAX);
-    std::memcpy(client.sun_path, conn->second.c_str(), conn->second.size());
+    std::memcpy(client.sun_path, conn.second.c_str(), conn.second.size());
     send(client, "\x03");
   }
 }
