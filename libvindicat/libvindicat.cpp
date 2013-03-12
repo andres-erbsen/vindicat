@@ -76,6 +76,7 @@ void libvindicat::Connection::read() {
 			  throw std::runtime_error("Invalid ConfigurationResponse");
 			if(conf.ipv6_prefix_length() % 8 != 0)
 				throw std::runtime_error("Unalingned IPv6 prefixes not implemented");
+      _ipv6_prefix = conf.ipv6_prefix();
 			_ipv6 = (conf.ipv6_prefix()+conf.local_identifier()).substr(0, 16);
 			if(_ipv6.size() < 16)
 				_ipv6 += std::string(16-_ipv6.size(), '\0');
@@ -116,7 +117,6 @@ libvindicat::RawSocket* libvindicat::Connection::forward(std::uint8_t proto) {
 	std::string msg("\x01", 1);
 	request.AppendToString(&msg);
 	send(msg);
-  request.ParseFromString(msg.substr(1));
 	auto ret = new RawSocket(*this, proto);
 	_sockets.push_back(ret);
 	return ret;
@@ -159,13 +159,90 @@ libvindicat::UDPSocket::UDPSocket(libvindicat::Connection& conn,
 }
 
 libvindicat::RawSocket::~RawSocket() noexcept {
+  ForwardRequest request;
+  request.set_next_header(_proto);
+  std::string msg("\x04", 1);
+  request.AppendToString(&msg);
+  try {
+    _conn.send(msg);
+  } catch(...) {
+  }
 }
 
 libvindicat::UDPSocket::~UDPSocket() noexcept {
+  ForwardRequest request;
+  request.set_next_header(IPPROTO_UDP);
+  request.mutable_udp()->set_port(_port);
+  std::string msg("\x04", 1);
+  request.AppendToString(&msg);
+  try {
+    _conn.send(msg);
+  } catch(...) {
+  }
 }
 
 void libvindicat::UDPSocket::set_callback(
     std::function<void(const std::string&, std::uint16_t, const std::string&)>
         &&cb) {
   _cb = cb;
+}
+
+void libvindicat::RawSocket::set_callback(
+    std::function<void(const std::string&, const std::string&)> &&cb) {
+  _cb = cb;
+}
+
+void libvindicat::RawSocket::sendto(const std::string& to,
+                                    const std::string& payload) const {
+  Packet packet;
+  packet.set_identifier(to);
+  packet.set_next_header(_proto);
+  packet.set_payload(payload);
+  std::string msg("\x02", 1);
+  packet.AppendToString(&msg);
+  _conn.send(msg);
+}
+
+void libvindicat::UDPSocket::sendto(const std::string& to, std::uint16_t port,
+                                    const std::string& payload) const {
+  std::uint16_t header[4] = {_port, port, sizeof(header)+payload.size(), 0};
+
+  // Checksum:
+  // Source IP:
+  std::size_t checksum = 0;
+  const std::uint16_t *data =
+    reinterpret_cast<const std::uint16_t*>(_conn._ipv6.data());
+  for(int i = 0; i < _conn._ipv6.size()/sizeof(std::uint16_t); i++)
+    checksum += data[i];
+  // Destination IP:
+  std::string dest_ip = (_conn._ipv6_prefix+to).substr(0, 16);
+  if(dest_ip.size() < 16)
+    dest_ip += std::string(16-dest_ip.size(), '\x00');
+  data = reinterpret_cast<const std::uint16_t*>(dest_ip.data());
+  for(int i = 0; i< dest_ip.size()/sizeof(std::uint16_t); i++)
+    checksum += data[i];
+  // UDP header
+  for(int i = 0; i < sizeof(header)/sizeof(std::uint16_t); i++)
+    checksum += header[i];
+  // Protocol number
+  checksum += IPPROTO_UDP;
+  // Payload
+  data = reinterpret_cast<const std::uint16_t*>(payload.data());
+  for(int i = 0; i < payload.size()/sizeof(std::uint16_t); i++)
+    checksum += data[i];
+  if(payload.size() % 2 == 1)
+    checksum += payload.back();
+
+  while(checksum > 0xFFFF)
+    checksum = (checksum & 0xFFFF) + (checksum >> 16);
+  header[3] = ~checksum;
+
+  Packet packet;
+  packet.set_identifier(to);
+  packet.set_next_header(IPPROTO_UDP);
+  packet.set_payload(
+      std::string(reinterpret_cast<char*>(header), sizeof(header))+payload);
+  std::string msg("\x02", 1);
+  packet.AppendToString(&msg);
+  _conn.send(msg);
 }

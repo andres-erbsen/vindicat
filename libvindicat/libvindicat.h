@@ -29,7 +29,7 @@ namespace libvindicat {
     void send(const std::string& payload) const;
     std::string recv() const;
     sockaddr_un *_server, *_client;
-    std::string _identifier, _ipv6;
+    std::string _identifier, _ipv6, _ipv6_prefix;
     int _fd;
     std::vector<Socket*> _sockets;
   };
@@ -46,7 +46,7 @@ namespace libvindicat {
   class RawSocket: public Socket {
    public:
     virtual ~RawSocket() noexcept;
-    bool sendto(const std::string& to, const std::string& payload) const;
+    void sendto(const std::string& to, const std::string& payload) const;
     void set_callback(
         std::function<void(const std::string&, const std::string&)> &&cb);
 
@@ -65,7 +65,7 @@ namespace libvindicat {
   class UDPSocket: public Socket {
    public:
     virtual ~UDPSocket() noexcept;
-    bool sendto(const std::string& to, std::uint16_t port,
+    void sendto(const std::string& to, std::uint16_t port,
                 const std::string& payload) const;
     void set_callback(std::function<void(const std::string&, std::uint16_t,
                                          const std::string&)> &&cb);
