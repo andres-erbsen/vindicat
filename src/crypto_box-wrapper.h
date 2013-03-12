@@ -64,5 +64,6 @@ static inline bool crypto_box_open_to(const std::string &c,
     throw "ciphertext too short"; // should have been caught by _open
   *m = std::string(reinterpret_cast<char*>(mpad + crypto_box_ZEROBYTES),
                      clen - crypto_box_ZEROBYTES);
+  return 1;
 }
 

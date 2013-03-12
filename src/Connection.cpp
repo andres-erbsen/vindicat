@@ -4,7 +4,6 @@
 #include "Util.h"
 
 const static unsigned int COOKIE_SIZE = 96;
-const static unsigned int crypto_box_AUTHBYTES = crypto_box_ZEROBYTES - crypto_box_BOXZEROBYTES;
 
 Connection::Connection(CryptoIdentity& ci, Path path, ConnectionPool& cp, ConnectionHandler& ch)
   : Forwarding(randint64())
@@ -157,7 +156,7 @@ void Connection::handle_auth(CryptoIdentity& ci, ConnectionHandler& ch, const st
   if ( ! naclsession.decrypt(remaining, nonce, message) ) return;
 
   // their main enc key should vouch for the connection enc key
-  auto vouchlen = crypto_box_PUBLICKEYBYTES + crypto_box_AUTHBYTES;
+  auto vouchlen = crypto_box_PUBLICKEYBYTES + crypto_box_MACBYTES;
   if (message.size() < vouchlen) return;
   std::string their_main_pk;
   Device dev;
