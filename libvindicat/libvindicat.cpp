@@ -163,3 +163,9 @@ libvindicat::RawSocket::~RawSocket() noexcept {
 
 libvindicat::UDPSocket::~UDPSocket() noexcept {
 }
+
+void libvindicat::UDPSocket::set_callback(
+    std::function<void(const std::string&, std::uint16_t, const std::string&)>
+        &&cb) {
+  _cb = cb;
+}

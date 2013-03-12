@@ -225,15 +225,16 @@ void IPCInterface::ping(ev::timer&, int) {
   std::memset(&client, 0, sizeof(client));
   client.sun_family = AF_UNIX;
 
+  std::vector<std::string> clients;
+
   for(auto proto : {_tcp, _udp})
-    for(auto conn : proto) {
-      std::memset(client.sun_path, 0, UNIX_PATH_MAX);
-      std::memcpy(client.sun_path, conn.second.c_str(), conn.second.size());
-      send(client, "\x03");
-    }
-  for(auto conn : _clients) {
+    for(auto conn : proto)
+      clients.push_back(conn.second);
+  for(auto conn : _clients)
+    clients.push_back(conn.second);
+  for(auto path : clients) {
     std::memset(client.sun_path, 0, UNIX_PATH_MAX);
-    std::memcpy(client.sun_path, conn.second.c_str(), conn.second.size());
+    std::memcpy(client.sun_path, path.data(), path.size());
     send(client, "\x03");
   }
 }
