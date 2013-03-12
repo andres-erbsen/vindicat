@@ -133,3 +133,33 @@ libvindicat::UDPSocket* libvindicat::Connection::forwardUDP(std::uint16_t p) {
   _sockets.push_back(ret);
 	return ret;
 }
+
+void libvindicat::RawSocket::forward(const std::string& id, std::uint8_t proto,
+     	                               const std::string& payload) {
+  if(proto == _proto)
+    _cb(id, payload);
+}
+
+void libvindicat::UDPSocket::forward(const std::string& id, std::uint8_t proto,
+                                     const std::string& payload) {
+  const std::uint16_t *header =
+      reinterpret_cast<const std::uint16_t*>(payload.data());
+  if(proto == IPPROTO_UDP && header[1] == _port)
+    _cb(id, header[1], payload.substr(8));
+}
+
+libvindicat::RawSocket::RawSocket(libvindicat::Connection& conn,
+                                  std::uint8_t proto)
+    : _conn(conn), _proto(proto) {
+}
+
+libvindicat::UDPSocket::UDPSocket(libvindicat::Connection& conn,
+                                  std::uint16_t port)
+    : _conn(conn), _port(port) {
+}
+
+libvindicat::RawSocket::~RawSocket() noexcept {
+}
+
+libvindicat::UDPSocket::~UDPSocket() noexcept {
+}
