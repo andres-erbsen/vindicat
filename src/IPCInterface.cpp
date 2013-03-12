@@ -113,16 +113,9 @@ void IPCInterface::clear(const sockaddr_un& client) {
 void IPCInterface::read_cb(ev::io&, int) {
   sockaddr_un from;
   socklen_t length = sizeof(from);
-  std::size_t buflen = 0, buflen_len = sizeof(buflen);
 
-  if(getsockopt(_fd, SOL_PACKET, SO_RCVBUF, &buflen, &buflen_len) == -1) {
-    std::perror("getsockopt(SO_RCVBUF)");
-    std::abort();
-  }
-  assert(buflen_len == sizeof(buflen));
-
-  char *buf = new char[buflen];
-  auto buf_len = recvfrom(_fd, buf, buflen, 0,
+  char *buf = new char[4096];
+  auto buf_len = recvfrom(_fd, buf, 4096, 0,
                           reinterpret_cast<sockaddr*>(&from), &length);
   if(buf_len >= 1) {
     switch(buf[0]) {

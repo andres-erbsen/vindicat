@@ -58,13 +58,8 @@ void libvindicat::Connection::send(const std::string& payload) const {
 }
 
 std::string libvindicat::Connection::recv() const {
-  std::size_t buflen = 0, buflen_len = sizeof(buflen);
-  if(getsockopt(_fd, SOL_PACKET, SO_RCVBUF, &buflen, &buflen_len) == -1)
-    throw std::system_error(errno, std::system_category());
-  if(buflen_len != sizeof(buflen))
-    throw std::runtime_error("Alignment error");
-  char *buf = new char[buflen];
-  auto res = ::recv(_fd, buf, buflen, 0);
+  char *buf = new char[4096];
+  auto res = ::recv(_fd, buf, 4096, 0);
   if(res == -1)
     throw std::system_error(errno, std::system_category());
   std::string ret(buf, res);
