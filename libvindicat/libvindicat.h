@@ -19,11 +19,12 @@ namespace libvindicat {
     virtual ~Connection();
     std::string identifier() const;
     std::string ipv6() const;
+    int selectable_fd() const;
 		friend RawSocket;
     RawSocket* forward(std::uint8_t proto);
 		friend UDPSocket;
     UDPSocket* forwardUDP(std::uint16_t local_port);
-    void wait();
+    void read();
    private:
     void send(const std::string& payload) const;
     std::string recv() const;

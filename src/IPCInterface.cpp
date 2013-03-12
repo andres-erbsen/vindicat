@@ -125,49 +125,55 @@ void IPCInterface::read_cb(ev::io&, int) {
         std::string message("\x00", 1);
         response.AppendToString(&message);
         send(from, message);
-	break;
+	      break;
       }
       case 0x01: {  // Forwarding request
         std::string client_path(from.sun_path, UNIX_PATH_MAX); 
         libvindicat::ForwardRequest request;
-	if(!request.ParseFromArray(buf, buf_len) ||
-	    request.next_header() > 256 ||
-            (request.next_header() == IPPROTO_TCP &&
-	       !(request.has_tcp() && request.tcp().port() > 0 &&
-                   request.tcp().port() <= 0xFFFF)) ||
-	    (request.next_header() == IPPROTO_UDP &&
-               !(request.has_udp() && request.udp().port() > 0 &&
-                   request.udp().port() <= 0xFFFF ))) {
-	  send(from, "\x01");
-	  break;
-	}
-	switch(request.next_header()) {
+        if(!request.ParseFromArray(buf+1, buf_len-1) ||
+            request.next_header() < 0 || request.next_header() > 255) {
+          send(from, "\x01");
+          break;
+        }
+        if(request.next_header() == IPPROTO_TCP &&
+            (!request.has_tcp() || request.tcp().port() <= 0 ||
+               request.tcp().port() > 0xFFFF)) {
+          send(from, "\x01");
+          break;
+        }
+        if(request.next_header() == IPPROTO_UDP &&
+            (!request.has_udp() || request.udp().port() <= 0 ||
+                   request.udp().port() > 0xFFFF )) {
+	        send(from, "\x01");
+	        break;
+	      }
+        switch(request.next_header()) {
           case IPPROTO_TCP:
-	    _tcp.insert(std::make_pair(request.tcp().port(), client_path));
-	    break;
-	  case IPPROTO_UDP:
-	    _udp.insert(std::make_pair(request.udp().port(), client_path));
-	    break;
-	  default:
-	    _clients.insert(std::make_pair(request.next_header(),
+            _tcp.insert(std::make_pair(request.tcp().port(), client_path));
+            break;
+          case IPPROTO_UDP:
+            _udp.insert(std::make_pair(request.udp().port(), client_path));
+            break;
+          default:
+            _clients.insert(std::make_pair(request.next_header(),
                                            client_path));
-	}
-	break;
+       	}
+	      break;
       }
       case 0x02: {  // Packet
         libvindicat::Packet packet;
-	if(packet.ParseFromArray(buf, buf_len)) {
-	  _receive_cb(std::string(packet.identifier()),
+        if(packet.ParseFromArray(buf+1, buf_len-1)) {
+          _receive_cb(std::string(packet.identifier()),
               static_cast<char>(packet.next_header())+packet.payload());
-	}
-	break;
+        }
+        break;
       }
       case 0x03:  // Ping
         break;
       case 0x04: {  // Remove forwarding
         std::string client_path(from.sun_path, UNIX_PATH_MAX);
-	libvindicat::ForwardRequest request;
-	if(!request.ParseFromArray(buf, buf_len) ||
+        libvindicat::ForwardRequest request;
+        if(!request.ParseFromArray(buf+1, buf_len-1) ||
             request.next_header() > 256 ||
             (request.next_header() == IPPROTO_TCP &&
                !(request.has_tcp() && request.tcp().port() > 0 &&
@@ -175,18 +181,18 @@ void IPCInterface::read_cb(ev::io&, int) {
             (request.next_header() == IPPROTO_UDP &&
                !(request.has_udp() && request.udp().port() > 0 &&
                     request.udp().port() <= 0xFFFF ))) {
-	  send(from, "\x04");
+          send(from, "\x04");
           break;
-	}
-	switch(request.next_header()) {
-	  case IPPROTO_TCP: {
-	    for(auto i = _tcp.find(request.tcp().port());
+      	}
+      	switch(request.next_header()) {
+      	  case IPPROTO_TCP: {
+	          for(auto i = _tcp.find(request.tcp().port());
                 i->first == request.tcp().port() && i != _tcp.end(); i++)
-	      if(i->second == client_path) {
-	        _tcp.erase(i);
-		break;
-	      }
-	    break;
+      	      if(i->second == client_path) {
+	              _tcp.erase(i);
+            		break;
+      	      }
+	          break;
           }
 	  case IPPROTO_UDP: {
             for(auto i = _udp.find(request.udp().port());
@@ -219,8 +225,8 @@ void IPCInterface::ping(ev::timer&, int) {
   std::memset(&client, 0, sizeof(client));
   client.sun_family = AF_UNIX;
 
-  for(auto proto : {&_tcp, &_udp})
-    for(auto conn : *proto) {
+  for(auto proto : {_tcp, _udp})
+    for(auto conn : proto) {
       std::memset(client.sun_path, 0, UNIX_PATH_MAX);
       std::memcpy(client.sun_path, conn.second.c_str(), conn.second.size());
       send(client, "\x03");

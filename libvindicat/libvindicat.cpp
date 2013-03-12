@@ -67,7 +67,7 @@ std::string libvindicat::Connection::recv() const {
   return ret;
 }
 
-void libvindicat::Connection::wait() {
+void libvindicat::Connection::read() {
   std::string packet = recv();
   switch(packet[0]) {
     case 0x00: {  // Configuration response
@@ -106,12 +106,17 @@ std::string libvindicat::Connection::identifier() const {
 	return _identifier;
 }
 
+int libvindicat::Connection::selectable_fd() const {
+  return _fd;
+}
+
 libvindicat::RawSocket* libvindicat::Connection::forward(std::uint8_t proto) {
 	ForwardRequest request;
 	request.set_next_header(proto);
 	std::string msg("\x01", 1);
 	request.AppendToString(&msg);
 	send(msg);
+  request.ParseFromString(msg.substr(1));
 	auto ret = new RawSocket(*this, proto);
 	_sockets.push_back(ret);
 	return ret;
