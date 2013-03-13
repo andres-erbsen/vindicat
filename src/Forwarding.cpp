@@ -1,4 +1,5 @@
 #include "Forwarding.h"
+#include "Link.h"
 
 void Forwarding::pair( std::shared_ptr<Forwarding> l
                      , std::shared_ptr<Forwarding> r ) {
@@ -63,7 +64,7 @@ bool SimpleForwarding::forward_out(const std::string& packet) {
     auto owner = _owner.lock();
     assert(owner);
     // Get pointer to transportsocket to owner from NetworkMap
-    auto tsock = _nm.tsock_to(owner->id());
+    auto tsock = _nm.link_to(owner->id())->tsocket();
     // Send to tsock
     return tsock.send(packet);
 }

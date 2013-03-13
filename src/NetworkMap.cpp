@@ -95,12 +95,18 @@ Device& NetworkMap::our_device() const {
   return *_g_device[_our_node];
 }
 
-TransportSocket
-NetworkMap::tsock_to(const std::string& id) const {
-  auto it = _node_by_id.find(id);
-  if ( it == _node_by_id.end() ) return TransportSocket::no_socket();
-  auto edge = findEdge(_graph, _our_node, it->second);
-  return _g_link[edge]->tsocket();
+std::shared_ptr<Link> NetworkMap::link_between(const std::string& l_id,
+                                               const std::string& r_id) const {
+  auto l_it = _node_by_id.find(l_id);
+  if ( l_it == _node_by_id.end() ) return nullptr;
+  auto r_it = _node_by_id.find(r_id);
+  if ( r_it == _node_by_id.end() ) return nullptr;
+  auto edge = findEdge(_graph, r_it->second, r_it->second);
+  return _g_link[edge];
+}
+
+std::shared_ptr<Link> NetworkMap::link_to(const std::string& id) const {
+  return link_between(our_device().id(), id);
 }
 
 std::vector< std::shared_ptr<Device> > NetworkMap::devices() {
