@@ -1,6 +1,5 @@
 #include "Link.h"
 
-
 std::shared_ptr<Link> Link::
 fromPromise( std::shared_ptr<LinkPromise>&& promise, const NetworkMap& nm) {
   std::unique_ptr<LinkInfo> info(new LinkInfo());
@@ -66,6 +65,21 @@ Link::Link( const std::string& left_id
           , const std::string& right_id)
  : Link( left_id, right_id, std::time(NULL), true, std::move(socket), nullptr )
  {}
+
+void Link::merge(Link&& other) {
+  if (other.mtime() > mtime()) {
+    if ( ! (other._tsocket == TransportSocket::no_socket()) ) {
+      assert(_tsocket == TransportSocket::no_socket() || _tsocket == other._tsocket);
+      // FIXME: is this possible? What should we actually do then?
+      _tsocket = other._tsocket;
+    }
+    if (other._promise) std::swap(_promise, other._promise);
+    std::swap(_left_id, other._left_id);
+    std::swap(_right_id, other._right_id);
+    std::swap(_mtime, other._mtime);
+    std::swap(_operational, other._operational);
+  }
+}
 
 const std::string& Link::left_id() const {
   return _left_id;

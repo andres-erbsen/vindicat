@@ -8,6 +8,7 @@
 class TransportSocket
 {
 public:
+  TransportSocket() = default;
   typedef std::function<bool(const std::string&)> send_function;
   TransportSocket(send_function, const std::string&);
   bool send(const std::string&) const;

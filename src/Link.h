@@ -11,6 +11,7 @@
 
 class Link {
 public:
+  Link() = default;
   static std::shared_ptr<Link>
     fromPromise(std::shared_ptr<LinkPromise>&&, const NetworkMap& nm);
   Link( const std::string&, TransportSocket&&, const std::string&);
@@ -20,6 +21,8 @@ public:
   Link(const Link&) = delete;
   const Link& operator= (const Link&) = delete;
   virtual ~Link() = default;
+
+  void merge(Link&&);
 
   const std::string& left_id() const;
   const std::string& right_id() const;

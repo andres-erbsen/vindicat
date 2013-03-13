@@ -109,7 +109,7 @@ void PacketHandler::operator()(TransportSocket&& ts, std::string&& packet) {
     if (!relevant) return;
 
     auto link = std::make_shared
-      <DirectLink>(_nm.our_device().id(),std::move(ts),dev->id());
+      <Link>(_nm.our_device().id(),std::move(ts),dev->id());
     assert(link);
     _nm.add( std::move(dev)  );
     _nm.add( std::move(link) );

@@ -71,7 +71,10 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
         _node_by_socket.insert( std::make_pair(ts,left) );
       }
     }
-    std::swap(_g_link[edge], link);
+    if (link->promise()) _new_edges.insert(edge);
+    assert(link.unique());
+    if (! _g_link[edge]) _g_link[edge].reset(new Link);
+    _g_link[edge]->merge(std::move(*link));
     return 1;
   } else {
     return 0;
@@ -139,9 +142,21 @@ public:
   }
 };
 
-std::vector< std::tuple< std::weak_ptr<Link>, std::weak_ptr<Device> > >
-    NetworkMap::path_to(const Device& dev) const {
-  std::vector<std::tuple<std::weak_ptr<Link>,std::weak_ptr<Device> > > ret;
+std::vector<NetworkMap::EdgeWithEnds> NetworkMap::shake() {
+  std::vector<NetworkMap::EdgeWithEnds> ret;
+  for (const auto& edge : _new_edges) {
+    ret.push_back( std::make_tuple(
+          _g_device[ _graph.u(edge) ],
+          _g_link[edge],
+          _g_device[ _graph.v(edge) ]
+    ));
+  }
+  _new_edges.clear();
+  return ret;
+}
+
+Path NetworkMap::path_to(const Device& dev) const {
+  Path ret;
 
   // Find the node that corresponds to the referenced Device
   auto iter = _node_by_id.find( dev.id() );
