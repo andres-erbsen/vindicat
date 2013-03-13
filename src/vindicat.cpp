@@ -82,7 +82,7 @@ int main (int argc, char** argv) {
     ch.addInterface( std::unique_ptr<Interface>(new DummyInterface) );
   }
   std::unique_ptr<Interface> ipc(new IPCInterface(our_id));
-  ipc->onPacket(ihn);
+  ipc->onPacket(std::move(ihn));
 
   std::unique_ptr<Interface> ctrl(new ControlInterface(nm, ci));
   ctrl->onPacket(ihn);

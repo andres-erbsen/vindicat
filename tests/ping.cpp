@@ -41,28 +41,35 @@ int main(int argc, char *argv[]) {
     if(kill(pid, 0) == -1)
       throw std::system_error(errno, std::system_category());
 
-  libvindicat::Connection conn_server("/tmp/vindicat."+toString(server[0]), "/tmp/test1"), conn_client("/tmp/vindicat."+toString(server[1]), "/tmp/test2");
+  try {
+    libvindicat::Connection conn_server("/tmp/vindicat."+toString(server[0]), "/tmp/test1"), conn_client("/tmp/vindicat."+toString(server[1]), "/tmp/test2");
 
-  libvindicat::RawSocket *server_socket = conn_server.forward(0xFE);
-  libvindicat::RawSocket *client_socket = conn_client.forward(0xFE);
+    libvindicat::RawSocket *server_socket = conn_server.forward(0xFE);
+    libvindicat::RawSocket *client_socket = conn_client.forward(0xFE);
 
-  conn_server.read();
-  conn_client.read();
-
-  bool from_server = false, from_client = false;
-
-  server_socket->set_callback([&from_server](const std::string&, const std::string&) {from_server = true;});
-  client_socket->set_callback([&from_client](const std::string&, const std::string&) {from_client = true;});
-  server_socket->sendto(conn_client.identifier(), "PING");
-  client_socket->sendto(conn_server.identifier(), "PING");
-
-  for(int i = 0; (i < 2) && !(from_server && from_client); i++) {
     conn_server.read();
     conn_client.read();
+
+    bool from_server = false, from_client = false;
+
+    server_socket->set_callback([&from_server](const std::string&, const std::string&) {from_server = true;});
+    client_socket->set_callback([&from_client](const std::string&, const std::string&) {from_client = true;});
+    server_socket->sendto(conn_client.identifier(), "PING");
+    client_socket->sendto(conn_server.identifier(), "PING");
+
+    for(int i = 0; (i < 2) && !(from_server && from_client); i++) {
+      conn_server.read();
+      conn_client.read();
+    }
+
+    kill(server[0], SIGINT);
+    kill(server[1], SIGINT);
+
+    return (from_server && from_client? 0: 1);
+  } catch(...) {
+    kill(server[0], SIGINT);
+    kill(server[1], SIGINT);
+    throw;
   }
-
-  kill(server[0], SIGINT);
-  kill(server[1], SIGINT);
-
-  return (from_server && from_client? 0: 1);
+  return 1;
 }
