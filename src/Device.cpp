@@ -180,5 +180,3 @@ void Device::clear() {
   _mtime = 0;
   _card.reset();
 }
-
-bool Device::link_not_exaggerated(LinkInfo const&) { std::abort(); }

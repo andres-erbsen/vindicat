@@ -47,10 +47,9 @@ bool IPCInterface::match(const std::string& from, std::uint8_t next_header,
       return _clients.count(next_header) > 0;
   }
 }
-#include <iostream>
+
 void IPCInterface::send(const std::string& from, std::uint8_t next_header,
                         const std::string& data) {
-  std::cout << "IPCInterface::send" << std::endl;
   sockaddr_un client;
   std::memset(&client, 0, sizeof(client));
   client.sun_family = AF_UNIX;

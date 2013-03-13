@@ -41,8 +41,6 @@ int main(int argc, char *argv[]) {
     if(kill(pid, 0) == -1)
       throw std::system_error(errno, std::system_category());
 
-  std::cout << "processes exists: " << server_port << std::endl;
-
   libvindicat::Connection conn_server("/tmp/vindicat."+toString(server[0]), "/tmp/test1"), conn_client("/tmp/vindicat."+toString(server[1]), "/tmp/test2");
 
   libvindicat::RawSocket *server_socket = conn_server.forward(0xFE);

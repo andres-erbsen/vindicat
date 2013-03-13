@@ -104,12 +104,9 @@ void PacketHandler::operator()(TransportSocket&& ts, std::string&& packet) {
     auto dev =_nm.device(ts);
     if (!dev) return;
     auto fwd = dev->getForwarding(route_id);
-    std::cout << fwd << std::endl;
     if (fwd) {
-      std::cout << "forwarding" << std::endl;
       fwd->forward(packet);
     } else {
-      std::cout << "authenticating" << std::endl;
       Connection::handle_auth(_ci, _ch, packet, ts, _cp, _nm);
     }
 
