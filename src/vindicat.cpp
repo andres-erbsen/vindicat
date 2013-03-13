@@ -4,6 +4,7 @@
 #include "PacketHandler.h"
 #include "InterfaceHandler.h"
 #include "TUNInterface.h"
+#include "ControlInterface.h"
 #include "DummyInterface.h"
 #include "Beacon.h"
 #include "LinkLocalDiscovery.h"
@@ -79,6 +80,10 @@ int main (int argc, char** argv) {
     std::cerr << "TUN interface creation failed" << std::endl;
     ch.addInterface( std::unique_ptr<Interface>(new DummyInterface) );
   }
+
+  std::unique_ptr<Interface> ctrl(new ControlInterface(nm, ci));
+  ctrl->onPacket(ihn);
+  ch.addInterface( std::move(ctrl) );
 
   ExitOnSIGINT sigint_handler;
   sigint_handler.enable();

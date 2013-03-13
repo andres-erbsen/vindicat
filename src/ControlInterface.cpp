@@ -1,4 +1,5 @@
 #include <ctime>
+#include <iostream>
 #include "ControlInterface.h"
 #include "Util.h"
 #include "Link.h"
@@ -14,7 +15,8 @@ ControlInterface::ControlInterface(NetworkMap& nm, CryptoIdentity& ci)
   , _ci(ci)
 {
   _w.set(0.00001,VC_MAINTENANCE_INTERVAL);
-  _w.set(this);  
+  _w.set(this);
+  _w.start();
 }
 
 bool ControlInterface::match( const std::string&
@@ -80,6 +82,8 @@ void ControlInterface::send( const std::string& from
     promise_packet[0] = VC_CONTROL_PROTOCOL;
     sg.AppendToString(&promise_packet);
     _receive_cb( std::string(from), std::move(promise_packet) );
+  } else if (tag == 3) {
+    std::cout << "Received link promise" << std::endl;
   }
 }
 
