@@ -43,8 +43,6 @@ include_directories(${LEMON_INCLUDE_DIRS})
 include_directories(${SODIUM_INCLUDE_DIRS})
 include_directories(${PCAP_INCLUDE_DIRS})
 include_directories(${CMAKE_BINARY_DIR})
-ENABLE_TESTING()
-ADD_TEST(Ping Ping $<TARGET_FILE:vindicat_server>)
 
 FILE(GLOB_RECURSE srcs src/*.c src/*.cc src/*.cpp)
 FILE(GLOB_RECURSE libs lib/keccak/*.c lib/libev/ev.c lib/libev/event.c)
@@ -55,11 +53,17 @@ file(GLOB_RECURSE lib_srcs libvindicat/*.cpp)
 PROTOBUF_GENERATE_CPP(lib_proto_srcs lib_proto_hdrs libvindicat/libvindicat.proto)
 
 ADD_EXECUTABLE(vindicat-server ${clibs} ${libs} ${srcs} ${PROTO_SRCS} ${lib_proto_srcs})
-ADD_EXECUTABLE(Ping EXCLUDE_FROM_ALL tests/ping.cpp)
 set_target_properties(vindicat-server PROPERTIES OUTPUT_NAME vindicat)
 ADD_LIBRARY(vindicat ${lib_srcs} ${lib_proto_srcs})
 set_source_files_properties(${libs} PROPERTIES LANGUAGE CXX)
 
 target_link_libraries(vindicat-server ${PROTOBUF_LITE_LIBRARIES} ${SODIUM_LIBRARIES} ${LEMON_LIBRARIES} ${PCAP_LIBRARIES})
 target_link_libraries(vindicat ${PROTOBUF_LITE_LIBRARIES})
+
+# Testing
+enable_testing()
+add_custom_target(build_tests)
+ADD_EXECUTABLE(Ping EXCLUDE_FROM_ALL tests/ping.cpp)
 target_link_libraries(Ping vindicat)
+add_test(Ping Ping $<TARGET_FILE:vindicat-server>)
+add_dependencies(build_tests Ping)

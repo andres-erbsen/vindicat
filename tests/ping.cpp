@@ -9,13 +9,19 @@
 #include <sys/types.h>
 #include <signal.h>
 
+template <typename T> std::string toString(const T& value) {
+  std::stringstream ss;
+  ss << value;
+  return ss.str();
+}
+
 int main(int argc, char *argv[]) {
   pid_t server[2];
   std::random_device rand;
-  std::string server_port = dynamic_cast<std::stringstream&>(std::stringstream() << std::uniform_int_distribution<std::uint16_t>(1025)(rand)).str();
+  std::string server_port = toString(std::uniform_int_distribution<std::uint16_t>(1025)(rand));
 
   if((server[0] = fork()) == 0) {
-    char *args[] = {argv[1], "-s", "::", const_cast<char*>(server_port.c_str()), nullptr};
+    char *args[] = {argv[1], "-s", "::1", const_cast<char*>(server_port.c_str()), nullptr};
     execv(argv[1], args);
     throw std::system_error(errno, std::system_category());
   } else if(server[0] == -1) {
@@ -30,10 +36,30 @@ int main(int argc, char *argv[]) {
     throw std::system_error(errno, std::system_category());
   }
 
-  std::cout << "server: " << server[0] << std::endl;
-  std::cout << "client: " << server[1] << std::endl;
-
   sleep(2);
+  for(auto pid : server)
+    if(kill(pid, 0) == -1)
+      throw std::system_error(errno, std::system_category());
+
+  libvindicat::Connection conn_server("/tmp/vindicat."+toString(server[0]), "/tmp/test1"), conn_client("/tmp/vindicat."+toString(server[1]), "/tmp/test2");
+
+  libvindicat::RawSocket *server_socket = conn_server.forward(0xFE);
+  libvindicat::RawSocket *client_socket = conn_client.forward(0xFE);
+
+  conn_server.read();
+  conn_client.read();
+
+  auto print_packet = [](const std::string&, const std::string& payload)
+      {
+        std::cout << "Packet:" << payload << std::endl;
+      };
+  server_socket->set_callback(print_packet);
+  client_socket->set_callback(print_packet);
+  server_socket->sendto(conn_client.identifier(), "PING");
+  client_socket->sendto(conn_server.identifier(), "PING");
+
+  conn_server.read();
+  conn_client.read();
 
   kill(server[0], SIGINT);
   kill(server[1], SIGINT);

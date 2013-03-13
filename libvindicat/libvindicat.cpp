@@ -66,11 +66,12 @@ std::string libvindicat::Connection::recv() const {
   delete[] buf;
   return ret;
 }
-
+#include <iostream>
 void libvindicat::Connection::read() {
   std::string packet = recv();
   switch(packet[0]) {
     case 0x00: {  // Configuration response
+      std::cout << "Configuration response" << std::endl;
 			ConfigurationResponse conf;
 			if(!conf.ParseFromString(packet.substr(1)))
 			  throw std::runtime_error("Invalid ConfigurationResponse");

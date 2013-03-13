@@ -132,6 +132,7 @@ void Connection::handle_auth(CryptoIdentity& ci, ConnectionHandler& ch, const st
   // This may be the auth packet to start a connection, with contents:
   // pkttype, routeid, pktid, cookie, [[A'](A<>B'),bcard_A](A'<>B')
   if (packet.size() < 1+8+8+COOKIE_SIZE) return;
+  std::cout << "auth size ok" << std::endl;
   std::string nonce = packet.substr(1,8+8);
   nonce.resize(crypto_box_NONCEBYTES,'\0');
   std::string their_connection_pk;
@@ -140,8 +141,10 @@ void Connection::handle_auth(CryptoIdentity& ci, ConnectionHandler& ch, const st
     std::string c;
     std::string cookie = packet.substr(1+8+8, COOKIE_SIZE);
     if ( ! ci.cookies.open(cookie, c) ) return;
+    std::cout << "auth cookie ok" << std::endl;
     their_connection_pk = c.substr(0,crypto_box_PUBLICKEYBYTES);
     if ( ! ci.cookies.allowed(their_connection_pk)) return;
+    std::cout << "auth cookie allowed" << std::endl;
     ci.cookies.blacklist(their_connection_pk);
     /// \FIXME don't accept connections from connection enc keys that may
     /// have been used with the current cookies to avoid session replays
@@ -154,6 +157,7 @@ void Connection::handle_auth(CryptoIdentity& ci, ConnectionHandler& ch, const st
   std::string message;
   nacl25519_nm naclsession(their_connection_pk, connection_sk);
   if ( ! naclsession.decrypt(remaining, nonce, message) ) return;
+  std::cout << "auth message ok" << std::endl;
 
   // their main enc key should vouch for the connection enc key
   auto vouchlen = crypto_box_PUBLICKEYBYTES + crypto_box_MACBYTES;
@@ -161,6 +165,7 @@ void Connection::handle_auth(CryptoIdentity& ci, ConnectionHandler& ch, const st
   std::string their_main_pk;
   Device dev;
   if ( ! dev.parseFrom( message.substr(vouchlen) ) ) return;
+  std::cout << "auth device ok" << std::endl;
 
   // verify the vouching
   std::string vouch = message.substr(0, vouchlen);
@@ -168,6 +173,7 @@ void Connection::handle_auth(CryptoIdentity& ci, ConnectionHandler& ch, const st
   if ( ! dev.open( vouch, nonce, connection_sk
                  , PkencAlgo::CURVE25519XSALSA20POLY1305, vkey )
     || vkey != their_connection_pk) return;
+  std::cout << "auth vouch ok" << std::endl;
 
   // all ok, save the connection
   std::string their_id = dev.id();

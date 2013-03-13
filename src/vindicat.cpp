@@ -80,7 +80,8 @@ int main (int argc, char** argv) {
     std::cerr << "TUN interface creation failed" << std::endl;
     ch.addInterface( std::unique_ptr<Interface>(new DummyInterface) );
   }
-  ch.addInterface(std::unique_ptr<Interface>(new IPCInterface(our_id)));
+  std::unique_ptr<Interface> ipc(new IPCInterface(our_id));
+  ipc->onPacket(ihn);
 
   ExitOnSIGINT sigint_handler;
   sigint_handler.enable();
