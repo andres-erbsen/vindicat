@@ -105,10 +105,19 @@ NetworkMap::tsock_to(const std::string& id) const {
 
 std::vector< std::shared_ptr<Device> > NetworkMap::devices() {
   std::vector< std::shared_ptr<Device> > ret;
-  for (const auto& it : _node_by_socket) ret.push_back(_g_device[it.second]);
+  for (lemon::ListGraph::NodeIt n(_graph); n != lemon::INVALID; ++n) {
+    ret.push_back(_g_device[n]);
+  }
   return ret;
 }
 
+std::vector< std::shared_ptr<Device> > NetworkMap::neighbors() {
+  std::vector< std::shared_ptr<Device> > ret;
+  for (lemon::ListGraph::IncEdgeIt e(_graph, _our_node); e != lemon::INVALID; ++e) {
+    ret.push_back(_g_device[_graph.oppositeNode(_our_node, e)]);
+  }
+  return ret;
+}
 
 class Measure {
 public:
