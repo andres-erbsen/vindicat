@@ -8,6 +8,7 @@ void ConnectionHandler::operator() (const std::string& from, std::uint8_t protoc
   for ( const auto& iface : _ifaces) {
     if ( iface->match(from, protocol, payload) ) {
       iface->send(from, protocol, payload);
+      break;
     }
   }
 }
