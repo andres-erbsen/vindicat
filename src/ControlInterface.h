@@ -18,9 +18,14 @@ class ControlInterface : public Interface {
   bool match(const std::string&, uint8_t, const std::string&) override;
   void send(const std::string&, uint8_t, const std::string&) override;
 
+//private:
+  void operator()(ev::timer&, int); // regular maintenance
  private:
   NetworkMap& _nm;
   CryptoIdentity& _ci;
+
+  friend class ev::timer;
+  ev::timer _w;  
 };
 
 #endif // UDPINTERFACE_H_

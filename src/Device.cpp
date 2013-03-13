@@ -1,12 +1,13 @@
 #include "Device.h"
+#include <algorithm>
+#include <ctime>
+
+#include <sodium/crypto_sign_ed25519.h>
 #include "Forwarding.h"
 #include "CryptoIdentity.h"
 #include "keccak128.h"
 #include "Util.h"
 #include "nacl25519_nm.h"
-
-#include <sodium/crypto_sign_ed25519.h>
-#include <algorithm>
 
 
 uint64_t Device::mtime() const {
@@ -41,6 +42,10 @@ PkencAlgo Device::enc_algo() const {
     preference {PkencAlgo::CURVE25519XSALSA20POLY1305};
   for (const auto& a : preference) if ( _enc.find(a) != _enc.end() ) return a;
   assert(0);
+}
+
+bool Device::link_not_exaggerated(const LinkInfo& li) {
+  return li.time() <= std::time(NULL);
 }
 
 static bool verifySig( const std::string& message

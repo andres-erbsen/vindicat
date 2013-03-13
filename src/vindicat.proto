@@ -24,13 +24,6 @@ message LinkInfo {
 	optional int64 time = 4; // unix "epoch" format
 }
 
-message LinkProposal {
-	repeated uint32 left_sig_algos = 1;
-	required bytes link_info_msg = 3; // LinkInfo
-	repeated bytes left_sigs = 4;
-}
-
-
 message LinkPromise {
 	repeated uint32 left_sig_algos = 1;
 	repeated uint32 right_sig_algos = 2;
