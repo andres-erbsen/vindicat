@@ -11,9 +11,6 @@
 #include <cstdint>
 #include <sodium/crypto_box.h>
 
-const static unsigned int COOKIE_SIZE = 96;
-const static unsigned int crypto_box_AUTHBYTES = crypto_box_ZEROBYTES - crypto_box_BOXZEROBYTES;
-
 PacketHandler::
 PacketHandler(NetworkMap& nm, CryptoIdentity& ci, ConnectionPool& cp, ConnectionHandler& ch)
   : _nm(nm)
