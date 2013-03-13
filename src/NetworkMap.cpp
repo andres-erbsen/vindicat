@@ -102,6 +102,7 @@ std::shared_ptr<Link> NetworkMap::link_between(const std::string& l_id,
   auto r_it = _node_by_id.find(r_id);
   if ( r_it == _node_by_id.end() ) return nullptr;
   auto edge = findEdge(_graph, r_it->second, r_it->second);
+  if (edge == lemon::INVALID) return nullptr;
   return _g_link[edge];
 }
 
