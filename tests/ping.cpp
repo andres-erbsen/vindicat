@@ -41,6 +41,8 @@ int main(int argc, char *argv[]) {
     if(kill(pid, 0) == -1)
       throw std::system_error(errno, std::system_category());
 
+  std::cout << "processes exists: " << server_port << std::endl;
+
   libvindicat::Connection conn_server("/tmp/vindicat."+toString(server[0]), "/tmp/test1"), conn_client("/tmp/vindicat."+toString(server[1]), "/tmp/test2");
 
   libvindicat::RawSocket *server_socket = conn_server.forward(0xFE);
@@ -49,20 +51,20 @@ int main(int argc, char *argv[]) {
   conn_server.read();
   conn_client.read();
 
-  auto print_packet = [](const std::string&, const std::string& payload)
-      {
-        std::cout << "Packet:" << payload << std::endl;
-      };
-  server_socket->set_callback(print_packet);
-  client_socket->set_callback(print_packet);
+  bool from_server = false, from_client = false;
+
+  server_socket->set_callback([&from_server](const std::string&, const std::string&) {from_server = true;});
+  client_socket->set_callback([&from_client](const std::string&, const std::string&) {from_client = true;});
   server_socket->sendto(conn_client.identifier(), "PING");
   client_socket->sendto(conn_server.identifier(), "PING");
 
-  conn_server.read();
-  conn_client.read();
+  for(int i = 0; (i < 2) && !(from_server && from_client); i++) {
+    conn_server.read();
+    conn_client.read();
+  }
 
   kill(server[0], SIGINT);
   kill(server[1], SIGINT);
 
-  return 0;
+  return (from_server && from_client? 0: 1);
 }
