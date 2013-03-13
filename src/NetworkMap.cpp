@@ -103,6 +103,13 @@ NetworkMap::tsock_to(const std::string& id) const {
   return _g_link[edge]->tsocket();
 }
 
+std::vector< std::shared_ptr<Device> > NetworkMap::devices() {
+  std::vector< std::shared_ptr<Device> > ret;
+  for (const auto& it : _node_by_socket) ret.push_back(_g_device[it.second]);
+  return ret;
+}
+
+
 class Measure {
 public:
   typedef lemon::ListGraph::Edge argument_type;

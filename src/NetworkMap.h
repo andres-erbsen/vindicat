@@ -35,6 +35,7 @@ public:
   std::shared_ptr<Device> device(const TransportSocket&) const;
   Device& our_device() const;
   TransportSocket tsock_to(const std::string&) const;
+  std::vector< std::shared_ptr<Device> > devices();
   
   std::vector< std::tuple<
       std::weak_ptr<Device>, std::weak_ptr<Link>, std::weak_ptr<Device>
