@@ -83,7 +83,21 @@ void ControlInterface::send( const std::string& from
     sg.AppendToString(&promise_packet);
     _receive_cb( std::string(from), std::move(promise_packet) );
   } else if (tag == 3) {
+    Subgraph sg;
+    if ( ! sg.ParseFromArray(packet.data()+1, packet.size()-1) ) return;
     std::cout << "Received link promise" << std::endl;
+    for (int i=sg.devices_size(); i; --i) {
+      auto dev = std::make_shared<Device>();
+      std::shared_ptr<DeviceBusinesscard>
+        card(sg.mutable_devices()->ReleaseLast());
+      if ( ! dev->parseFrom(card) ) continue;
+      _nm.add( std::move(dev)  );
+    }
+    for (int i=sg.links_size(); i; --i) {
+      std::shared_ptr<LinkPromise> promise(sg.mutable_links()->ReleaseLast());
+      auto l = Link::fromPromise( std::move(promise), _nm);
+      if (l) _nm.add( std::move(l) );
+    }
   }
 }
 

@@ -11,9 +11,8 @@
 
 class Link {
 public:
-  Link() = default;
-  Link( const std::string&, const std::string&
-      , uint64_t, std::shared_ptr<LinkPromise>&&);
+  static std::shared_ptr<Link>
+    fromPromise(std::shared_ptr<LinkPromise>&&, const NetworkMap& nm);
   Link(const Link&) = delete;
   const Link& operator= (const Link&) = delete;
   virtual ~Link() = default;
@@ -27,6 +26,8 @@ public:
   virtual TransportSocket tsocket() const;
 
 protected:
+  Link( const std::string&, const std::string&
+      , uint64_t, std::shared_ptr<LinkPromise>&&);
   std::string _left_id, _right_id;
   std::vector< std::shared_ptr<LinkPromise> > _promises;  
   uint64_t _mtime;  
