@@ -35,7 +35,7 @@ protected:
 class DirectLink : public Link {
 public:
   DirectLink(const std::string&, TransportSocket&&, const std::string& );
-  virtual ~DirectLink() noexcept {}
+  virtual ~DirectLink() noexcept {};
   TransportSocket tsocket() const;
 private:
   TransportSocket _tsocket;
@@ -44,13 +44,13 @@ private:
 class PublicLink : public Link {
 public:
   PublicLink( const std::string&, const std::string&
-        , uint64_t, std::shared_ptr<LinkPromise>&&);
+            , uint64_t, std::shared_ptr<LinkPromise>&&);
 };
 
 class DeadLink : public Link {
 public:
   DeadLink( const std::string&, const std::string&
-      , uint64_t, std::shared_ptr<LinkPromise>&&);
+          , uint64_t, std::shared_ptr<LinkPromise>&&);
 };
 
 #endif // LINK_H_

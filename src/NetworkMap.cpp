@@ -95,12 +95,35 @@ Device& NetworkMap::our_device() const {
   return *_g_device[_our_node];
 }
 
-TransportSocket
-NetworkMap::tsock_to(const std::string& id) const {
-  auto it = _node_by_id.find(id);
-  if ( it == _node_by_id.end() ) return TransportSocket::no_socket();
-  auto edge = findEdge(_graph, _our_node, it->second);
-  return _g_link[edge]->tsocket();
+std::shared_ptr<Link> NetworkMap::link_between(const std::string& l_id,
+                                               const std::string& r_id) const {
+  auto l_it = _node_by_id.find(l_id);
+  if ( l_it == _node_by_id.end() ) return nullptr;
+  auto r_it = _node_by_id.find(r_id);
+  if ( r_it == _node_by_id.end() ) return nullptr;
+  auto edge = findEdge(_graph, l_it->second, r_it->second);
+  if (edge == lemon::INVALID) return nullptr;
+  return _g_link[edge];
+}
+
+std::shared_ptr<Link> NetworkMap::link_to(const std::string& id) const {
+  return link_between(our_device().id(), id);
+}
+
+std::vector< std::shared_ptr<Device> > NetworkMap::devices() {
+  std::vector< std::shared_ptr<Device> > ret;
+  for (lemon::ListGraph::NodeIt n(_graph); n != lemon::INVALID; ++n) {
+    ret.push_back(_g_device[n]);
+  }
+  return ret;
+}
+
+std::vector< std::shared_ptr<Device> > NetworkMap::neighbors() {
+  std::vector< std::shared_ptr<Device> > ret;
+  for (lemon::ListGraph::IncEdgeIt e(_graph, _our_node); e != lemon::INVALID; ++e) {
+    ret.push_back(_g_device[_graph.oppositeNode(_our_node, e)]);
+  }
+  return ret;
 }
 
 class Measure {

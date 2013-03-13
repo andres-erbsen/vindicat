@@ -213,7 +213,6 @@ bool Connection::forward(const std::string& packet) {
 
 void Connection::_outgoing(const std::string& packet) {
   assert(packet.size() >= 1);
-  if (packet[0] == '\xDC') return; // would collide with embedded message
   assert(_nonces);
   std::string packet_id = _nonces->next();
   assert(packet_id.size() == 8);

@@ -4,6 +4,7 @@
 #include "PacketHandler.h"
 #include "InterfaceHandler.h"
 #include "TUNInterface.h"
+#include "ControlInterface.h"
 #include "DummyInterface.h"
 #include "IPCInterface.h"
 #include "Beacon.h"
@@ -82,6 +83,10 @@ int main (int argc, char** argv) {
   }
   std::unique_ptr<Interface> ipc(new IPCInterface(our_id));
   ipc->onPacket(ihn);
+
+  std::unique_ptr<Interface> ctrl(new ControlInterface(nm, ci));
+  ctrl->onPacket(ihn);
+  ch.addInterface( std::move(ctrl) );
 
   ExitOnSIGINT sigint_handler;
   sigint_handler.enable();
