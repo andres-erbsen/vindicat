@@ -13,45 +13,28 @@ class Link {
 public:
   static std::shared_ptr<Link>
     fromPromise(std::shared_ptr<LinkPromise>&&, const NetworkMap& nm);
+  Link( const std::string&, TransportSocket&&, const std::string&);
+  Link( const std::string&, const std::string&
+      , uint64_t, bool, TransportSocket&& socket
+      , std::shared_ptr<LinkPromise>&&);
   Link(const Link&) = delete;
   const Link& operator= (const Link&) = delete;
   virtual ~Link() = default;
 
   const std::string& left_id() const;
   const std::string& right_id() const;
-  std::vector< std::weak_ptr<LinkPromise> > promises() const;  
+  std::shared_ptr<LinkPromise> promise() const;  
 
   uint64_t mtime() const;  
   virtual double measure() const;
   virtual TransportSocket tsocket() const;
 
-protected:
-  Link( const std::string&, const std::string&
-      , uint64_t, std::shared_ptr<LinkPromise>&&);
-  std::string _left_id, _right_id;
-  std::vector< std::shared_ptr<LinkPromise> > _promises;  
-  uint64_t _mtime;  
-};
-
-class DirectLink : public Link {
-public:
-  DirectLink(const std::string&, TransportSocket&&, const std::string& );
-  virtual ~DirectLink() noexcept {};
-  TransportSocket tsocket() const;
 private:
+  std::string _left_id, _right_id;
+  uint64_t _mtime;
+  bool _operational;
   TransportSocket _tsocket;
-};
-
-class PublicLink : public Link {
-public:
-  PublicLink( const std::string&, const std::string&
-            , uint64_t, std::shared_ptr<LinkPromise>&&);
-};
-
-class DeadLink : public Link {
-public:
-  DeadLink( const std::string&, const std::string&
-          , uint64_t, std::shared_ptr<LinkPromise>&&);
+  std::shared_ptr<LinkPromise> _promise; 
 };
 
 #endif // LINK_H_

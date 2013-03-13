@@ -42,27 +42,30 @@ fromPromise( std::shared_ptr<LinkPromise>&& promise, const NetworkMap& nm) {
 
   if ( !got_left || !got_right ) return nullptr;
 
-  if (info->status() == LinkInfo::PUBLIC) {
-    return std::make_shared<PublicLink>( info->left()
-                                      , info->right()
-                                      , info->time()
-                                      , std::move(promise) );
-  } else if (info->status() == LinkInfo::DEAD) {
-    return std::make_shared<DeadLink>( info->left()
-                                    , info->right()
-                                    , info->time()
-                                    , std::move(promise) );
-  } else return nullptr;
+  return std::make_shared<Link>( info->left()
+                               , info->right()
+                               , info->time()
+                               , info->status() != LinkInfo::DEAD
+                               , TransportSocket::no_socket()
+                               , std::move(promise) );
 }
 
-
 Link::Link( const std::string& left_id, const std::string& right_id
-          , uint64_t mtime, std::shared_ptr<LinkPromise>&& promise)
+          , uint64_t mtime, bool operational, TransportSocket&& tsocket
+          , std::shared_ptr<LinkPromise>&& promise)
           : _left_id(left_id)
           , _right_id(right_id)
-          , _promises{promise}
+          , _operational(operational)
           , _mtime(mtime)
+          , _tsocket(tsocket)
+          , _promise(promise)
           {}
+
+Link::Link( const std::string& left_id
+          , TransportSocket&& socket
+          , const std::string& right_id)
+ : Link( left_id, right_id, std::time(NULL), true, std::move(socket), nullptr )
+ {}
 
 const std::string& Link::left_id() const {
   return _left_id;
@@ -72,11 +75,8 @@ const std::string& Link::right_id() const {
   return _right_id;
 }
 
-std::vector< std::weak_ptr<LinkPromise> > Link::promises() const {
-  std::vector< std::weak_ptr<LinkPromise> > ret(_promises.size());
-  for (const auto& p : _promises)
-    ret.push_back( std::weak_ptr<LinkPromise>(p) );
-  return ret;
+std::shared_ptr<LinkPromise> Link::promise() const {
+  return _promise;
 }
 
 uint64_t Link::mtime() const {
@@ -84,29 +84,9 @@ uint64_t Link::mtime() const {
 }
 
 TransportSocket Link::tsocket() const {
-  return TransportSocket::no_socket();
-}
-
-double Link::measure() const {
-  return 1.0;
-}
-
-
-DirectLink::DirectLink( const std::string& left_id
-                      , TransportSocket&& ts
-                      , const std::string& right_id )
-                      : Link(left_id, right_id, std::time(NULL), nullptr) 
-                      , _tsocket(ts) 
-                      {}
-
-TransportSocket DirectLink::tsocket() const {
   return _tsocket;
 }
 
-PublicLink::PublicLink( const std::string& left_id, const std::string& right_id
-                      , uint64_t mtime, std::shared_ptr<LinkPromise>&& promise)
-                      : Link(left_id, right_id, mtime, std::move(promise) ) {}
-
-DeadLink::DeadLink( const std::string& left_id, const std::string& right_id
-                  , uint64_t mtime, std::shared_ptr<LinkPromise>&& promise)
-                  : Link(left_id, right_id, mtime, std::move(promise) ) {}
+double Link::measure() const {
+  return _operational ? 1.0 : 1e400;
+}
