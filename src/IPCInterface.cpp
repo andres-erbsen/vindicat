@@ -10,6 +10,8 @@
 #define UNIX_PATH_MAX sizeof(sockaddr_un::sun_path)
 #endif
 
+#include <iostream>
+
 IPCInterface::IPCInterface(const std::string& id)
     : _id(id) {
   if((_fd = socket(AF_UNIX, SOCK_DGRAM, 0)) == -1) {
@@ -50,6 +52,7 @@ bool IPCInterface::match(const std::string& from, std::uint8_t next_header,
 
 void IPCInterface::send(const std::string& from, std::uint8_t next_header,
                         const std::string& data) {
+  std::cout << "IPCInterface::send" << std::endl;
   sockaddr_un client;
   std::memset(&client, 0, sizeof(client));
   client.sun_family = AF_UNIX;
@@ -135,6 +138,9 @@ void IPCInterface::read_cb(ev::io&, int) {
           send(from, "\x01");
           break;
         }
+        std::cout << "IPCInterface::read_cb(\"\\x01...\\x";
+        std::cout << std::hex << request.next_header() << std::dec;
+        std::cout << "\")" << std::endl;
         if(request.next_header() == IPPROTO_TCP &&
             (!request.has_tcp() || request.tcp().port() <= 0 ||
                request.tcp().port() > 0xFFFF)) {
@@ -161,6 +167,7 @@ void IPCInterface::read_cb(ev::io&, int) {
 	      break;
       }
       case 0x02: {  // Packet
+        std::cout << "IPCInterface::read_cb(\"\\x02...\")" << std::endl;
         libvindicat::Packet packet;
         if(packet.ParseFromArray(buf+1, buf_len-1)) {
           _receive_cb(std::string(packet.identifier()),
