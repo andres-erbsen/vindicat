@@ -77,6 +77,10 @@ int main (int argc, char** argv) {
   ctrl->onPacket(ihn);
   ch.addInterface( std::move(ctrl) );
 
+  std::unique_ptr<Interface> ipc(new IPCInterface(our_id));
+  ipc->onPacket(ihn);
+  ch.addInterface(std::move(ipc));
+
   std::unique_ptr<Interface> tun = TUNInterface::open(our_id);
   if (tun) {
     tun->onPacket(ihn);
@@ -85,9 +89,6 @@ int main (int argc, char** argv) {
     std::cerr << "TUN interface creation failed" << std::endl;
     ch.addInterface( std::unique_ptr<Interface>(new DummyInterface) );
   }
-  std::unique_ptr<Interface> ipc(new IPCInterface(our_id));
-  ipc->onPacket(ihn);
-  ch.addInterface(std::move(ipc));
 
   ExitOnSIGINT sigint_handler;
   sigint_handler.enable();

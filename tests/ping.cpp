@@ -21,22 +21,21 @@ int main(int argc, char *argv[]) {
   std::string server_port = toString(std::uniform_int_distribution<std::uint16_t>(1025)(rand));
 
   if((server[0] = fork()) == 0) {
-    char *args[] = {argv[1], "-s", "::1", const_cast<char*>(server_port.c_str()), nullptr};
-    execv(argv[1], args);
+    execl(argv[1], argv[1], "-s", "::1", server_port.c_str(), nullptr);
     throw std::system_error(errno, std::system_category());
   } else if(server[0] == -1) {
     throw std::system_error(errno, std::system_category());
   }
 
   if((server[1] = fork()) == 0) {
-    char *args[] = {argv[1], "-c", "::1", const_cast<char*>(server_port.c_str()), nullptr};
-    execv(argv[1], args);
+    execl(argv[1], argv[1], "-c", "::1", server_port.c_str(), nullptr);
     throw std::system_error(errno, std::system_category());
   } else if(server[1] == -1) {
     throw std::system_error(errno, std::system_category());
   }
 
-  sleep(2);
+  sleep(3);
+
   for(auto pid : server)
     if(kill(pid, 0) == -1)
       throw std::system_error(errno, std::system_category());
@@ -57,7 +56,7 @@ int main(int argc, char *argv[]) {
     server_socket->sendto(conn_client.identifier(), "PING");
     client_socket->sendto(conn_server.identifier(), "PING");
 
-    for(int i = 0; (i < 2) && !(from_server && from_client); i++) {
+    while(!(from_server && from_client)) {
       conn_server.read();
       conn_client.read();
     }
