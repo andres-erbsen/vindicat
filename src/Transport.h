@@ -8,7 +8,10 @@
 class TransportSocket
 {
 public:
-  TransportSocket() = default;
+  TransportSocket(const TransportSocket&) = default;
+  TransportSocket(TransportSocket&&) = default;
+  TransportSocket& operator=(const TransportSocket&) = default;
+  TransportSocket& operator=(TransportSocket&&) = default;
   typedef std::function<bool(const std::string&)> send_function;
   TransportSocket(send_function, const std::string&);
   bool send(const std::string&) const;

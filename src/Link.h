@@ -11,7 +11,6 @@
 
 class Link {
 public:
-  Link() = default;
   static std::shared_ptr<Link>
     fromPromise(std::shared_ptr<LinkPromise>&&, const NetworkMap& nm);
   Link( const std::string&, TransportSocket&&, const std::string&);

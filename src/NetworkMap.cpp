@@ -73,8 +73,10 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
     }
     if (link->promise()) _new_edges.insert(edge);
     assert(link.unique());
-    if (! _g_link[edge]) _g_link[edge].reset(new Link);
-    _g_link[edge]->merge(std::move(*link));
+    if(!_g_link[edge])
+      _g_link[edge] = link;
+    else
+      _g_link[edge]->merge(std::move(*link));
     return 1;
   } else {
     return 0;
