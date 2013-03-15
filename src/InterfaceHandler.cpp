@@ -1,8 +1,6 @@
 #include "InterfaceHandler.h"
 #include "Connection.h"
 
-#include <iostream>
-
 InterfaceHandler::InterfaceHandler
   (CryptoIdentity& ci, NetworkMap& nm, ConnectionPool& cp, ConnectionHandler& ch)
   : _ci(ci)
@@ -27,8 +25,6 @@ static std::string hex(const std::string& input) {
 }
 
 void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
-  std::cerr << "To: " << hex(to) << " (" << packet.size() << " bytes)\n"
-    << packet << "\n" << std::endl;
   auto it = _cp.find(to);
   if (it != _cp.end() ) {
     it->second->forward(packet);

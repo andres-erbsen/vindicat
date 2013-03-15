@@ -73,6 +73,10 @@ int main (int argc, char** argv) {
   Beacon bcn(3,ci,transports);
   bcn.enable();
 
+  std::unique_ptr<Interface> ctrl(new ControlInterface(nm, ci));
+  ctrl->onPacket(ihn);
+  ch.addInterface( std::move(ctrl) );
+
   std::unique_ptr<Interface> tun = TUNInterface::open(our_id);
   if (tun) {
     tun->onPacket(ihn);
@@ -84,10 +88,6 @@ int main (int argc, char** argv) {
   std::unique_ptr<Interface> ipc(new IPCInterface(our_id));
   ipc->onPacket(ihn);
   ch.addInterface(std::move(ipc));
-
-  std::unique_ptr<Interface> ctrl(new ControlInterface(nm, ci));
-  ctrl->onPacket(ihn);
-  ch.addInterface( std::move(ctrl) );
 
   ExitOnSIGINT sigint_handler;
   sigint_handler.enable();

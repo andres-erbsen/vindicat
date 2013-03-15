@@ -12,6 +12,7 @@ class Link;
 #include <vector>
 #include <tuple>
 #include <unordered_map>
+#include <set>
 
 typedef std::vector< std::tuple<
       std::weak_ptr<Link>, std::weak_ptr<Device>
@@ -39,9 +40,9 @@ public:
   std::vector< std::shared_ptr<Device> > devices();
   std::vector< std::shared_ptr<Device> > neighbors();
   
-  std::vector< std::tuple<
-      std::weak_ptr<Device>, std::weak_ptr<Link>, std::weak_ptr<Device>
-    > > shake();
+  typedef std::tuple< std::shared_ptr<Device>, std::shared_ptr<Link>,
+                      std::shared_ptr<Device> > EdgeWithEnds;
+  std::vector<EdgeWithEnds> shake();
   // Return the links and the respective devices that were added to the map
   // Remove and discard all that we tried to add but had no room for
 
@@ -52,6 +53,7 @@ private:
   lemon::ListGraph _graph;
   lemon::ListGraph::NodeMap<std::shared_ptr<Device> > _g_device;
   lemon::ListGraph::EdgeMap<std::shared_ptr<Link> > _g_link;
+  std::set<lemon::ListGraph::Edge> _new_edges;
   PrefixMap<lemon::ListGraph::Node> _node_by_id;
   std::unordered_map<TransportSocket, lemon::ListGraph::Node> _node_by_socket;
 

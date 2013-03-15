@@ -83,11 +83,28 @@ void ControlInterface::send( const std::string& from
     sg.AppendToString(&promise_packet);
     _receive_cb( std::string(from), std::move(promise_packet) );
   } else if (tag == 3) {
+    Subgraph sg;
+    if ( ! sg.ParseFromArray(packet.data()+1, packet.size()-1) ) return;
     std::cout << "Received link promise" << std::endl;
+    for (int i=sg.devices_size(); i; --i) {
+      auto dev = std::make_shared<Device>();
+      std::shared_ptr<DeviceBusinesscard>
+        card(sg.mutable_devices()->ReleaseLast());
+      if ( ! dev->parseFrom(card) ) continue;
+      _nm.add( std::move(dev)  );
+    }
+    for (int i=sg.links_size(); i; --i) {
+      std::shared_ptr<LinkPromise> promise(sg.mutable_links()->ReleaseLast());
+      auto l = Link::fromPromise( std::move(promise), _nm);
+      if (l) {
+        _nm.add( std::move(l) );
+      }
+    }
   }
 }
 
 void ControlInterface::operator()(ev::timer&, int) {
+  // maintain links with neighbors
   LinkInfo info;
   info.set_status( LinkInfo::PUBLIC      );
   info.set_left  ( _nm.our_device().id() );
@@ -96,7 +113,7 @@ void ControlInterface::operator()(ev::timer&, int) {
   proposal.add_left_sig_algos( enumval(SigAlgo::ED25519) );
   proposal.add_left_sigs();
   for (const auto& dev : _nm.neighbors()) {
-    if ( _nm.link_to(dev->id())->promises().empty() ) { // negotiate
+    if ( _nm.link_to(dev->id())->promise() == nullptr ) { // negotiate
       info.set_right ( dev->id() );
       info.SerializeToString( proposal.mutable_link_info_msg() );
       _ci.sign( proposal.link_info_msg()
@@ -109,5 +126,23 @@ void ControlInterface::operator()(ev::timer&, int) {
       _receive_cb( std::string(dev->id()), std::move(proposal_packet) );
     } else { // TODO: ping and check connectivity
     }
+  }
+
+  // share the new link descriptions we have received
+  Subgraph sg;
+  sg.add_devices();
+  sg.add_devices();
+  sg.add_links();
+  for (const NetworkMap::EdgeWithEnds& tup : _nm.shake()) {
+    *sg.mutable_devices(0) = *std::get<0>(tup)->card();
+    *sg.mutable_links(0) = *std::get<1>(tup)->promise();
+    *sg.mutable_devices(1) = *std::get<2>(tup)->card();
+    std::string promise_packet(2, '\3');
+    promise_packet[0] = VC_CONTROL_PROTOCOL;
+    sg.AppendToString(&promise_packet);
+    for (const auto& dev : _nm.neighbors()) {
+      _receive_cb( std::string(dev->id()), std::move(promise_packet) );
+    }
+    std::cout << "Shared an interesting link" << std::endl;
   }
 }
