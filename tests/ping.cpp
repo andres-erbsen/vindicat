@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
   std::string server_port = toString(std::uniform_int_distribution<std::uint16_t>(1025)(rand));
 
   if((server[0] = fork()) == 0) {
+    sleep(1);
     execl(argv[1], argv[1], "-s", "::1", server_port.c_str(), nullptr);
     throw std::system_error(errno, std::system_category());
   } else if(server[0] == -1) {
@@ -34,13 +35,16 @@ int main(int argc, char *argv[]) {
     throw std::system_error(errno, std::system_category());
   }
 
-  sleep(3);
+  sleep(12);
 
   for(auto pid : server)
     if(kill(pid, 0) == -1)
       throw std::system_error(errno, std::system_category());
 
   try {
+    unlink("/tmp/test1");
+    unlink("/tmp/test2");
+    std::cout << "connecting" << std::endl;
     libvindicat::Connection conn_server("/tmp/vindicat."+toString(server[0]), "/tmp/test1"), conn_client("/tmp/vindicat."+toString(server[1]), "/tmp/test2");
 
     libvindicat::RawSocket *server_socket = conn_server.forward(0xFE);

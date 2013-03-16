@@ -42,9 +42,9 @@ bool IPCInterface::match(const std::string& from, std::uint8_t next_header,
   std::uint16_t port = reinterpret_cast<const std::uint16_t*>(data.data())[1];
   switch(next_header) {
     case IPPROTO_TCP:
-      return _tcp.count(port) > 0;
+      return data.size() >= 8 && _tcp.count(port) > 0;
     case IPPROTO_UDP:
-      return _udp.count(port) > 0;
+      return data.size() >= 8 && _udp.count(port) > 0;
     default:
       return _clients.count(next_header) > 0;
   }
