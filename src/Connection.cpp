@@ -156,7 +156,7 @@ void Connection::handle_auth(CryptoIdentity& ci, ConnectionHandler& ch, const st
   if ( ! naclsession.decrypt(remaining, nonce, message) ) return;
 
   // their main enc key should vouch for the connection enc key
-  auto vouchlen = crypto_box_PUBLICKEYBYTES + crypto_box_MACBYTES;
+  std::size_t vouchlen = crypto_box_PUBLICKEYBYTES + crypto_box_MACBYTES;
   if (message.size() < vouchlen) return;
   std::string their_main_pk;
   Device dev;

@@ -6,6 +6,7 @@
 #include "TUNInterface.h"
 #include "ControlInterface.h"
 #include "DummyInterface.h"
+#include "IPCInterface.h"
 #include "Beacon.h"
 #include "LinkLocalDiscovery.h"
 #include "ConnectionHandler.h"
@@ -75,6 +76,10 @@ int main (int argc, char** argv) {
   std::unique_ptr<Interface> ctrl(new ControlInterface(nm, ci));
   ctrl->onPacket(ihn);
   ch.addInterface( std::move(ctrl) );
+
+  std::unique_ptr<Interface> ipc(new IPCInterface(our_id));
+  ipc->onPacket(ihn);
+  ch.addInterface(std::move(ipc));
 
   std::unique_ptr<Interface> tun = TUNInterface::open(our_id);
   if (tun) {

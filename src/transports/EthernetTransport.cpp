@@ -56,16 +56,18 @@ EthernetTransport::EthernetTransport(const std::string& d): _fd{-1, -1}
 
   if(pcap_compile(_pcap, &_filter, buf, false, PCAP_NETMASK_UNKNOWN) == -1)
   {
-    pcap_perror(_pcap, "pcap_compile");
+    std::cerr << "pcap_compile: " << pcap_geterr(_pcap) << std::endl;
     std::abort();
   }
   if(pcap_setfilter(_pcap, &_filter) == -1)
   {
-    pcap_perror(_pcap, "pcap_setfilter");
+    std::cerr << "pcap_setfilter: " << pcap_geterr(_pcap) << std::endl;;
     std::abort();
   }
 
+#ifdef HAVE_PCAP_GET_SELECTABLE_FD
   _fd[0] = pcap_get_selectable_fd(_pcap);
+#endif
   if(_fd[0] == -1 && pipe(_fd) == -1)
   {
     std::perror("pipe");
@@ -131,7 +133,7 @@ void EthernetTransport::read_cb(ev::io& /*watcher*/, int /*revents*/)
   {
     int res = pcap_next_ex(_pcap, &header, &packet);
     if(res == -1)
-      pcap_perror(_pcap, "pcap_next_ex");
+      std::cerr << "pcap_next_ex" << pcap_geterr(_pcap) << std::endl;
     if(res != 1)
       return;
   }

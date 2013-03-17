@@ -14,9 +14,9 @@ static inline std::string crypto_box(const std::string &m,
     throw "incorrect nonce length";
   std::size_t mlen = m.size() + crypto_box_ZEROBYTES;
   unsigned char mpad[mlen];
-  for (int i = 0; i < crypto_box_ZEROBYTES; ++i)
+  for (std::size_t i = 0; i < crypto_box_ZEROBYTES; ++i)
     mpad[i] = 0;
-  for (int i = crypto_box_ZEROBYTES; i < mlen; ++i)
+  for (std::size_t i = crypto_box_ZEROBYTES; i < mlen; ++i)
     mpad[i] = m[i - crypto_box_ZEROBYTES];
   unsigned char cpad[mlen];
   crypto_box(cpad, mpad, mlen,
@@ -50,9 +50,9 @@ static inline bool crypto_box_open_to(const std::string &c,
     throw "incorrect nonce length";
   std::size_t clen = c.size() + crypto_box_BOXZEROBYTES;
   unsigned char cpad[clen];
-  for (int i = 0; i < crypto_box_BOXZEROBYTES; ++i)
+  for (std::size_t i = 0; i < crypto_box_BOXZEROBYTES; ++i)
     cpad[i] = 0;
-  for (int i = crypto_box_BOXZEROBYTES; i < clen; ++i)
+  for (std::size_t i = crypto_box_BOXZEROBYTES; i < clen; ++i)
     cpad[i] = c[i - crypto_box_BOXZEROBYTES];
   unsigned char mpad[clen];
   if (crypto_box_open(mpad, cpad, clen,
