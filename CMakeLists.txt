@@ -34,7 +34,7 @@ if(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
-include_directories(${PROJECT_SOURCE_DIR}/lib/libev)
+include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/lib/libev)
 add_definitions(-DEV_STANDALONE)
 include_directories(${PROJECT_SOURCE_DIR}/lib/ed25519-donna)
 include_directories(${PROJECT_SOURCE_DIR}/lib/keccak)

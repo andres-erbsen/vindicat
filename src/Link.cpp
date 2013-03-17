@@ -55,8 +55,8 @@ Link::Link( const std::string& left_id, const std::string& right_id
           , std::shared_ptr<LinkPromise>&& promise)
           : _left_id(left_id)
           , _right_id(right_id)
-          , _operational(operational)
           , _mtime(mtime)
+          , _operational(operational)
           , _tsocket(std::move(tsocket))
           , _promise(std::move(promise))
           {}

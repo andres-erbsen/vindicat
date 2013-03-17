@@ -37,7 +37,8 @@ void libvindicat::UDPSocket::set_callback(
 
 void libvindicat::UDPSocket::sendto(const std::string& to, std::uint16_t port,
                                     const std::string& payload) const {
-  std::uint16_t header[4] = {_port, port, sizeof(header)+payload.size(), 0};
+  std::uint16_t header[4] = {_port, port,
+      static_cast<std::uint16_t>(sizeof(header)+payload.size()), 0};
 
   // Checksum:
   // Source IP:

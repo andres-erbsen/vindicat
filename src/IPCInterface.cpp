@@ -37,7 +37,7 @@ IPCInterface::~IPCInterface() {
   unlink(_addr.sun_path);
 }
 
-bool IPCInterface::match(const std::string& from, std::uint8_t next_header,
+bool IPCInterface::match(const std::string&, std::uint8_t next_header,
                          const std::string& data) {
   switch(next_header) {
     case IPPROTO_TCP:
@@ -45,7 +45,7 @@ bool IPCInterface::match(const std::string& from, std::uint8_t next_header,
         _tcp.count(reinterpret_cast<const std::uint16_t*>(data.data())[1]) > 0;
     case IPPROTO_UDP:
       return data.size() >= 8 &&
-        _udp.count(reinterpret_cast<const std::uint16_t*>(data.data()[1])) > 0;
+        _udp.count(reinterpret_cast<const std::uint16_t*>(data.data())[1]) > 0;
     default:
       return _clients.count(next_header) > 0;
   }
