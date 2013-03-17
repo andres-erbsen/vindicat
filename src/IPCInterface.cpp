@@ -39,12 +39,13 @@ IPCInterface::~IPCInterface() {
 
 bool IPCInterface::match(const std::string& from, std::uint8_t next_header,
                          const std::string& data) {
-  std::uint16_t port = reinterpret_cast<const std::uint16_t*>(data.data())[1];
   switch(next_header) {
     case IPPROTO_TCP:
-      return data.size() >= 8 && _tcp.count(port) > 0;
+      return data.size() >= 8 &&
+        _tcp.count(reinterpret_cast<const std::uint16_t*>(data.data())[1]) > 0;
     case IPPROTO_UDP:
-      return data.size() >= 8 && _udp.count(port) > 0;
+      return data.size() >= 8 &&
+        _udp.count(reinterpret_cast<const std::uint16_t*>(data.data()[1])) > 0;
     default:
       return _clients.count(next_header) > 0;
   }
@@ -52,7 +53,6 @@ bool IPCInterface::match(const std::string& from, std::uint8_t next_header,
 
 void IPCInterface::send(const std::string& from, std::uint8_t next_header,
                         const std::string& data) {
-  std::cout << "IPCInterface::send" << std::endl;
   sockaddr_un client;
   std::memset(&client, 0, sizeof(client));
   client.sun_family = AF_UNIX;
@@ -68,15 +68,15 @@ void IPCInterface::send(const std::string& from, std::uint8_t next_header,
     case IPPROTO_TCP:
       for(auto i = _tcp.find(port); i != _tcp.end() && i->first == port; i++) {
         std::memset(client.sun_path, 0, UNIX_PATH_MAX);
-	std::memcpy(client.sun_path, i->second.data(), i->second.size());
+        std::memcpy(client.sun_path, i->second.data(), i->second.size());
         send(client, message);
       }
       break;
     case IPPROTO_UDP:
       for(auto i = _udp.find(port); i != _udp.end() && i->first == port; i++) {
         std::memset(client.sun_path, 0, UNIX_PATH_MAX);
-	std::memcpy(client.sun_path, i->second.data(), i->second.size());
-	send(client, message);
+        std::memcpy(client.sun_path, i->second.data(), i->second.size());
+        send(client, message);
       }
       break;
     default:
@@ -138,9 +138,6 @@ void IPCInterface::read_cb(ev::io&, int) {
           send(from, "\x01");
           break;
         }
-        std::cout << "IPCInterface::read_cb(\"\\x01...\\x";
-        std::cout << std::hex << request.next_header() << std::dec;
-        std::cout << "\")" << std::endl;
         if(request.next_header() == IPPROTO_TCP &&
             (!request.has_tcp() || request.tcp().port() <= 0 ||
                request.tcp().port() > 0xFFFF)) {
@@ -167,7 +164,6 @@ void IPCInterface::read_cb(ev::io&, int) {
 	      break;
       }
       case 0x02: {  // Packet
-        std::cout << "IPCInterface::read_cb(\"\\x02...\")" << std::endl;
         libvindicat::Packet packet;
         if(packet.ParseFromArray(buf+1, buf_len-1)) {
           _receive_cb(std::string(packet.identifier()),
@@ -200,26 +196,26 @@ void IPCInterface::read_cb(ev::io&, int) {
             		break;
       	      }
 	          break;
-          }
-	  case IPPROTO_UDP: {
+          } 
+          case IPPROTO_UDP: {
             for(auto i = _udp.find(request.udp().port());
                 i->first == request.udp().port() && i != _udp.end(); i++)
               if(i->second == client_path) {
                 _udp.erase(i);
-		break;
-	      }
+                break;
+              }
             break;
           }
-	  default: {
+          default: {
             for(auto i = _clients.find(request.next_header());
                 i->first == request.next_header() && i != _clients.end(); i++)
               if(i->second == client_path) {
-	        _clients.erase(i);
-		break;
+                _clients.erase(i);
+                break;
               }
-	  }
-	}
-	break;
+          }
+        }
+        break;
       }
     }
   }
