@@ -65,7 +65,9 @@ EthernetTransport::EthernetTransport(const std::string& d): _fd{-1, -1}
     std::abort();
   }
 
+#ifdef HAVE_PCAP_GET_SELECTABLE_FD
   _fd[0] = pcap_get_selectable_fd(_pcap);
+#endif
   if(_fd[0] == -1 && pipe(_fd) == -1)
   {
     std::perror("pipe");

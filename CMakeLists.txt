@@ -17,6 +17,9 @@ find_package(Sodium REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(LEMON REQUIRED)
 find_package(PCAP REQUIRED)
+if(HAVE_PCAP_GET_SELECTABLE_FD)
+  add_definitions(-DHAVE_PCAP_GET_SELECTABLE_FD)
+endif()
 
 # Doxygen documentation
 find_package(Doxygen)
