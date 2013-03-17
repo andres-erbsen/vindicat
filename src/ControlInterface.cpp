@@ -46,6 +46,7 @@ bool parse_all_or_nothing(const std::string& ss, LinkInfo& replica) {
 void ControlInterface::send( const std::string& from
                            , uint8_t protocol
                            , const std::string& packet ) {
+  assert(protocol == VC_CONTROL_PROTOCOL);
   if (packet.size() < 1) return;
   uint8_t tag = packet[0];
   if (0) {

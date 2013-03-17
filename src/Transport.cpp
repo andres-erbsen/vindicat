@@ -27,7 +27,7 @@ std::hash<std::string>::result_type TransportSocket::hash() const
 
 TransportSocket TransportSocket::no_socket()
 {
-  return TransportSocket([](const std::string&){return false;}, "");
+  return TransportSocket([](const std::string&){return false;}, "NO-SOCKET");
 }
 
 void Transport::onPacket(packet_callback cb)

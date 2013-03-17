@@ -1,4 +1,5 @@
 #include "Link.h"
+#include <limits>
 
 std::shared_ptr<Link> Link::
 fromPromise( std::shared_ptr<LinkPromise>&& promise, const NetworkMap& nm) {
@@ -54,10 +55,10 @@ Link::Link( const std::string& left_id, const std::string& right_id
           , std::shared_ptr<LinkPromise>&& promise)
           : _left_id(left_id)
           , _right_id(right_id)
-          , _operational(operational)
           , _mtime(mtime)
-          , _tsocket(tsocket)
-          , _promise(promise)
+          , _operational(operational)
+          , _tsocket(std::move(tsocket))
+          , _promise(std::move(promise))
           {}
 
 Link::Link( const std::string& left_id
@@ -102,5 +103,5 @@ TransportSocket Link::tsocket() const {
 }
 
 double Link::measure() const {
-  return _operational ? 1.0 : 1e400;
+  return _operational ? 1.0 : std::numeric_limits<double>::infinity();
 }

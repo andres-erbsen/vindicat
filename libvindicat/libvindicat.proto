@@ -1,0 +1,30 @@
+option optimize_for = LITE_RUNTIME;
+package libvindicat;
+
+message Packet {
+  required bytes identifier = 1;
+  required int32 next_header = 2;
+  required bytes payload = 3;
+}
+
+message ConfigurationResponse {
+  optional bytes ipv6_prefix = 1 [default = "\x04"];
+  optional int32 ipv6_prefix_length = 2 [default = 8];
+  required bytes local_identifier = 3;
+}
+
+message ForwardRequest {
+  required int32 next_header = 1;
+
+  // if `next_header' is IPPROTO_TCP (6) this is required
+  message TCP {
+    required int32 port = 1;
+  }
+  optional TCP tcp = 1006;
+
+  // if `next_header' is IPPROTO_UDP (17) this is required
+  message UDP {
+    required int32 port = 1;
+  }
+  optional UDP udp = 1017;
+}

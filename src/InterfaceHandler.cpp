@@ -9,21 +9,6 @@ InterfaceHandler::InterfaceHandler
   , _ch(ch)
   {}
 
-static std::string hex(const std::string& input) {
-    static const char* const lut = "0123456789abcdef";
-    size_t len = input.length();
-
-    std::string output;
-    output.reserve(2 * len);
-    for (size_t i = 0; i < len; ++i)
-    {
-        const unsigned char c = input[i];
-        output.push_back(lut[c >> 4]);
-        output.push_back(lut[c & 15]);
-    }
-    return output;
-}
-
 void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
   auto it = _cp.find(to);
   if (it != _cp.end() ) {
