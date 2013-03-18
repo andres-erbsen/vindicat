@@ -65,8 +65,9 @@ target_link_libraries(vindicat ${PROTOBUF_LITE_LIBRARIES})
 
 # Testing
 enable_testing()
-add_custom_target(build_tests)
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -V)
 ADD_EXECUTABLE(Ping EXCLUDE_FROM_ALL tests/ping.cpp)
 target_link_libraries(Ping vindicat)
 add_test(NAME Ping COMMAND Ping $<TARGET_FILE:vindicat-server>)
-add_dependencies(build_tests Ping)
+add_dependencies(Ping vindicat-server)
+add_dependencies(check Ping)
