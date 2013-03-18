@@ -77,6 +77,7 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
       _g_link[edge] = link;
     else
       _g_link[edge]->merge(std::move(*link));
+    assert( (left == _our_node || right == _our_node) == (! (_g_link[edge]->tsocket() == TransportSocket::no_socket())) );
     return 1;
   } else {
     return 0;
@@ -173,16 +174,14 @@ Path NetworkMap::path_to(const Device& dev) const {
 
   // Convert the path to a globally meaningful format
   ret.reserve(path.length());
-  lemon::ListGraph::Node prev = _our_node;
-  lemon::ListGraph::Node next;
-  lemon::ListGraph::Edge hop;
+  lemon::ListGraph::Node node = _our_node;
   while ( !path.empty() ) {
-    hop = path.front();
-    next = _graph.oppositeNode(prev, hop);
-    ret.push_back( std::make_tuple(_g_link[hop], _g_device[next]) );
+    lemon::ListGraph::Edge hop = path.front();
+    node = _graph.oppositeNode(node, hop);
+    ret.push_back( std::make_tuple(_g_link[hop], _g_device[node]) );
     path.eraseFront();
   }
-  assert(next == t);
+  assert(node == t);
   assert(path.empty());
   return ret;
 }
