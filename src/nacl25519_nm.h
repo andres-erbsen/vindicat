@@ -17,6 +17,7 @@ public:
   void pk(const std::string& pk);
   std::string pk();
   std::string our_pk();
+  std::string our_sk();
   bool nonce_bit();
 
   std::string encrypt(const std::string&, const std::string&) const;

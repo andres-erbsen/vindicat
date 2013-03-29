@@ -77,8 +77,31 @@ void PacketHandler::operator()(TransportSocket&& ts, std::string&& packet) {
 
     if (hop.type() == Hop::UP) { // Connection to us, not through us
       Connection::handle_request(_ci, rq, hop, route_id, ts);
-    }
+    } else if (hop.type() == Hop::SIMPLE) {
+      auto l = _nm.device(ts);
+      auto r = _nm.device(hop.next());
+      if (!l || !r) return;
+      uint64_t route_id_ = *reinterpret_cast<const uint64_t*>(route_id.data());
+      auto fwd_l = std::make_shared<SimpleForwarding>(_nm, route_id_);
+      auto fwd_r = std::make_shared<SimpleForwarding>(_nm, route_id_);
+      Forwarding::pair(fwd_l, fwd_r);
+      l->addForwarding(fwd_l);
+      r->addForwarding(fwd_r);
 
+      if (hop.has_enc_algo()) {
+        rq.set_enc_algo(hop.enc_algo());
+      }
+      if (hop.has_sender_pubkey()) {
+        rq.set_allocated_sender_pubkey(hop.release_sender_pubkey());
+      }
+      if (hop.has_details()) {
+        rq.set_allocated_details(hop.release_details());
+      }
+      packet.resize(1+8+8);
+      rq.AppendToString(&packet);        
+      _nm.link_to(hop.next())->tsocket().send( std::move(packet) );
+      return;
+    }
 
   } else if (tag == 4) { // "Hey, it's /me/ here"
     auto dev = std::make_shared<Device>();

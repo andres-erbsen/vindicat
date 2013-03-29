@@ -28,6 +28,7 @@ public:
 
     void detatch() override;
     bool forward_out(const std::string&) override;
+    bool connection_forward(const std::string&);
     bool forward(const std::string&) override;
 
   void request();

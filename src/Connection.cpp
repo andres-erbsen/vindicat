@@ -10,8 +10,8 @@ Connection::Connection(CryptoIdentity& ci, Path path, ConnectionPool& cp, Connec
   , _ci(&ci)
   , _cp(cp)
   , _ch(ch)
-  , _naclsession( std::get<1>(path.at(path.size()-1)) .lock()->enc_key() )
-  , _their_id(      std::get<1>(path.at(path.size()-1)) .lock()->id() )
+  , _naclsession( std::get<1>(path.at(path.size()-1))->enc_key() )
+  , _their_id(      std::get<1>(path.at(path.size()-1))->id() )
   , _route_id( bytes( id() ) )
   , _authenticated(false)
   , _request_packet(new std::string)
@@ -27,15 +27,22 @@ Connection::Connection(CryptoIdentity& ci, Path path, ConnectionPool& cp, Connec
   RoutingRequest rq;
   rq.set_enc_algo(enumval(PkencAlgo::CURVE25519XSALSA20POLY1305));
   rq.set_sender_pubkey(_naclsession.our_pk());
+  Hop hop;
   {
-    Hop hop;
     hop.set_type(Hop::UP);
     hop.set_nonce_algo(Hop::XTEA32);
     rq.set_details(_naclsession.encrypt(hop.SerializeAsString(), nonce));
   }
 
+  hop.Clear();
+  hop.set_type(Hop::SIMPLE);
+  hop.set_next(_their_id);
   for (signed int i=path.size()-2; i>=0; --i) {
-    assert(0); /// \TODO forwarding requests not supported yet
+    auto dev = std::get<1>(path[i]);
+    hop.set_details(rq.details());
+    rq.set_details( crypto_box( hop.SerializeAsString(), nonce,
+                                dev->enc_key(), _naclsession.our_sk()) );
+    hop.set_next(dev->id());
   }
 
   rq.AppendToString(_request_packet.get());
@@ -199,7 +206,7 @@ Connection::Connection(nacl25519_nm&& ns, const std::string& their_id
                              , _naclsession.nonce_bit()) )
   {}
 
-bool Connection::forward(const std::string& packet) {
+bool Connection::connection_forward(const std::string& packet) {
   if ( ! _authenticated ) _packet_queue->push_back(packet);
   else _outgoing(packet);
   return 1;
@@ -242,4 +249,8 @@ bool Connection::forward_out(const std::string& packet) {
 
 void Connection::detatch() {
   _cp.erase(_their_id);
+}
+
+bool Connection::forward(const std::string&) {
+  return 0;
 }

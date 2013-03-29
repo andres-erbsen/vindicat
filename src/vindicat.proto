@@ -46,7 +46,7 @@ message RoutingRequest { // follows static headers
 }
 
 message Hop {
-	enum Type { UP = 1; SIMPLE_ONEWAY = 2; SIMPLE_TWOWAY = 3; }
+	enum Type { UP = 1; SIMPLE = 2; }
 	  required Type type = 1;
 	optional bytes next = 2; // next device's identifier
 	optional uint32 enc_algo = 3; // RoutingRequest.1 for next packet

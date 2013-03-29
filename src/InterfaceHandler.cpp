@@ -12,7 +12,7 @@ InterfaceHandler::InterfaceHandler
 void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
   auto it = _cp.find(to);
   if (it != _cp.end() ) {
-    it->second->forward(packet);
+    it->second->connection_forward(packet);
   } else {
     Path path;
     {
@@ -24,7 +24,7 @@ void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
     auto conn = std::make_shared<Connection>(_ci, path, _cp, _ch);
     
     auto rfwd = std::make_shared<SimpleForwarding>(_nm, conn->id());
-    auto next_dev = std::get<1>(path.at(0)).lock();
+    auto next_dev = std::get<1>(path.at(0));
     next_dev->addForwarding(rfwd);
 
     Forwarding::pair(conn, rfwd);

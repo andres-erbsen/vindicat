@@ -33,6 +33,10 @@ std::string nacl25519_nm::our_pk() {
   return std::string((char *) _our_pk, crypto_box_PUBLICKEYBYTES);
 }
 
+std::string nacl25519_nm::our_sk() {
+  return std::string((char *) _sk, crypto_box_SECRETKEYBYTES);
+}
+
 bool nacl25519_nm::nonce_bit() {
   return std::memcmp(_our_pk, _pk, crypto_box_PUBLICKEYBYTES) > 0;
 }

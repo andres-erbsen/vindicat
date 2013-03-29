@@ -6,6 +6,8 @@
 #include <utility>
 #include <assert.h>
 
+#include <iostream>
+
 NetworkMap::NetworkMap(std::shared_ptr<Device>&& our_dev)
   : _g_device(_graph)
   , _g_link  (_graph)
@@ -77,6 +79,11 @@ bool NetworkMap::add(std::shared_ptr<Link>&& link) {
       _g_link[edge] = link;
     else
       _g_link[edge]->merge(std::move(*link));
+		std::cout << "Link between " << _graph.id(left) << " and " << _graph.id(right)
+			        << " should be " << _g_link[edge].get() << std::endl;
+		std::cout << "Link between " << _graph.id(left) << " and " << _graph.id(right)
+			        << " is now seen as "
+							<< link_between( link->left_id(), link->right_id() ).get() << std::endl;
     assert( (left == _our_node || right == _our_node) == (! (_g_link[edge]->tsocket() == TransportSocket::no_socket())) );
     return 1;
   } else {

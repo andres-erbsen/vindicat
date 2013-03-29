@@ -15,7 +15,7 @@ class Link;
 #include <set>
 
 typedef std::vector< std::tuple<
-      std::weak_ptr<Link>, std::weak_ptr<Device>
+      std::shared_ptr<Link>, std::shared_ptr<Device>
     > > Path;
 
 // THREE RESPONSIBILITIES
