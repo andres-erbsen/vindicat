@@ -1,5 +1,6 @@
 #include <ctime>
 #include <iostream>
+#include <random>
 #include "ControlInterface.h"
 #include "Util.h"
 #include "Link.h"
@@ -10,11 +11,18 @@
 const uint8_t VC_CONTROL_PROTOCOL = 0xDC;
 const int VC_MAINTENANCE_INTERVAL = 10;
 
+static inline double next_maintenance() {
+  std::random_device device;
+  std::normal_distribution<double> distrib(VC_MAINTENANCE_INTERVAL,
+                                        VC_MAINTENANCE_INTERVAL/4);
+  return std::max(0.0, std::min(distrib(device), 1.0));
+}
+
 ControlInterface::ControlInterface(NetworkMap& nm, CryptoIdentity& ci)
   : _nm(nm)
   , _ci(ci)
 {
-  _w.set(0.00001,VC_MAINTENANCE_INTERVAL);
+  _w.set(0.00001, next_maintenance());
   _w.set(this);
   _w.start();
 }
@@ -104,7 +112,10 @@ void ControlInterface::send( const std::string& from
   }
 }
 
-void ControlInterface::operator()(ev::timer&, int) {
+void ControlInterface::operator()(ev::timer& timer, int) {
+  timer.repeat = next_maintenance();
+  timer.again();
+
   // maintain links with neighbors
   LinkInfo info;
   info.set_status( LinkInfo::PUBLIC      );
