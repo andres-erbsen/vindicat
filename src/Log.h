@@ -1,3 +1,6 @@
+#ifndef LOG_H_
+#define LOG_H_
+
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
@@ -86,4 +89,4 @@ namespace Log {
 # define DEBUG() Log::Debug(__func__)
 # define TRACE() Log::Trace(__func__)
 #endif
-
+#endif  // LOG_H_
