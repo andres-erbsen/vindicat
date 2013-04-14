@@ -6,6 +6,7 @@
 #include "Constants.h"
 #include "Util.h"
 #include "nacl25519_nm.h"
+#include "Log.h"
 
 #include <iostream>
 #include <cstdint>
@@ -106,7 +107,7 @@ void PacketHandler::operator()(TransportSocket&& ts, std::string&& packet) {
   } else if (tag == 4) { // "Hey, it's /me/ here"
     auto dev = std::make_shared<Device>();
     if ( ! dev->parseFrom( packet.substr(2) ) ) return;
-    std::cout << "Beacon from " << ipv6ify(dev->id()) << std::endl;
+    DEBUG() << "Beacon from " << ipv6ify(dev->id());
 
     if(packet[1] == '\x01') {
       std::string response("\x04\x00", 2);
@@ -137,6 +138,6 @@ void PacketHandler::operator()(TransportSocket&& ts, std::string&& packet) {
     _nm.add( std::move(dev)  );
     _nm.add( std::move(link) );
   } else {
-    std::cerr << "Packet with unkown tag " << tag << std::endl;
+    ERROR() << "Packet with unkown tag " << tag;
   }
 }

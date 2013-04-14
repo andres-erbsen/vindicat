@@ -21,7 +21,6 @@ int main(int argc, char *argv[]) {
   std::string server_port = toString(std::uniform_int_distribution<std::uint16_t>(1025)(rand));
 
   if((server[0] = fork()) == 0) {
-    sleep(1);
     execl(argv[1], argv[1], "-s", "::1", server_port.c_str(), nullptr);
     throw std::system_error(errno, std::system_category());
   } else if(server[0] == -1) {
@@ -35,7 +34,7 @@ int main(int argc, char *argv[]) {
     throw std::system_error(errno, std::system_category());
   }
 
-  sleep(12);
+  sleep(3);
 
   for(auto pid : server)
     if(kill(pid, 0) == -1)

@@ -7,6 +7,7 @@
 #include "Device.h"
 #include "Constants.h"
 #include "vindicat.pb.h"
+#include "Log.h"
 
 const uint8_t VC_CONTROL_PROTOCOL = 0xDC;
 const int VC_MAINTENANCE_INTERVAL = 10;
@@ -22,7 +23,7 @@ ControlInterface::ControlInterface(NetworkMap& nm, CryptoIdentity& ci)
   : _nm(nm)
   , _ci(ci)
 {
-  _w.set(0.00001, next_maintenance());
+  _w.set(next_maintenance());
   _w.set(this);
   _w.start();
 }
@@ -94,7 +95,7 @@ void ControlInterface::send( const std::string& from
   } else if (tag == 3) {
     Subgraph sg;
     if ( ! sg.ParseFromArray(packet.data()+1, packet.size()-1) ) return;
-    std::cout << "Received link promise" << std::endl;
+    DEBUG() << "Received link promise";
     for (int i=sg.devices_size(); i; --i) {
       auto dev = std::make_shared<Device>();
       std::shared_ptr<DeviceBusinesscard>
@@ -155,6 +156,6 @@ void ControlInterface::operator()(ev::timer& timer, int) {
     for (const auto& dev : _nm.neighbors()) {
       _receive_cb( std::string(dev->id()), std::move(promise_packet) );
     }
-    std::cout << "Shared an interesting link" << std::endl;
+    DEBUG() << "Shared an interesting link";
   }
 }

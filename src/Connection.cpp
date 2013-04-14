@@ -2,6 +2,7 @@
 #include "crypto_box-wrapper.h"
 #include "Connection.h"
 #include "Util.h"
+#include "Log.h"
 
 const static unsigned int COOKIE_SIZE = 96;
 
@@ -186,6 +187,9 @@ void Connection::handle_auth(CryptoIdentity& ci, ConnectionHandler& ch, const st
     <SimpleForwarding>(nm, conn->id());  
   Forwarding::pair(conn, rfwd);  
 
+  auto it = cp.find(their_id);
+  if (it != cp.end())
+    WARNING() << "Already connected" << (it->second->_authenticated? " and authenticated": "");
   cp.insert( std::make_pair(their_id, conn) );
   nm.device(ts)->addForwarding(rfwd);
 }  

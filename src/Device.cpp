@@ -8,6 +8,7 @@
 #include "keccak128.h"
 #include "Util.h"
 #include "nacl25519_nm.h"
+#include "Log.h"
 
 
 uint64_t Device::mtime() const {
@@ -90,8 +91,9 @@ bool Device::open( const std::string& ct
 // Device is a container for forwardings...
 
 void Device::addForwarding(std::shared_ptr<ForeignForwarding>&& fwd) {
+  DEBUG() << "adding " << std::hex << fwd->id() << std::dec;
   fwd->owner(shared_from_this());
-  _forwardings.insert(std::make_pair(fwd->id(), std::move(fwd)));
+  _forwardings.insert(std::make_pair(fwd->id(), std::move(fwd)))
 }
 
 std::shared_ptr<ForeignForwarding> Device::getForwarding(uint64_t id) {
@@ -101,6 +103,7 @@ std::shared_ptr<ForeignForwarding> Device::getForwarding(uint64_t id) {
 }
 
 void Device::removeForwarding(uint64_t id) {
+  DEBUG() << std::hex << id << std::dec;
   _forwardings.erase(id);
 }
 

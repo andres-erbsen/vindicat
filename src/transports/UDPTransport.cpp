@@ -1,4 +1,5 @@
 #include "UDPTransport.h"
+#include "Log.h"
 
 #include <cassert>
 #include <cerrno>
@@ -42,10 +43,8 @@ UDPClient::UDPClient(int fd, const std::string& host, const std::string& port):
   int err;
   if((err=getaddrinfo(host.c_str(), port.c_str(), &hints, &res)) != 0) {
     if(err == EAI_SYSTEM)
-      std::perror("UDPClient::UDPClient");
-    else
-      std::cerr << "UDPClient::UDPClient: " << gai_strerror(err) << std::endl;
-    std::abort();
+      FATAL().perror("getaddrinfo");
+    FATAL() << "getaddrinfo: " << gai_strerror(err);
   }
 
   _addr = std::shared_ptr<sockaddr>(
@@ -74,10 +73,8 @@ bool UDPClient::operator==(const UDPClient &client) const {
 
 UDPTransport::UDPTransport():
     _fd(socket(AF_INET6, SOCK_DGRAM | SOCK_NONBLOCK, 0)) {
-  if(_fd == -1) {
-    std::perror("socket");
-    std::abort();
-  }
+  if(_fd == -1)
+    FATAL().perror("socket");
 }
 
 void UDPTransport::connect(bool persistent, const std::string& host,
@@ -134,10 +131,8 @@ void UDPTransport::read_cb(ev::io& w, int /*revents*/) {
   sockaddr *addr = reinterpret_cast<sockaddr*>(new sockaddr_storage);
   socklen_t len = sizeof(sockaddr_storage);
   ssize_t read = recvfrom(w.fd, buf, 1500, 0, addr, &len);
-  if(read == -1 && errno != ECONNREFUSED) {
-    std::perror("UDPTransport::read_cb: recvfrom:");
-    std::abort();
-  }
+  if(read == -1 && errno != ECONNREFUSED)
+    FATAL().perror("recvfrom");
 
   UDPClient client(w.fd, std::shared_ptr<sockaddr>(addr), len);
   if(_unknown[client] != -1)

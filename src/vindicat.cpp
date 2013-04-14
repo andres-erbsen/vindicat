@@ -10,6 +10,7 @@
 #include "Beacon.h"
 #include "LinkLocalDiscovery.h"
 #include "ConnectionHandler.h"
+#include "Log.h"
 
 #include <ev++.h>
 
@@ -86,7 +87,7 @@ int main (int argc, char** argv) {
     tun->onPacket(ihn);
     ch.addInterface( std::move(tun) );
   } else {
-    std::cerr << "TUN interface creation failed" << std::endl;
+    ERROR() << "TUN interface creation failed";
     ch.addInterface( std::unique_ptr<Interface>(new DummyInterface) );
   }
 
