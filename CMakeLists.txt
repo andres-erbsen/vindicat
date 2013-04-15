@@ -46,6 +46,7 @@ include_directories(${LEMON_INCLUDE_DIRS})
 include_directories(${SODIUM_INCLUDE_DIRS})
 include_directories(${PCAP_INCLUDE_DIRS})
 include_directories(${CMAKE_BINARY_DIR})
+add_definitions(-DANSI) # for coloured logs
 
 FILE(GLOB_RECURSE srcs src/*.c src/*.cc src/*.cpp)
 FILE(GLOB_RECURSE libs lib/keccak/*.c lib/libev/ev.c lib/libev/event.c)
@@ -64,9 +65,13 @@ target_link_libraries(vindicat-server ${PROTOBUF_LITE_LIBRARIES} ${SODIUM_LIBRAR
 target_link_libraries(vindicat ${PROTOBUF_LITE_LIBRARIES})
 
 # Testing
+set(DART_TESTING_TIMEOUT "60")
+include(CTest)
 enable_testing()
-add_custom_target(build_tests)
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -V)
 ADD_EXECUTABLE(Ping EXCLUDE_FROM_ALL tests/ping.cpp)
 target_link_libraries(Ping vindicat)
-add_test(NAME Ping COMMAND Ping $<TARGET_FILE:vindicat-server>)
-add_dependencies(build_tests Ping)
+add_test(NAME Ping-after COMMAND Ping $<TARGET_FILE:vindicat-server> 25)
+add_test(NAME Ping-before COMMAND Ping $<TARGET_FILE:vindicat-server> 1)
+add_dependencies(Ping vindicat-server)
+add_dependencies(check Ping)

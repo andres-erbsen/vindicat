@@ -1,5 +1,6 @@
 #include "InterfaceHandler.h"
 #include "Connection.h"
+#include "Log.h"
 
 InterfaceHandler::InterfaceHandler
   (CryptoIdentity& ci, NetworkMap& nm, ConnectionPool& cp, ConnectionHandler& ch)
@@ -14,6 +15,15 @@ void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
   if (it != _cp.end() ) {
     it->second->connection_forward(packet);
   } else {
+    {
+      auto *logger = new INFO();
+      *logger << "connecting to " << std::hex;
+      for(auto c : to)
+        *logger << +static_cast<unsigned char>(c);
+      *logger << std::dec;
+      delete logger;
+    }
+
     Path path;
     {
       auto dst_dev = _nm.device(to);

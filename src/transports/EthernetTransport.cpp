@@ -1,4 +1,5 @@
 #include "EthernetTransport.h"
+#include "Log.h"
 #include <cstdlib>
 #include <pcap/pcap.h>
 #include <iostream>
@@ -18,34 +19,22 @@ EthernetTransport::EthernetTransport(const std::string& d): _fd{-1, -1}
   else
     device = d.c_str();
   if(device == nullptr)
-  {
-    std::cerr << "pcap_lookupdev: " << errbuf << std::endl;
-    std::abort();
-  }
+    FATAL() << "pcap_lookupdev: " << errbuf;
   errbuf[0] = 0;
   _pcap = pcap_open_live(device, (1<<16)-1, false, -1, errbuf);
   if(_pcap == nullptr)
-  {
-    std::cerr << "pcap_open_live: " << errbuf << std::endl;
-    std::abort();
-  }
+    FATAL() << "pcap_open_live: " << errbuf;
   if(errbuf[0] != 0)
-    std::clog << "pcap_open_live: " << errbuf << std::endl;
+    ERROR() << "pcap_open_live: " << errbuf;
 
   ifreq ifr;
   int sock = socket(PF_INET, SOCK_DGRAM, 0);
   if(sock == -1)
-  {
-    std::perror("socket");
-    std::abort();
-  }
+    FATAL().perror("socket");
   std::memset(&ifr, 0, sizeof(ifreq));
   std::strcpy(ifr.ifr_name, device);
   if(ioctl(sock, SIOCGIFHWADDR, &ifr) == -1)
-  {
-    std::perror("ioctl");
-    std::abort();
-  }
+    FATAL().perror("ioctl");
   close(sock);
   std::memcpy(_mac, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 
@@ -55,24 +44,15 @@ EthernetTransport::EthernetTransport(const std::string& d): _fd{-1, -1}
       _mac[0], _mac[1], _mac[2], _mac[3], _mac[4], _mac[5]);
 
   if(pcap_compile(_pcap, &_filter, buf, false, PCAP_NETMASK_UNKNOWN) == -1)
-  {
-    std::cerr << "pcap_compile: " << pcap_geterr(_pcap) << std::endl;
-    std::abort();
-  }
+    FATAL() << "pcap_compile: " << pcap_geterr(_pcap);
   if(pcap_setfilter(_pcap, &_filter) == -1)
-  {
-    std::cerr << "pcap_setfilter: " << pcap_geterr(_pcap) << std::endl;;
-    std::abort();
-  }
+    FATAL() << "pcap_setfilter: " << pcap_geterr(_pcap);
 
 #ifdef HAVE_PCAP_GET_SELECTABLE_FD
   _fd[0] = pcap_get_selectable_fd(_pcap);
 #endif
   if(_fd[0] == -1 && pipe(_fd) == -1)
-  {
-    std::perror("pipe");
-    std::abort();
-  }
+    FATAL().perror("pipe");
 }
 
 EthernetTransport::~EthernetTransport()
@@ -133,7 +113,7 @@ void EthernetTransport::read_cb(ev::io& /*watcher*/, int /*revents*/)
   {
     int res = pcap_next_ex(_pcap, &header, &packet);
     if(res == -1)
-      std::cerr << "pcap_next_ex" << pcap_geterr(_pcap) << std::endl;
+      ERROR() << "pcap_next_ex" << pcap_geterr(_pcap);
     if(res != 1)
       return;
   }

@@ -1,6 +1,7 @@
 // vim: set ts=4 sw=4 :
 #include "UDPServerTransport.h"
 #include "UDPTransport.h"
+#include "Log.h"
 #include <cassert>
 
 #include <sys/types.h>
@@ -17,23 +18,16 @@
 UDPServerTransport::
 UDPServerTransport(UDPTransport *clients, const std::string& host
                   , const std::string& port)
-  : _clients(clients)
-{
+  : _clients(clients) {
   struct addrinfo hints, *res;
-        std::memset(&hints, 0, sizeof(struct addrinfo));
+  std::memset(&hints, 0, sizeof(struct addrinfo));
   hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_DGRAM;
-        int err;
-        if((err=getaddrinfo(host.c_str(), port.c_str(), &hints, &res)) != 0)
-        {
+  hints.ai_socktype = SOCK_DGRAM;
+  int err;
+  if((err=getaddrinfo(host.c_str(), port.c_str(), &hints, &res)) != 0) {
     if(err == EAI_SYSTEM)
-      std::perror("UDPServerTransport::UDPServerTransport");
-else
-    {
-      std::cerr << "UDPServerTransport::UDPServerTransport: ";
-      std::cerr << gai_strerror(err) << std::endl;
-    }
-    std::abort();
+      FATAL().perror("getaddrinfo");
+    FATAL() << "getaddrinfo: " << gai_strerror(err);
   }
 
   for(auto i = res; i != nullptr; i = i->ai_next)
@@ -115,10 +109,7 @@ else
   freeaddrinfo(res);
 
   if(_fd == -1)
-  {
-    std::perror("UDPServerTransport::UDPServerTransport");
-    std::abort();
-  }
+    FATAL().perror("Failed to start UDP server");
 }
 
 UDPServerTransport::~UDPServerTransport() {

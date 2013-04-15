@@ -1,20 +1,29 @@
 #include <ctime>
 #include <iostream>
+#include <random>
 #include "ControlInterface.h"
 #include "Util.h"
 #include "Link.h"
 #include "Device.h"
 #include "Constants.h"
 #include "vindicat.pb.h"
+#include "Log.h"
 
 const uint8_t VC_CONTROL_PROTOCOL = 0xDC;
-const int VC_MAINTENANCE_INTERVAL = 10;
+const double VC_MAINTENANCE_INTERVAL = 10.0;
+
+static inline double next_maintenance() {
+  std::random_device device;
+  std::normal_distribution<double> distrib(VC_MAINTENANCE_INTERVAL,
+                                        VC_MAINTENANCE_INTERVAL/4);
+  return std::max(0.0, std::min(distrib(device), 2*VC_MAINTENANCE_INTERVAL));
+}
 
 ControlInterface::ControlInterface(NetworkMap& nm, CryptoIdentity& ci)
   : _nm(nm)
   , _ci(ci)
 {
-  _w.set(0.00001,VC_MAINTENANCE_INTERVAL);
+  _w.set(next_maintenance());
   _w.set(this);
   _w.start();
 }
@@ -86,7 +95,7 @@ void ControlInterface::send( const std::string& from
   } else if (tag == 3) {
     Subgraph sg;
     if ( ! sg.ParseFromArray(packet.data()+1, packet.size()-1) ) return;
-    std::cout << "Received link promise" << std::endl;
+    DEBUG() << "Received link promise";
     for (int i=sg.devices_size(); i; --i) {
       auto dev = std::make_shared<Device>();
       std::shared_ptr<DeviceBusinesscard>
@@ -104,7 +113,11 @@ void ControlInterface::send( const std::string& from
   }
 }
 
-void ControlInterface::operator()(ev::timer&, int) {
+void ControlInterface::operator()(ev::timer& timer, int) {
+  timer.repeat = next_maintenance();
+  timer.again();
+  TRACE() << "next maintenance in " << timer.repeat << " seconds";
+
   // maintain links with neighbors
   LinkInfo info;
   info.set_status( LinkInfo::PUBLIC      );
@@ -144,6 +157,6 @@ void ControlInterface::operator()(ev::timer&, int) {
     for (const auto& dev : _nm.neighbors()) {
       _receive_cb( std::string(dev->id()), std::move(promise_packet) );
     }
-    std::cout << "Shared an interesting link" << std::endl;
+    DEBUG() << "Shared an interesting link";
   }
 }
