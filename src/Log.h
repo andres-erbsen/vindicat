@@ -8,8 +8,6 @@
 #include <cstring>
 #include <unistd.h>
 
-#define ANSI
-
 namespace Log {
   class Base {
    public:

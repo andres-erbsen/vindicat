@@ -16,7 +16,7 @@ static inline double next_maintenance() {
   std::random_device device;
   std::normal_distribution<double> distrib(VC_MAINTENANCE_INTERVAL,
                                         VC_MAINTENANCE_INTERVAL/4);
-  return std::max(0.0, std::min(distrib(device), 1.0));
+  return std::max(0.0, std::min(distrib(device), 2.0*VC_MAINTENANCE_INTERVAL));
 }
 
 ControlInterface::ControlInterface(NetworkMap& nm, CryptoIdentity& ci)
@@ -116,6 +116,7 @@ void ControlInterface::send( const std::string& from
 void ControlInterface::operator()(ev::timer& timer, int) {
   timer.repeat = next_maintenance();
   timer.again();
+  TRACE() << "next maintenance in " << timer.repeat << " seconds";
 
   // maintain links with neighbors
   LinkInfo info;

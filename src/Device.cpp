@@ -93,7 +93,7 @@ bool Device::open( const std::string& ct
 void Device::addForwarding(std::shared_ptr<ForeignForwarding>&& fwd) {
   DEBUG() << "adding " << std::hex << fwd->id() << std::dec;
   fwd->owner(shared_from_this());
-  _forwardings.insert(std::make_pair(fwd->id(), std::move(fwd)))
+  _forwardings.insert(std::make_pair(fwd->id(), std::move(fwd)));
 }
 
 std::shared_ptr<ForeignForwarding> Device::getForwarding(uint64_t id) {

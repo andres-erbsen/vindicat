@@ -40,6 +40,8 @@ int main(int argc, char *argv[]) {
     if(kill(pid, 0) == -1)
       throw std::system_error(errno, std::system_category());
 
+  sleep(std::atoi(argv[2]));
+
   try {
     unlink("/tmp/test1");
     unlink("/tmp/test2");
