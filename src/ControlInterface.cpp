@@ -10,13 +10,13 @@
 #include "Log.h"
 
 const uint8_t VC_CONTROL_PROTOCOL = 0xDC;
-const int VC_MAINTENANCE_INTERVAL = 10;
+const double VC_MAINTENANCE_INTERVAL = 10.0;
 
 static inline double next_maintenance() {
   std::random_device device;
   std::normal_distribution<double> distrib(VC_MAINTENANCE_INTERVAL,
                                         VC_MAINTENANCE_INTERVAL/4);
-  return std::max(0.0, std::min(distrib(device), 2.0*VC_MAINTENANCE_INTERVAL));
+  return std::max(0.0, std::min(distrib(device), 2*VC_MAINTENANCE_INTERVAL));
 }
 
 ControlInterface::ControlInterface(NetworkMap& nm, CryptoIdentity& ci)
