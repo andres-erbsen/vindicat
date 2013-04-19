@@ -1,6 +1,7 @@
 #include "LinkLocalDiscovery.h"
 #include "NetworkMap.h"
 #include "transports/UDPTransport.h"
+#include "Log.h"
 
 #include <sys/types.h>
 #include <ifaddrs.h>
@@ -20,14 +21,14 @@ LinkLocalDiscovery::LinkLocalDiscovery(UDPTransport* clients,
 {
   if(_fd == -1)
   {
-    std::perror("LinkLocalDiscovery::LinkLocalDiscovery: socket");
+    ERROR().perror("socket");
     return;
   }
 
   struct ifaddrs *ifap;
   if(getifaddrs(&ifap) == -1)
   {
-    std::perror("LinkLocalDiscovery::LinkLocalDiscovery: getifaddrs");
+    ERROR().perror("getifaddrs");
     close(_fd);
     _fd = -1;
     return;
@@ -37,7 +38,7 @@ LinkLocalDiscovery::LinkLocalDiscovery(UDPTransport* clients,
     int reuse = 1;
     if(setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) != 0)
     {
-      std::perror("LinkLocalDiscovery::LinkLocalDiscovery");
+      ERROR().perror("setsockopt");
       close(_fd);
       _fd = -1;
       return;
@@ -52,7 +53,7 @@ LinkLocalDiscovery::LinkLocalDiscovery(UDPTransport* clients,
   if(bind(_fd, reinterpret_cast<struct sockaddr*>(&local_ipv6),
           sizeof(struct sockaddr_in6)) == -1)
   {
-    std::perror("LinkLocalDiscovery::LinkLocalDiscovery: bind");
+    ERROR().perror("bind");
     close(_fd);
     _fd = -1;
     return;
@@ -75,12 +76,12 @@ LinkLocalDiscovery::LinkLocalDiscovery(UDPTransport* clients,
     ipv4_request.imr_ifindex = if_nametoindex(i->ifa_name);
     ipv4_request.imr_address = reinterpret_cast<struct sockaddr_in*>(i->ifa_addr)->sin_addr;
     if(setsockopt(_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ipv4_request, sizeof(struct ip_mreqn)) != 0)
-      perror("setsockopt for IPv4");
+      ERROR().perror("setsockopt for IPv4");
     break;
   case AF_INET6:
     ipv6_request.ipv6mr_interface = if_nametoindex(i->ifa_name);
     if(setsockopt(_fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &ipv6_request, sizeof(struct ipv6_mreq)) != 0)
-      std::perror("setsockopt for IPv6");
+      ERROR().perror("setsockopt for IPv6");
     break;
       }
     }
@@ -116,16 +117,16 @@ void LinkLocalDiscovery::read_cb(ev::io& /*w*/, int /*revents*/)
                           uid_format(reinterpret_cast<sockaddr*>(src), srclen)));
       if(!device) {
         char ip[40];
-        std::cout << "Connecting to [";
-        std::cout << inet_ntop(AF_INET6, src->sin6_addr.s6_addr, ip, 40) << "]:";
-        std::cout << ntohs(src->sin6_port) << std::endl;
+        INFO() << "Connecting to ["
+               << inet_ntop(AF_INET6, src->sin6_addr.s6_addr, ip, 40) << "]:"
+               << ntohs(src->sin6_port);
         _clients->connect(false,
             std::shared_ptr<sockaddr>(reinterpret_cast<sockaddr*>(src)), srclen);
-  return;
+        return;
       }
     }
   } else {
-    std::perror("LinkLocalDiscovery::read_cb");
+    ERROR().perror("recvfrom");
   }
   delete src;
 }
