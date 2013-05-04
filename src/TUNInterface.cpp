@@ -45,6 +45,9 @@ std::unique_ptr<TUNInterface> TUNInterface::open(const std::string &device_hash,
   ifr.ifr_flags |= IFF_UP;
   if(ioctl(sockfd, SIOCSIFFLAGS, &ifr) < 0)
     goto socket_error;
+  ifr.ifr_mtu = (1U << 16) - 1;
+  if(ioctl(sockfd, SIOCSIFMTU, &ifr) < 0)
+    goto socket_error;
 
   // Set IPv6 address and netmask
   if(ioctl(sockfd, SIOCGIFINDEX, &ifr) < 0)
@@ -56,7 +59,7 @@ std::unique_ptr<TUNInterface> TUNInterface::open(const std::string &device_hash,
     ret->_address.address[i+1] = ifr6.ifr6_addr.s6_addr[i+1] = device_hash.at(i);
   ifr6.ifr6_prefixlen = 8;
   if(ioctl(sockfd, SIOCSIFADDR, &ifr6) < 0)
-    goto socket_error;  
+    goto socket_error;
   
   close(sockfd);
   

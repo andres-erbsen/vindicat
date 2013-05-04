@@ -20,6 +20,7 @@ namespace IPv6
     std::size_t _data_length;
   public:
     const static int header_length = 40;
+    const static int max_packet_size = header_length + (1 << 16) - 1;
     // Allocate storage and set protocol version
     explicit Packet(std::size_t len);
 
