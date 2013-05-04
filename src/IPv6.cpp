@@ -1,4 +1,5 @@
 #include "IPv6.h"
+#include "Log.h"
 
 #include <arpa/inet.h>
 #include <cstring>
@@ -190,10 +191,9 @@ IPv6::Packet IPv6::Packet::reassemble(const IPv6::Address &src,
 
 IPv6::Packet IPv6::Packet::read(int fd)
 {
-  IPv6::Packet packet(1500);
-  ssize_t bytes = ::read(fd, packet.data(), 1500);
-  if(bytes == -1)
-    throw std::system_error(errno, std::system_category());
+  IPv6::Packet packet(IPv6::Packet::max_packet_size);
+  if(::read(fd, packet.data(), IPv6::Packet::max_packet_size) == -1)
+    FATAL().perror("read");
   assert(packet.version() == 6);
   return packet;
 }
