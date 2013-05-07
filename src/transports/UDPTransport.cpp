@@ -127,11 +127,14 @@ void UDPTransport::to_unknown(const std::string& payload) {
 void UDPTransport::read_cb(ev::io& w, int /*revents*/) {
   // Callback for libev loop
   // Reads data and gives it to handler
-  char *buf = new char[1500]; // ethernet MTU size
+  auto size = recv(w.fd, nullptr, 0, MSG_PEEK | MSG_TRUNC);
+  if(size == -1)
+    FATAL().perror("recv");
+  char *buf = new char[size];
   sockaddr *addr = reinterpret_cast<sockaddr*>(new sockaddr_storage);
   socklen_t len = sizeof(sockaddr_storage);
-  ssize_t read = recvfrom(w.fd, buf, 1500, 0, addr, &len);
-  if(read == -1 && errno != ECONNREFUSED)
+  size = recvfrom(w.fd, buf, size, 0, addr, &len);
+  if(size == -1 && errno != ECONNREFUSED)
     FATAL().perror("recvfrom");
 
   UDPClient client(w.fd, std::shared_ptr<sockaddr>(addr), len);
@@ -141,7 +144,7 @@ void UDPTransport::read_cb(ev::io& w, int /*revents*/) {
   _receive_cb(TransportSocket(std::bind(std::mem_fn(&UDPClient::send),
                                         client, std::placeholders::_1),
                               uid_format(addr, len)),
-              std::string(buf, read));
+              std::string(buf, size));
 
   delete[] buf;
 }
