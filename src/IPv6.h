@@ -67,6 +67,10 @@ namespace IPv6
     static Packet reassemble(const Address &src, const Address &dst,
       std::uint8_t next_header, const std::string &payload);
     static Packet read(int fd);
+
+    static Packet generate_ICMPv6(const Address& src, const Address& dest,
+                                  std::uint8_t type, std::uint8_t code,
+                                  const std::string& payload);
   };
 }
 #endif

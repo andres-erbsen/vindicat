@@ -86,6 +86,30 @@ void TUNInterface::read_cb(ev::io& /*w*/, int /*revents*/)
   // For now ignore foreign traffic
   if(packet.destination().address[0] != 0x04)
     return;
+
+  // RFC 2460 - Internet Protocol, Version 6 (IPv6)
+  // 4. IPv6 Extension Headers
+  //
+  // If, as a result of processing a header, a node is required to proceed
+  // to the next header but the Next Header value in the current header is
+  // unrecognized by the node, it should discard the packet and send an
+  // ICMP Parameter Problem message to the source of the packet, with an
+  // ICMP Code value of 1 ("unrecognized Next Header type encountered")
+  // and the ICMP Pointer field containing the offset of the unrecognized
+  // value within the original packet.  The same action should be taken if
+  // a node encounters a Next Header value of zero in any header other
+  // than an IPv6 header.
+  if(packet.next_header() == 0 ||     // Hop-by-Hop Options
+      packet.next_header() == 43 ||   // Routing
+      packet.next_header() == 44 ||   // Fragment
+      packet.next_header() == 50 ||   // Encapsulating Security Payload (ESP)
+      packet.next_header() == 51 ||   // Authentication Header (AH)
+      packet.next_header() == 60 ||   // Destination Options
+      packet.next_header() == 135) {  // Mobility
+    send(IPv6::Packet::generate_ICMPv6(packet.destination(), packet.source(),
+          4, 1, std::string("\x06\x00\x00\x00", 4)));
+    return;
+  }
   
   _receive_cb(std::string(reinterpret_cast<char*>(packet.destination().address)+1,
                           15),
