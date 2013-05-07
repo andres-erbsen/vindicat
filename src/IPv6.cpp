@@ -13,7 +13,11 @@ IPv6::Address::Address()
   std::memset(address, 0, 16);
 }
 
-std::ostream &IPv6::operator<<(std::ostream &out, const IPv6::Address &addr)
+bool IPv6::Address::operator==(const IPv6::Address& addr) const {
+  return std::memcmp(address, addr.address, 16) == 0;
+}
+
+std::ostream &operator<<(std::ostream &out, const IPv6::Address &addr)
 {
   char buf[40];
   out << inet_ntop(AF_INET6, addr.address, buf, 40);
