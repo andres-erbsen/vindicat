@@ -24,6 +24,7 @@ IPv6::Packet::Packet(std::size_t len):
   _data(new std::uint8_t[len]), _data_length(len)
 {
   version(6);
+  payload_length(len-header_length);
 }
 
 IPv6::Packet::Packet(const std::uint8_t *packet, std::size_t len):
