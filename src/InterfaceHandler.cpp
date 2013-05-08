@@ -31,6 +31,12 @@ void InterfaceHandler::operator()(std::string&& to, std::string&& packet) {
       path = _nm.path_to(*dst_dev);
     }
 
+    if(path.size() == 0) {
+      assert(_nm.device(to)->id() == _nm.our_device().id());
+      _ch(_nm.our_device().id(), packet[0], packet.substr(1));
+      return;
+    }
+
     auto conn = std::make_shared<Connection>(_ci, path, _cp, _ch);
     
     auto rfwd = std::make_shared<SimpleForwarding>(_nm, conn->id());
