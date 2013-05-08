@@ -83,6 +83,8 @@ int main (int argc, char** argv) {
     tun->set_tunnel(std::bind(&TunnelInterface::tunnel, tunnel,
           std::placeholders::_1));
     ch.addInterface(std::unique_ptr<Interface>(tunnel));
+    ci.add_capability("IPv6-Tunnel");
+    ci.update_businesscard();
   }
 
   std::unique_ptr<Interface> ctrl(new ControlInterface(nm, ci));

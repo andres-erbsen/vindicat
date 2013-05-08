@@ -8,6 +8,7 @@
 #include <sodium/crypto_sign_ed25519.h>
 #include <string>
 #include <memory>
+#include <unordered_set>
 
 class CryptoIdentity {
 public:
@@ -23,6 +24,10 @@ public:
 
   void update_businesscard();
 
+  bool add_capability(const std::string&);
+  bool has_capability(const std::string&) const;
+  bool remove_capability(const std::string&);
+
   TemporalCookies cookies;
 private:
   unsigned char _secretkey_edsig[crypto_sign_ed25519_SECRETKEYBYTES];
@@ -32,6 +37,8 @@ private:
   std::string _enckey_naclbox;
 
   std::shared_ptr<DeviceBusinesscard> _our_businesscard;
+
+  std::unordered_set<std::string> _capabilities;
 };
 
 #endif // CRYPTOIDENTITY_H_

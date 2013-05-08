@@ -46,13 +46,16 @@ void TunnelInterface::tunnel(const IPv6::Packet& packet) {
     if(devices.size() == 0) {
       // Reject packet
       // ICMPv6: Destination Unreachable: no route to destination
+      std::size_t packet_size = packet.header_length + packet.payload_length();
+      packet_size = std::min<decltype(packet_size)>(1280 - 8, packet_size); 
       _send(IPv6::Packet::generate_ICMPv6(packet.destination(),
             packet.source(), 1, 0, std::string(4, 0) +
-            std::string(reinterpret_cast<const char*>(packet.data()), 1232)));
+            std::string(reinterpret_cast<const char*>(packet.data()),
+              packet_size)));
       return;
     } else {
       rand64 rand64;
-      std::uniform_int_distribution<std::size_t> distrib(0, devices.size());
+      std::uniform_int_distribution<std::size_t> distrib(0, devices.size()-1);
       _connections[packet.destination()] = devices[distrib(rand64)]->id();
     }
   }
