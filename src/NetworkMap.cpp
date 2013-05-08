@@ -135,7 +135,8 @@ std::vector< std::shared_ptr<Device> > NetworkMap::devices() {
 std::vector< std::shared_ptr<Device> > NetworkMap::neighbors() {
   std::vector< std::shared_ptr<Device> > ret;
   for (lemon::ListGraph::IncEdgeIt e(_graph, _our_node); e != lemon::INVALID; ++e) {
-    ret.push_back(_g_device[_graph.oppositeNode(_our_node, e)]);
+    if (_graph.oppositeNode(_our_node, e) != _our_node)  // Ignore loops
+      ret.push_back(_g_device[_graph.oppositeNode(_our_node, e)]);
   }
   return ret;
 }
