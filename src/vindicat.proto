@@ -7,6 +7,7 @@ message DeviceInfo {
 	repeated bytes sig_keys  = 3;
 	repeated bytes enc_keys  = 4;
 	optional int64 time = 5; // unix "epoch" format
+  repeated string capabilities = 6;
 }
 
 message DeviceBusinesscard {

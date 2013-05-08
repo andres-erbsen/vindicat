@@ -74,6 +74,17 @@ int main (int argc, char** argv) {
   Beacon bcn(3,ci,transports);
   bcn.enable();
 
+  auto tun = TUNInterface::open(our_id);
+  if (tun) {
+    auto tunnel = new TunnelInterface(nm);
+    void (TUNInterface::*tun_send)(const IPv6::Packet&) = &TUNInterface::send;
+    tunnel->set_send(std::bind(tun_send, tun.get(), std::placeholders::_1));
+    tunnel->onPacket(ihn);
+    tun->set_tunnel(std::bind(&TunnelInterface::tunnel, tunnel,
+          std::placeholders::_1));
+    ch.addInterface(std::unique_ptr<Interface>(tunnel));
+  }
+
   std::unique_ptr<Interface> ctrl(new ControlInterface(nm, ci));
   ctrl->onPacket(ihn);
   ch.addInterface( std::move(ctrl) );
@@ -82,10 +93,9 @@ int main (int argc, char** argv) {
   ipc->onPacket(ihn);
   ch.addInterface(std::move(ipc));
 
-  std::unique_ptr<Interface> tun = TUNInterface::open(our_id);
   if (tun) {
     tun->onPacket(ihn);
-    ch.addInterface( std::move(tun) );
+    ch.addInterface(std::unique_ptr<Interface>(tun.release()));
   } else {
     ERROR() << "TUN interface creation failed";
     ch.addInterface( std::unique_ptr<Interface>(new DummyInterface) );

@@ -2,6 +2,7 @@
 #define TUNDEVICE_H_
 
 #include "Interface.h"
+#include "TunnelInterface.h"
 #include "IPv6.h"
 #include <ev++.h>
 #include <string>
@@ -14,6 +15,7 @@ class TUNInterface : public Interface {
   TUNInterface(const TUNInterface &) = delete;
   ~TUNInterface();
   TUNInterface &operator=(const TUNInterface &) = delete;
+  void set_tunnel(std::function<void(const IPv6::Packet&)>&&);
   void send(const IPv6::Packet &packet);
   void send(const std::string&, uint8_t, const std::string&);
 
@@ -24,7 +26,7 @@ class TUNInterface : public Interface {
   int _fd;
   void read_cb(ev::io&, int);
   IPv6::Address _address;
-
+  std::function<void(const IPv6::Packet&)> _tunnel;
 };
 
 #endif  // TUNINTERFACE_H_

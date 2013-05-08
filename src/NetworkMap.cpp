@@ -193,3 +193,12 @@ Path NetworkMap::path_to(const Device& dev) const {
   assert(path.empty());
   return ret;
 }
+
+std::vector<std::shared_ptr<Device>> NetworkMap::has_capability(
+    const std::string& capability) const {
+  std::vector<std::shared_ptr<Device>> ret;
+  for (lemon::ListGraph::NodeIt n(_graph); n != lemon::INVALID; ++n)
+    if (_g_device[n]->capabilities().count(capability) == 1 && n != _our_node)
+      ret.push_back(_g_device[n]);
+  return ret;
+}

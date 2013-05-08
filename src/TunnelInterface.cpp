@@ -5,9 +5,12 @@
 
 #define TUNNEL_PROTOCOL 0xDD
 
-TunnelInterface::TunnelInterface(std::unique_ptr<TUNInterface>& tun,
-    NetworkMap& nm)
-  : _tun(tun), _nm(nm) {
+TunnelInterface::TunnelInterface(NetworkMap& nm)
+  : _nm(nm) {
+}
+
+void TunnelInterface::set_send(std::function<void(const IPv6::Packet&)>&& f) {
+  _send = std::move(f);
 }
 
 bool TunnelInterface::match(const std::string&, uint8_t protocol,
@@ -19,7 +22,7 @@ void TunnelInterface::send(const std::string&, uint8_t,
     const std::string& payload) {
   IPv6::Packet packet(payload.size());
   std::memcpy(packet.data(), payload.data(), payload.size());
-  _tun->send(packet);
+  _send(packet);
 }
 
 struct rand64 {
@@ -43,9 +46,10 @@ void TunnelInterface::tunnel(const IPv6::Packet& packet) {
     if(devices.size() == 0) {
       // Reject packet
       // ICMPv6: Destination Unreachable: no route to destination
-      _tun->send(IPv6::Packet::generate_ICMPv6(packet.destination(),
+      _send(IPv6::Packet::generate_ICMPv6(packet.destination(),
             packet.source(), 1, 0, std::string(4, 0) +
             std::string(reinterpret_cast<const char*>(packet.data()), 1232)));
+      return;
     } else {
       rand64 rand64;
       std::uniform_int_distribution<std::size_t> distrib(0, devices.size());

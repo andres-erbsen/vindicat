@@ -70,6 +70,8 @@ void CryptoIdentity::update_businesscard() {
 
   dev.set_time( std::time(NULL) );
 
+  dev.add_capabilities("IPv6-Tunnel");
+
   _our_businesscard->set_device_info_msg( dev.SerializeAsString() );
   sign(_our_businesscard->device_info_msg(), SigAlgo::ED25519, *_our_businesscard->add_sigs());
 }

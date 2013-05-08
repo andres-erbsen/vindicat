@@ -149,6 +149,9 @@ bool Device::parseFrom(std::shared_ptr<DeviceBusinesscard> card_p) {
     _enc.insert( std::make_pair(algo, dev_info.enc_keys(i)) );
   }
 
+  for (int i = 0; i < dev_info.capabilities_size(); i++)
+    _capabilities.insert(dev_info.capabilities(i));
+
   std::swap(_card, card_p);
   return 1;
 }
@@ -164,6 +167,8 @@ void Device::merge(Device&& other) {
     addForwarding( other.getForwarding(kvp.first) );
     other.removeForwarding(kvp.first);
   }
+  for (auto cap : other._capabilities)
+    _capabilities.insert(cap);
   if (other.mtime() > mtime()) {
     std::swap(_sig, other._sig);
     std::swap(_ids, other._ids);
@@ -182,4 +187,12 @@ void Device::clear() {
   _forwardings.clear();
   _mtime = 0;
   _card.reset();
+}
+
+std::unordered_set<std::string>& Device::capabilities() {
+  return _capabilities;
+}
+
+const std::unordered_set<std::string>& Device::capabilities() const {
+  return _capabilities;
 }

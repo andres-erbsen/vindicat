@@ -83,9 +83,10 @@ void TUNInterface::read_cb(ev::io& /*w*/, int /*revents*/)
 {
   IPv6::Packet packet = IPv6::Packet::read(_fd);
   
-  // For now ignore foreign traffic
-  if(packet.destination().address[0] != 0x04)
+  if(packet.destination().address[0] != 0x04) {
+    _tunnel(packet);
     return;
+  }
 
   // RFC 2460 - Internet Protocol, Version 6 (IPv6)
   // 4. IPv6 Extension Headers
@@ -132,3 +133,6 @@ void TUNInterface::send(const std::string& from_id, uint8_t protocol_number, con
   send(IPv6::Packet::reassemble(src, _address, protocol_number, payload));
 }
 
+void TUNInterface::set_tunnel(std::function<void(const IPv6::Packet&)>&& f) {
+  _tunnel = std::move(f);
+}
