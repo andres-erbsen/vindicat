@@ -56,8 +56,17 @@ bool CryptoIdentity::sign(const std::string& message, SigAlgo algo, std::string&
   return 1;
 }
 
+bool CryptoIdentity::add_capability(const std::string& capability) {
+  return _capabilities.insert(capability).second;
+}
 
+bool CryptoIdentity::has_capability(const std::string& capability) const {
+  return _capabilities.count(capability) != 0;
+}
 
+bool CryptoIdentity::remove_capability(const std::string& capability) {
+  return _capabilities.erase(capability) != 0;
+}
 
 void CryptoIdentity::update_businesscard() {
   DeviceInfo dev;
@@ -69,6 +78,9 @@ void CryptoIdentity::update_businesscard() {
   *dev.add_enc_keys() = _enckey_naclbox;
 
   dev.set_time( std::time(NULL) );
+
+  for (auto capability : _capabilities)
+    dev.add_capabilities(capability);
 
   _our_businesscard->set_device_info_msg( dev.SerializeAsString() );
   sign(_our_businesscard->device_info_msg(), SigAlgo::ED25519, *_our_businesscard->add_sigs());

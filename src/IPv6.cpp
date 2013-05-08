@@ -13,7 +13,11 @@ IPv6::Address::Address()
   std::memset(address, 0, 16);
 }
 
-std::ostream &IPv6::operator<<(std::ostream &out, const IPv6::Address &addr)
+bool IPv6::Address::operator==(const IPv6::Address& addr) const {
+  return std::memcmp(address, addr.address, 16) == 0;
+}
+
+std::ostream &operator<<(std::ostream &out, const IPv6::Address &addr)
 {
   char buf[40];
   out << inet_ntop(AF_INET6, addr.address, buf, 40);
@@ -24,6 +28,7 @@ IPv6::Packet::Packet(std::size_t len):
   _data(new std::uint8_t[len]), _data_length(len)
 {
   version(6);
+  payload_length(len-header_length);
 }
 
 IPv6::Packet::Packet(const std::uint8_t *packet, std::size_t len):
@@ -198,3 +203,39 @@ IPv6::Packet IPv6::Packet::read(int fd)
   return packet;
 }
 
+IPv6::Packet IPv6::Packet::generate_ICMPv6(const IPv6::Address& src, 
+    const IPv6::Address& dest, std::uint8_t type, std::uint8_t code,
+    const std::string& payload) {
+  IPv6::Packet packet(IPv6::Packet::header_length+4+payload.size());
+  packet.source(src);
+  packet.destination(dest);
+  packet.next_header(58);
+  packet.payload()[0] = type;
+  packet.payload()[1] = code;
+  packet.payload()[2] = 0;
+  packet.payload()[3] = 0;
+  std::memcpy(packet.payload()+4, payload.data(), payload.size());
+
+  std::uint32_t checksum = 0;
+  for(int i = 0; i < 16; i += 2) {
+    checksum += (src.address[i] << 8) & 0xFF00;
+    checksum += src.address[i+1];
+    checksum += (dest.address[i] << 8) & 0xFF00;
+    checksum += dest.address[i+1];
+  }
+  checksum += packet.payload_length();
+  checksum += 58;
+  std::size_t length = packet.payload_length()/2*2;
+  for(int i = 0; i < length; i += 2) {
+    checksum += (packet.payload()[i] << 8) & 0xFF00;
+    checksum += packet.payload()[i+1];
+  }
+  if(length != packet.payload_length())
+    checksum += (packet.payload()[packet.payload_length()-1] << 8) & 0xFF00;
+  while(checksum >> 16)
+    checksum = (checksum & 0xFFFF) + (checksum >> 16);
+  packet.payload()[2] = ((~checksum) >> 8) & 0xFF;
+  packet.payload()[3] = (~checksum) & 0xFF;
+
+  return packet;
+}

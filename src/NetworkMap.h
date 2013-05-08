@@ -49,6 +49,8 @@ public:
   Path path_to(const Device&) const;
   // Return the "best" path to the specified Device. Empty if none.
 
+  std::vector<std::shared_ptr<Device>> has_capability(const std::string&) const;
+
 private:
   lemon::ListGraph _graph;
   lemon::ListGraph::NodeMap<std::shared_ptr<Device> > _g_device;

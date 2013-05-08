@@ -4,21 +4,29 @@
 #include <cstdint>
 #include <ostream>
 
-namespace IPv6
-{
-  struct Address
-  {
+namespace IPv6 {
+  struct Address {
     std::uint8_t address[16];
+
     Address();
+    bool operator==(const Address&) const;
   };
-  
-  std::ostream &operator<<(std::ostream &out, const Address &addr);
-  
-  class Packet
-  {
-    std::uint8_t *_data;
-    std::size_t _data_length;
-  public:
+}
+
+std::ostream &operator<<(std::ostream &out, const IPv6::Address &addr);
+
+namespace std {
+  template<> struct hash<IPv6::Address> {
+    hash<string>::result_type operator()(const IPv6::Address& addr) const {
+      return hash<string>()(
+          string(reinterpret_cast<const char*>(addr.address), 16));
+    }
+  };
+}
+
+namespace IPv6 {  
+  class Packet {
+   public:
     const static int header_length = 40;
     const static int max_packet_size = header_length + (1 << 16) - 1;
     // Allocate storage and set protocol version
@@ -67,6 +75,14 @@ namespace IPv6
     static Packet reassemble(const Address &src, const Address &dst,
       std::uint8_t next_header, const std::string &payload);
     static Packet read(int fd);
+
+    static Packet generate_ICMPv6(const Address& src, const Address& dest,
+                                  std::uint8_t type, std::uint8_t code,
+                                  const std::string& payload);
+
+   private:
+    std::uint8_t *_data;
+    std::size_t _data_length;
   };
 }
 #endif

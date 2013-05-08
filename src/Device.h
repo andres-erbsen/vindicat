@@ -10,6 +10,7 @@ class ForeignForwarding;
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <stdint.h>
 
@@ -47,6 +48,10 @@ public:
 
   void merge(Device&&);
 
+  // Capabilities
+  std::unordered_set<std::string>& capabilities();
+  const std::unordered_set<std::string>& capabilities() const;
+
 private:
   void clear();
 
@@ -58,6 +63,8 @@ private:
   std::unordered_map<uint64_t, std::shared_ptr<ForeignForwarding> > _forwardings;
   uint64_t _mtime;
   std::shared_ptr<DeviceBusinesscard> _card;
+
+  std::unordered_set<std::string> _capabilities;
 };
 
 #endif // DEVICE_H_
